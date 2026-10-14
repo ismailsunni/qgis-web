@@ -1,0 +1,142 @@
+[
+  {
+    "name": "categorized",
+    "project": "reference/categorized/categorized.qgz",
+    "crs": "EPSG:8857",
+    "extent": [
+      -18105971.74484282,
+      -8810656.34838498,
+      18105971.74484282,
+      8733951.148193114
+    ],
+    "width": 600,
+    "height": 400,
+    "labels": false
+  },
+  {
+    "name": "graduated_3857",
+    "project": "reference/graduated_3857/graduated_3857.qgz",
+    "crs": "EPSG:3857",
+    "extent": [
+      -21039383.759928707,
+      -8129565.143027663,
+      21039383.759928707,
+      19088041.139946956
+    ],
+    "width": 600,
+    "height": 400,
+    "labels": false
+  },
+  {
+    "name": "points_4326",
+    "project": "reference/points_4326/points_4326.qgz",
+    "crs": "EPSG:4326",
+    "extent": [
+      -189.0,
+      -94.34112825,
+      189.0,
+      87.98625824999999
+    ],
+    "width": 600,
+    "height": 400,
+    "labels": false
+  },
+  {
+    "name": "rulebased_lines",
+    "project": "reference/rulebased_lines/rulebased_lines.qgz",
+    "crs": "EPSG:8857",
+    "extent": [
+      -18105971.74484282,
+      -8810656.34838498,
+      18105971.74484282,
+      8733951.148193114
+    ],
+    "width": 600,
+    "height": 400,
+    "labels": false
+  },
+  {
+    "name": "labels_polygons",
+    "project": "reference/labels_polygons/labels_polygons.qgz",
+    "crs": "EPSG:8857",
+    "extent": [
+      -18105971.74484282,
+      -8810656.34838498,
+      18105971.74484282,
+      8733951.148193114
+    ],
+    "width": 600,
+    "height": 400,
+    "labels": true
+  },
+  {
+    "name": "raster_pseudocolor",
+    "project": "reference/raster_pseudocolor/raster_pseudocolor.qgz",
+    "crs": "EPSG:4326",
+    "extent": [
+      -189.0,
+      -94.5,
+      189.0,
+      94.5
+    ],
+    "width": 600,
+    "height": 400,
+    "labels": false
+  },
+  {
+    "name": "formats_group_opacity",
+    "project": "reference/formats_group_opacity/formats_group_opacity.qgz",
+    "crs": "EPSG:3857",
+    "extent": [
+      -21039383.759928707,
+      -46511518.88515213,
+      21039383.759928707,
+      20024186.353169497
+    ],
+    "width": 600,
+    "height": 400,
+    "labels": false
+  },
+  {
+    "name": "projected_laea",
+    "project": "reference/projected_laea/projected_laea.qgz",
+    "crs": "EPSG:3035",
+    "extent": [
+      2500000.0,
+      1300000.0,
+      6000000.0,
+      5500000.0
+    ],
+    "width": 600,
+    "height": 400,
+    "labels": false
+  },
+  {
+    "name": "symbol_layers",
+    "project": "reference/symbol_layers/symbol_layers.qgz",
+    "crs": "EPSG:4326",
+    "extent": [
+      -90.0,
+      -60.0,
+      -30.0,
+      15.0
+    ],
+    "width": 600,
+    "height": 400,
+    "labels": false
+  },
+  {
+    "name": "labels_points",
+    "project": "reference/labels_points/labels_points.qgz",
+    "crs": "EPSG:3857",
+    "extent": [
+      -2000000.0,
+      3500000.0,
+      5000000.0,
+      8500000.0
+    ],
+    "width": 600,
+    "height": 400,
+    "labels": true
+  }
+]

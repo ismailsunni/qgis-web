@@ -13,9 +13,11 @@ import { apply } from "./lib/commit";
 import * as editing from "./lib/editing";
 import * as map from "./lib/map";
 import * as publish from "./lib/publish";
+import * as gpkg from "./lib/gpkg";
+import Point from "ol/geom/Point";
 import { ui } from "./lib/state.svelte";
 
 // Scripted access for end-to-end tests (see tests/).
-Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish } });
+Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish, gpkg, PointGeometry: Point } });
 
 mount(App, { target: document.getElementById("app")! });

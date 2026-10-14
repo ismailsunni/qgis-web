@@ -1,0 +1,55 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Mirror the QGIS Hub catalog
+        run: node scripts/hub-mirror.mjs
+        continue-on-error: true
+      # Reference projects open and render within tolerance of QGIS Desktop; scripted edits are saved.
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            test-results/
+            playwright-report/
+
+  # The projects saved by the round-trip test must open in QGIS Desktop with every edit intact.
+  desktop-roundtrip:
+    needs: e2e
+    runs-on: ubuntu-latest
+    container: qgis/qgis:latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v4
+        with:
+          name: test-results
+      - run: QT_QPA_PLATFORM=offscreen python3 scripts/check_roundtrip.py test-results/roundtrip
