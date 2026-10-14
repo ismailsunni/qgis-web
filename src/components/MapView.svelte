@@ -4,6 +4,8 @@
   import { clearIdentify, identifyAt } from "../lib/actions";
   import { ui, view } from "../lib/state.svelte";
   import IdentifyResults from "./IdentifyResults.svelte";
+  import EditToolbar from "./EditToolbar.svelte";
+  import { editClick } from "../lib/editmap";
 
   let target: HTMLDivElement;
   let coord = $state("");
@@ -12,7 +14,11 @@
 
   onMount(() => {
     const map = createMap(target, true);
-    map.on("singleclick", (e) => ui.phase === "ready" && identifyAt(e.coordinate));
+    map.on("singleclick", (e) => {
+      if (ui.phase !== "ready") return;
+      if (ui.editing && editClick(e.coordinate)) return;
+      identifyAt(e.coordinate);
+    });
     map.on("pointermove", (e) => {
       if (ui.phase !== "ready" || e.dragging) return;
       const [x, y] = e.coordinate;
@@ -31,6 +37,8 @@
 </script>
 
 <div class="map" bind:this={target}></div>
+
+{#if ui.editing && !view.mapOnly}<EditToolbar />{/if}
 
 {#if ui.hits.length}
   <IdentifyResults onclose={clearIdentify} />

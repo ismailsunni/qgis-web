@@ -6,6 +6,7 @@
   import { ui } from "../lib/state.svelte";
   import Icon from "./Icon.svelte";
   import ExpressionBuilder from "./ExpressionBuilder.svelte";
+  import { setAttribute, editSession } from "../lib/editing";
 
   let props: { layerId: string } = $props();
 
@@ -25,6 +26,18 @@
   let selected = $state<number | null>(null);
   let scrollTop = $state(0);
   let builder = $state(false);
+  let editingCell = $state<[number, number] | null>(null);
+  const editable = $derived(ui.editing === props.layerId);
+
+  function commitCell(row: number, col: number, text: string) {
+    editingCell = null;
+    const old = rows[row][col];
+    const value = text === "" ? null : typeof old === "number" && !Number.isNaN(Number(text)) ? Number(text) : text;
+    if (value === old) return;
+    setAttribute(fids[row], fields[col], value);
+    rows[row][col] = value;
+    rows = [...rows];
+  }
   let height = $state(240);
   let run = 0;
 
@@ -108,7 +121,7 @@
 
 <section class="drawer" aria-label="Attribute table">
   <header>
-    <h3><Icon name="table" size={16} /> {layer.name} <small class="muted">{fids.length.toLocaleString()}{loading ? "…" : ""} features</small></h3>
+    <h3><Icon name="table" size={16} /> {layer.name} <small class="muted">{fids.length.toLocaleString()}{loading ? "…" : ""} features{editable ? " · double-click a cell to edit" : ""}</small></h3>
     <form class="row filter" onsubmit={(e) => { e.preventDefault(); load(); }}>
       <input placeholder={`Filter expression, e.g. "${fields[0] ?? "field"}" > 10`} bind:value={filter} class:invalid={!!error} title={error} />
       <button type="button" class="icon" title="Expression builder" onclick={() => (builder = true)}><Icon name="expr" size={16} /></button>
@@ -131,7 +144,14 @@
         <tr style:height="{start * ROW}px"></tr>
         {#each visible as i (fids[i])}
           <tr class:selected={selected === fids[i]} onclick={() => select(i)} style:height="{ROW}px">
-            {#each rows[i] as v}<td class:null={v === null}>{fmt(v)}</td>{/each}
+            {#each rows[i] as v, c}
+              {#if editingCell?.[0] === i && editingCell?.[1] === c}
+                <!-- svelte-ignore a11y_autofocus -->
+                <td><input value={v === null ? "" : String(v)} autofocus onblur={(e) => commitCell(i, c, e.currentTarget.value)} onkeydown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); if (e.key === "Escape") editingCell = null; }} /></td>
+              {:else}
+                <td class:null={v === null} ondblclick={() => editable && fields[c] !== editSession()?.info.fid && (editingCell = [i, c])}>{fmt(v)}</td>
+              {/if}
+            {/each}
           </tr>
         {/each}
         <tr style:height="{Math.max(0, (order.length - start - visible.length) * ROW)}px"></tr>

@@ -1,9 +1,19 @@
 <script lang="ts">
   import { ui } from "../lib/state.svelte";
+  import { setAttribute, editSession } from "../lib/editing";
   import Icon from "./Icon.svelte";
 
   let { onclose }: { onclose: () => void } = $props();
   let open = $state(0);
+
+  /** Parses typed text back to the column's kind (numbers stay numbers, empty is NULL). */
+  const parse = (text: string, old: unknown) => (text === "" || text === "NULL" ? null : typeof old === "number" && !Number.isNaN(Number(text)) ? Number(text) : text);
+
+  function edit(hit: (typeof ui.hits)[number], key: string, old: unknown, text: string) {
+    setAttribute(hit.fid, key, parse(text, old));
+    const a = hit.attributes.find(([k]) => k === key);
+    if (a) a[1] = parse(text, old);
+  }
 
   const fmt = (v: unknown) => (v === null || v === undefined ? "NULL" : typeof v === "number" ? v.toLocaleString() : String(v));
 </script>
@@ -24,7 +34,14 @@
           <table class="attrs">
             <tbody>
               {#each hit.attributes as [k, v]}
-                <tr><th>{k}</th><td>{fmt(v)}</td></tr>
+                <tr>
+                  <th>{k}</th>
+                  {#if ui.editing === hit.layerId && editSession() && k !== editSession()!.info.fid}
+                    <td><input value={v === null ? "" : String(v)} placeholder="NULL" onchange={(e) => edit(hit, k, v, e.currentTarget.value)} /></td>
+                  {:else}
+                    <td>{fmt(v)}</td>
+                  {/if}
+                </tr>
               {/each}
             </tbody>
           </table>

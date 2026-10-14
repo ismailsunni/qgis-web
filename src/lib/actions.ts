@@ -186,6 +186,25 @@ export function identifyAt(coord: Coordinate) {
   setHighlight(geoms);
 }
 
+/** Shows one feature in the identify panel (e.g. a feature just digitized). */
+export function identifyFeature(layerId: string, fid: number) {
+  const api = engine();
+  const layer = engine().layerTreeRoot().findLayer(layerId)?.layer() as QgsVectorLayer | undefined;
+  if (!layer) return;
+  const req = new api.QgsFeatureRequest();
+  req.setFilterFid(fid);
+  req.setDestinationCrs(srid());
+  const it = layer.getFeatures(req);
+  const f = it.nextFeature();
+  if (f) {
+    ui.hits = [{ layerId, layerName: layer.name, fid, title: `#${fid}`, attributes: featureAttributes(f) }];
+    setHighlight([f.geometry()]);
+  }
+  free(f);
+  free(it);
+  free(req);
+}
+
 export function clearIdentify() {
   ui.hits = [];
   ui.hitAt = null;
@@ -215,6 +234,11 @@ export function commands(): Command[] {
   return [
     ...base,
     { id: "full", label: "Zoom to full extent", run: zoomToFull },
+    { id: "project", label: "Project properties (title, CRS)…", run: () => (ui.dialog = "project") },
+    { id: "save", label: "Save in this browser", hint: "Ctrl+S", run: saveInBrowser },
+    { id: "download", label: "Download project file (.qgz)", run: downloadProject },
+    { id: "bundle", label: "Download project with data (.zip)", run: downloadBundle },
+    { id: "new", label: "New empty project", run: newProject },
     { id: "clear", label: "Clear identify results", run: clearIdentify },
     { id: "close-table", label: "Close attribute table", run: () => (ui.tableLayerId = null) },
     ...layers.flatMap((l) => [

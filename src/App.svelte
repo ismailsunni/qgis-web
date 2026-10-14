@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { undo, redo } from "./lib/editing";
   import { boot } from "./lib/engine";
   import { ui, view, type Panel } from "./lib/state.svelte";
   import { droppedFiles, openFiles, openUrl, pickedFiles, saveInBrowser, downloadProject, downloadBundle } from "./lib/actions";
@@ -12,6 +13,7 @@
   import CommandPalette from "./components/CommandPalette.svelte";
   import Welcome from "./components/Welcome.svelte";
   import ShareDialog from "./components/ShareDialog.svelte";
+  import ProjectDialog from "./components/ProjectDialog.svelte";
 
   const rail: { id: Panel | "table"; icon: "layers" | "add" | "style" | "table" | "tools" | "hub"; label: string; planned?: string }[] = [
     { id: "layers", icon: "layers", label: "Layers" },
@@ -49,6 +51,9 @@
     if (mod && e.key.toLowerCase() === "k") {
       e.preventDefault();
       ui.palette = !ui.palette;
+    } else if (mod && ui.editing && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) && (e.key.toLowerCase() === "z" || e.key.toLowerCase() === "y")) {
+      e.preventDefault();
+      e.shiftKey || e.key.toLowerCase() === "y" ? redo() : undo();
     } else if (mod && e.key.toLowerCase() === "s") {
       e.preventDefault();
       saveInBrowser();
@@ -84,7 +89,9 @@
   {#if !view.mapOnly && !view.compact}
     <header class="topbar">
       <div class="brand"><span class="logo"></span>QGIS Web</div>
-      <div class="project-name" title={ui.projectName}>{ui.projectName}{#if ui.dirty}<span class="dirty" title="Unsaved changes"> •</span>{/if}</div>
+      <div class="project-name">
+        {#if ui.phase === "ready"}<button title="Project properties" onclick={() => (ui.dialog = "project")}>{ui.projectName}</button>{/if}{#if ui.dirty}<span class="dirty" title="Unsaved changes">•</span>{/if}
+      </div>
       <button class="palette-btn" onclick={() => (ui.palette = true)}>
         <Icon name="search" size={16} /> Search actions <kbd>Ctrl K</kbd>
       </button>
@@ -157,6 +164,7 @@
 
   {#if ui.palette}<CommandPalette />{/if}
   {#if shareOpen}<ShareDialog onclose={() => (shareOpen = false)} />{/if}
+  {#if ui.dialog === "project"}<ProjectDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.toast}<div class="toast" role="status">{ui.toast}</div>{/if}
 
   <input id="pick-files" type="file" multiple hidden onchange={onPick} />

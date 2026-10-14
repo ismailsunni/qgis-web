@@ -10,9 +10,11 @@ import * as remote from "./lib/remote";
 import * as style from "./lib/style";
 import * as engine from "./lib/engine";
 import { apply } from "./lib/commit";
+import * as editing from "./lib/editing";
+import * as map from "./lib/map";
 import { ui } from "./lib/state.svelte";
 
 // Scripted access for end-to-end tests (see tests/).
-Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply } });
+Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map } });
 
 mount(App, { target: document.getElementById("app")! });

@@ -1,10 +1,9 @@
-import type { Database } from "sql.js";
 import { readFile } from "./engine";
-import { openDb, rows } from "./sqlite";
+import { openDb, rows, type Db } from "./sqlite";
 
 /** CRS definitions from QGIS's own srs.db, shipped inside the engine. */
 
-let srs: Promise<Database> | null = null;
+let srs: Promise<Db> | null = null;
 const srsDb = () => (srs ??= openDb(readFile("/qgis/resources/srs.db")));
 
 export interface CrsDef {

@@ -10,6 +10,8 @@ const headers = {
 export default defineConfig({
   base: process.env.BASE_PATH ?? "/",
   build: { target: "esnext" },
+  // Loads its .wasm relative to its own module, which pre-bundling would break.
+  optimizeDeps: { exclude: ["@sqlite.org/sqlite-wasm"] },
   plugins: [
     svelte(),
     viteStaticCopy({

@@ -11,6 +11,7 @@
   import { ui } from "../lib/state.svelte";
   import Icon from "./Icon.svelte";
   import Self from "./LayerNode.svelte";
+  import { canEdit, startEditing, stopEditing, convertToGpkg } from "../lib/editing";
 
   let { node }: { node: TreeNode } = $props();
   let showLegend = $state(false);
@@ -109,6 +110,15 @@
         {/if}
         {#if !node.isGroup}
           <button role="menuitem" onclick={run(() => { ui.current = node.layerId!; ui.panel = "style"; })}>Style…</button>
+        {/if}
+        {#if !node.isGroup && node.layerType === LayerType.Vector && node.valid}
+          {#if node.editing}
+            <button role="menuitem" onclick={run(() => stopEditing())}>Stop editing</button>
+          {:else if canEdit(node.layerId!)}
+            <button role="menuitem" onclick={run(() => startEditing(node.layerId!))}>Start editing</button>
+          {:else}
+            <button role="menuitem" onclick={run(async () => { await convertToGpkg(node.layerId!); startEditing(node.layerId!); })}>Convert to GeoPackage and edit</button>
+          {/if}
         {/if}
         <button role="menuitem" class="danger" onclick={run(() => remove(node))}>Remove</button>
       </div>

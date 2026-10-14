@@ -41,6 +41,11 @@ export const ui = $state({
   dirty: false,
   /** Layer in edit mode (one at a time, as a GeoPackage write session). */
   editing: null as string | null,
+  editTool: null as "add" | "modify" | "delete" | null,
+  canUndo: false,
+  canRedo: false,
+  /** Open modal dialog, if any. */
+  dialog: null as "project" | "publish" | null,
   /** OPFS slot of the open project, once saved in the browser. */
   storedId: null as string | null,
 });
