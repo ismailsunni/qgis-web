@@ -41,7 +41,7 @@ Also: a command palette (Ctrl/Cmd+K) with every action, keyboard shortcuts (Ctrl
 
 ### Notes and deviations from the PRD
 
-- The PRD runs the engine in a Web Worker. It runs on the main thread for now, because the qgis-js API adapter and `@qgis-js/ol` expect `window`; heavy rendering already happens in the engine's own threads.
+- The PRD runs the engine in a Web Worker. It runs on the main thread: in a worker, qgis-js 4.2.3 downloads and starts but its Qt application never finishes initialising (spike, Oct 2026), so this needs upstream work in qgis-js. Heavy rendering already happens in the engine's own threads.
 - Engine features qgis-js doesn't bind yet (project write, renderers, processing) are implemented on the XML document, with GEOS and with SQLite as described above, rather than as qgis-js bindings.
 - **QGIS Hub:** hub.qgis.org doesn't send CORS headers, so a build step (`scripts/hub-mirror.mjs`) mirrors styles, GeoPackage projects and layer definitions into the site, refreshed weekly.
 - **Publishing** stores the project file as a GitHub gist: unlisted (secret) or public links, versions from gist revisions, restorable. Publishing needs a GitHub token with the `gist` scope, kept only in the browser. Viewing needs no account. The embed allowlist is enforced by the app, not by a server. Paid-tier levers (billing, custom domains, view stats) need a backend and aren't part of this static app.
