@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QGIS Web</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%23589632'/><path d='M10 16a6 6 0 1 1 9 5.2l3 3' stroke='white' stroke-width='3' fill='none'/></svg>" />
+    <!-- Sets COOP/COEP via a service worker so SharedArrayBuffer works on static hosts. -->
+    <script src="./coi-serviceworker.min.js"></script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
