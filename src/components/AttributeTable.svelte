@@ -5,6 +5,7 @@
   import { setHighlight, srid } from "../lib/map";
   import { ui } from "../lib/state.svelte";
   import Icon from "./Icon.svelte";
+  import ExpressionBuilder from "./ExpressionBuilder.svelte";
 
   let props: { layerId: string } = $props();
 
@@ -23,6 +24,7 @@
   let sortDir = $state(1);
   let selected = $state<number | null>(null);
   let scrollTop = $state(0);
+  let builder = $state(false);
   let height = $state(240);
   let run = 0;
 
@@ -100,11 +102,16 @@
   const fmt = (v: unknown) => (v === null || v === undefined ? "NULL" : String(v));
 </script>
 
+{#if builder}
+  <ExpressionBuilder layerId={props.layerId} initial={filter} title="Filter" onclose={() => (builder = false)} onapply={(v) => { builder = false; filter = v; load(); }} />
+{/if}
+
 <section class="drawer" aria-label="Attribute table">
   <header>
     <h3><Icon name="table" size={16} /> {layer.name} <small class="muted">{fids.length.toLocaleString()}{loading ? "…" : ""} features</small></h3>
     <form class="row filter" onsubmit={(e) => { e.preventDefault(); load(); }}>
       <input placeholder={`Filter expression, e.g. "${fields[0] ?? "field"}" > 10`} bind:value={filter} class:invalid={!!error} title={error} />
+      <button type="button" class="icon" title="Expression builder" onclick={() => (builder = true)}><Icon name="expr" size={16} /></button>
       <button type="submit">Filter</button>
       {#if filter}<button type="button" onclick={() => { filter = ""; load(); }}>Clear</button>{/if}
     </form>

@@ -1,5 +1,5 @@
 <!DOCTYPE qgis PUBLIC 'http://mrcc.com/qgis.dtd' 'SYSTEM'>
-<qgis projectname="Untitled" saveDateTime="2026-10-15T04:41:16" saveUser="ismailsunni" saveUserFull="ismailsunni" version="4.2.3-Belém do Pará">
+<qgis projectname="Untitled" saveDateTime="2026-10-15T04:43:16" saveUser="ismailsunni" saveUserFull="ismailsunni" version="4.2.3-Belém do Pará">
   <homePath path=""/>
   <title>Untitled</title>
   <transaction mode="Disabled"/>
@@ -43,7 +43,7 @@
   <relations/>
   <polymorphicRelations/>
   <main-annotation-layer autoRefreshMode="Disabled" autoRefreshTime="0" hasScaleBasedVisibilityFlag="0" layerType="Annotation" legendPlaceholderImage="" maxScale="0" minScale="1e+08" refreshOnNotifyEnabled="0" refreshOnNotifyMessage="" styleCategories="AllStyleCategories" type="annotation">
-    <id>Annotations_e2242588_d0f1_433f_885f_1f6ca28de4a1</id>
+    <id>Annotations_c6bd102a_8596_4eb9_87a3_d65aca43bac2</id>
     <datasource></datasource>
     <layername>Annotations</layername>
     <srs>
@@ -163,10 +163,10 @@
     <abstract></abstract>
     <links/>
     <dates>
-      <date type="Created" value="2026-10-15T04:41:16"/>
+      <date type="Created" value="2026-10-15T04:43:16"/>
     </dates>
     <author>ismailsunni</author>
-    <creation>2026-10-15T04:41:16</creation>
+    <creation>2026-10-15T04:43:16</creation>
   </projectMetadata>
   <Annotations/>
   <Layouts/>
@@ -178,7 +178,7 @@
   <ProjectViewSettings UseProjectScales="0" rotation="0">
     <Scales/>
   </ProjectViewSettings>
-  <ProjectStyleSettings DefaultSymbolOpacity="1" RandomizeDefaultSymbolColor="1" colorModel="Rgb" iccProfileId="attachment:///" projectStyleId="attachment:///DXTYkA_styles.db">
+  <ProjectStyleSettings DefaultSymbolOpacity="1" RandomizeDefaultSymbolColor="1" colorModel="Rgb" iccProfileId="attachment:///" projectStyleId="attachment:///pIFEMB_styles.db">
     <databases/>
   </ProjectStyleSettings>
   <ProjectTimeSettings cumulativeTemporalRange="0" frameRate="1" timeStep="1" timeStepUnit="h" totalMovieFrames="100"/>
