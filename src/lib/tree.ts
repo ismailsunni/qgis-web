@@ -1,6 +1,6 @@
 import { LayerType, type QgsLayerTreeNode, type QgsLayerTreeLayer } from "qgis-js";
 import { engine } from "./engine";
-import { child, mapLayerEl, removeLayerXml, treeChildren, treeEl, treeRootEl, project, isRemote } from "./doc";
+import { child, mapLayerEl, removeLayerXml, treeChildren, treeEl, treeRootEl, project, isRemote, xmlOpacity } from "./doc";
 import { apply } from "./commit";
 import { redraw } from "./map";
 import { changed, ui, type IdentifyHit } from "./state.svelte";
@@ -40,7 +40,7 @@ export function snapshotTree(): TreeNode[] {
       valid: !!layer?.isValid(),
       remote: isRemote((n as QgsLayerTreeLayer).layerId()),
       editing: ui.editing === (n as QgsLayerTreeLayer).layerId(),
-      opacity: layer?.opacity ?? 1,
+      opacity: layer?.opacity ?? xmlOpacity((n as QgsLayerTreeLayer).layerId()),
       children: [],
     };
   };
@@ -69,8 +69,7 @@ export function setExpanded(n: TreeNode, on: boolean) {
 
 export function setOpacity(n: TreeNode, value: number) {
   const layer = (n.node as QgsLayerTreeLayer).layer();
-  if (!layer) return;
-  layer.opacity = value;
+  if (layer) layer.opacity = value;
   const el = mapLayerEl(n.layerId!)!;
   const renderer = el.querySelector("pipe > rasterrenderer");
   if (renderer) renderer.setAttribute("opacity", String(value));

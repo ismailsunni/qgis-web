@@ -234,3 +234,8 @@ textarea.code { font: 12px/1.45 ui-monospace, monospace; width: 100%; min-height
 .fn-list button { border: none; width: 100%; padding: 3px 12px; font: 12px ui-monospace, monospace; justify-content: flex-start; }
 .dialog > footer { display: flex; gap: 8px; justify-content: flex-end; }
 .field button { color: var(--text); }
+.primary-like { background: var(--green); border-color: var(--green); color: white; justify-content: flex-start; }
+.primary-like:hover { background: var(--green-dark); }
+.stack-tight { display: flex; flex-direction: column; gap: 8px; }
+.presets { flex-wrap: wrap; gap: 4px; }
+.presets button { padding: 3px 8px; font-size: 12px; }

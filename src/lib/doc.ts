@@ -60,15 +60,16 @@ const enginePath = () => `${doc!.dir}/${doc!.file.replace(/\.(qgs|qgz)$/i, "")}.
 /** Writes the document for the engine and reloads it. */
 export function reload() {
   const d = doc!;
-  let xml = d.xml;
-  if (Object.keys(d.local).length) {
-    xml = d.xml.cloneNode(true) as XMLDocument;
-    for (const [id, src] of Object.entries(d.local)) {
-      const el = mapLayerEl(id, xml);
-      if (!el) continue;
+  // The engine can't use the network: it reads remote vector data from local copies and never
+  // sees browser-drawn layers (their tree nodes stay, so order and visibility are kept).
+  const xml = d.xml.cloneNode(true) as XMLDocument;
+  for (const el of [...xml.querySelectorAll("projectlayers > maplayer")]) {
+    const id = findChild(el, "id")?.textContent ?? "";
+    const src = d.local[id];
+    if (src?.datasource) {
       child(el, "datasource").textContent = src.datasource;
       child(el, "provider").textContent = src.provider;
-    }
+    } else if (isRemote(id)) el.remove();
   }
   writeFile(enginePath(), serialize(xml));
   if (!engine().loadProject(enginePath())) throw new Error("QGIS could not read the project");
@@ -170,4 +171,11 @@ const REMOTE_PROVIDERS = ["wms", "vectortile", "wfs", "arcgismapserver", "arcgis
 export function isRemote(id: string) {
   const { provider, datasource } = layerSource(id);
   return REMOTE_PROVIDERS.includes(provider.toLowerCase()) || datasource.startsWith("/vsicurl/") || id in doc!.local;
+}
+
+/** Layer opacity as stored in the project (also for layers the engine doesn't load). */
+export function xmlOpacity(id: string) {
+  const el = mapLayerEl(id);
+  const v = el?.querySelector("pipe > rasterrenderer")?.getAttribute("opacity") ?? (el && findChild(el, "layerOpacity")?.textContent);
+  return v ? Number(v) : 1;
 }

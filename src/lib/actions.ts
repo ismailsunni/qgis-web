@@ -5,6 +5,8 @@ import { engine, fetchProject, free, mountFiles, PROJECT_EXT } from "./engine";
 import { newDoc, openDoc, project, projectBytes, projectFiles } from "./doc";
 import emptyProject from "../templates/empty.qgs?raw";
 import { saveProject, loadProjectFiles, type StoredProject } from "./storage";
+import { addData, embeddedProjects, DATA_EXT } from "./adddata";
+import { hydrateAll } from "./remote";
 import { showProject, hitBox, srid, setHighlight, zoomToFull } from "./map";
 import { setVisible, snapshotTree, flatLayers } from "./tree";
 import { ui, changed, toast, featureAttributes, type IdentifyHit } from "./state.svelte";
@@ -22,6 +24,7 @@ function opened(name: string, storedId: string | null) {
   showProject();
   const broken = flatLayers(snapshotTree()).filter((l) => !l.valid && !l.remote);
   if (broken.length) toast(`Missing data for: ${broken.map((l) => l.name).join(", ")}`);
+  hydrateAll();
 }
 
 export async function newProject() {
@@ -47,10 +50,28 @@ async function open(name: string, load: () => Promise<{ root: string; path: stri
   }
 }
 
-/** Opens a project from local files: the project file plus any data it references. */
+/**
+ * Handles picked or dropped files: a project file opens the project (with the data next to it);
+ * a GeoPackage carrying a QGIS project opens that project; anything else is added as layers.
+ */
 export async function openFiles(files: { path: string; data: File }[]) {
   const projects = files.filter((f) => PROJECT_EXT.test(f.path));
-  if (!projects.length) return toast("Drop a .qgs or .qgz project (with its data files or folder).");
+  if (!projects.length) {
+    if (ui.phase !== "ready") {
+      for (const g of files.filter((f) => /\.gpkg$/i.test(f.path))) {
+        const [embedded] = await embeddedProjects(new Uint8Array(await g.data.arrayBuffer()));
+        if (!embedded) continue;
+        const qgz = g.path.replace(/[^/]+$/, `${embedded.name}.qgz`);
+        return open(embedded.name, async () => {
+          const root = await mountFiles([...files, { path: qgz, data: embedded.content }]);
+          return { root, path: `${root}/${qgz}` };
+        });
+      }
+    }
+    if (files.some((f) => DATA_EXT.test(f.path))) await addData(files);
+    else toast("Drop a QGIS project (.qgs/.qgz) or data files (GeoPackage, GeoJSON, Shapefile, GeoTIFF…).");
+    return;
+  }
   const project = projects.sort((a, b) => a.path.split("/").length - b.path.split("/").length)[0];
   await open(project.data.name, async () => {
     const root = await mountFiles(files);
