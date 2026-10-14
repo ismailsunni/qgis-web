@@ -2,7 +2,7 @@
 
 A zero-install web GIS that opens real QGIS projects (`.qgs` / `.qgz`) in the browser, rendered by QGIS core itself through [qgis-js](https://github.com/qgis/qgis-js) (QGIS compiled to WebAssembly).
 
-**Live app:** https://ismailsunni.github.io/qgis-web/ · **Product spec:** [docs/PRD.md](docs/PRD.md)
+**Live app:** https://ismailsunni.id/qgis-web/ · **Product spec:** [docs/PRD.md](docs/PRD.md)
 
 Everything runs client-side: projects and data stay in your browser unless you open a remote URL.
 
@@ -32,7 +32,7 @@ Also included: a command palette (Ctrl/Cmd+K) listing every action, and a phone 
 | `panels=none` | Start with all panels closed. |
 | `maponly` | Only the map, for iframes. |
 
-Example: `https://ismailsunni.github.io/qgis-web/?url=projects/world/world.qgz&maponly`
+Example: `https://ismailsunni.id/qgis-web/?url=projects/world/world.qgz&maponly`
 
 ## Development
 
