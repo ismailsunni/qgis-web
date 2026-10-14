@@ -1,4 +1,4 @@
-import { qgis, type QgisApi, type QgsLayerTreeNode, type QgsLayerTreeLayer, LayerType } from "qgis-js";
+import { qgis, type QgisApi } from "qgis-js";
 import { unzipSync, strFromU8 } from "fflate";
 
 export type EmFS = Awaited<ReturnType<typeof qgis>>["fs"];
@@ -8,6 +8,8 @@ let fs: EmFS;
 
 export async function boot(onStatus: (s: string) => void) {
   ({ api, fs } = await qgis({ prefix: `${import.meta.env.BASE_URL}assets/wasm`, onStatus }));
+  // Handle for end-to-end tests and debugging from the console.
+  Object.assign(globalThis, { qgisWeb: { api, fs } });
   return api;
 }
 
@@ -19,7 +21,20 @@ export const free = (o: unknown) => (o as { delete?: () => void } | null)?.delet
 export const PROJECT_EXT = /\.(qgs|qgz)$/i;
 let session = 0;
 
-function writeFile(path: string, data: Uint8Array) {
+export const readFile = (path: string) => fs.readFile(path) as Uint8Array;
+export const exists = (path: string) => fs.analyzePath(path).exists;
+
+/** All files under a folder, as absolute paths. */
+export function listFiles(dir: string): string[] {
+  return (fs.readdir(dir) as string[])
+    .filter((n) => n !== "." && n !== "..")
+    .flatMap((n) => {
+      const p = `${dir}/${n}`;
+      return fs.isDir(fs.stat(p).mode) ? listFiles(p) : [p];
+    });
+}
+
+export function writeFile(path: string, data: Uint8Array | string) {
   const parts = path.split("/").filter(Boolean);
   let dir = "";
   for (const p of parts.slice(0, -1)) {
@@ -37,10 +52,6 @@ export async function mountFiles(files: { path: string; data: Blob | Uint8Array 
     writeFile(`${root}/${f.path.replace(/^\/+/, "")}`, data);
   }
   return root;
-}
-
-export function loadProject(path: string) {
-  if (!api.loadProject(path)) throw new Error(`QGIS could not open ${path.split("/").pop()}`);
 }
 
 /** Relative data sources referenced by a .qgs/.qgz, so a remote project can fetch them. */
@@ -78,48 +89,9 @@ export async function fetchProject(url: string) {
       if (r?.ok) files.push({ path: local(src), data: new Uint8Array(await r.arrayBuffer()) });
     }),
   );
-  return (await mountFiles(files)) + local(name);
+  const root = await mountFiles(files);
+  return { root, path: root + local(name) };
 }
-
-export interface TreeNode {
-  key: string;
-  name: string;
-  isGroup: boolean;
-  checked: boolean;
-  visible: boolean;
-  expanded: boolean;
-  layerId?: string;
-  layerType?: LayerType;
-  valid?: boolean;
-  opacity?: number;
-  children: TreeNode[];
-  node: QgsLayerTreeNode;
-}
-
-/** A plain snapshot of the engine's layer tree; re-read after every change. */
-export function snapshotTree(): TreeNode[] {
-  const walk = (n: QgsLayerTreeNode, key: string, parentVisible: boolean): TreeNode => {
-    const checked = n.itemVisibilityChecked;
-    const base = { key, name: n.name, checked, visible: parentVisible && checked, expanded: n.expanded, node: n };
-    if (n.isGroup()) {
-      return { ...base, isGroup: true, children: n.children().map((c, i) => walk(c, `${key}/${i}`, base.visible)) };
-    }
-    const layer = (n as QgsLayerTreeLayer).layer();
-    return {
-      ...base,
-      isGroup: false,
-      layerId: (n as QgsLayerTreeLayer).layerId(),
-      layerType: layer?.type(),
-      valid: !!layer?.isValid(),
-      opacity: layer?.opacity ?? 1,
-      children: [],
-    };
-  };
-  return api.layerTreeRoot().children().map((c, i) => walk(c, `${i}`, true));
-}
-
-export const flatLayers = (nodes: TreeNode[]): TreeNode[] =>
-  nodes.flatMap((n) => (n.isGroup ? flatLayers(n.children) : [n]));
 
 export function findMapLayer(layerId: string) {
   return api.layerTreeRoot().findLayer(layerId)?.layer() ?? null;

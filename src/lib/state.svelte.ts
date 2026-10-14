@@ -37,6 +37,12 @@ export const ui = $state({
   hits: [] as IdentifyHit[],
   hitAt: null as [number, number] | null,
   toast: "",
+  /** Unsaved edits since the last save. */
+  dirty: false,
+  /** Layer in edit mode (one at a time, as a GeoPackage write session). */
+  editing: null as string | null,
+  /** OPFS slot of the open project, once saved in the browser. */
+  storedId: null as string | null,
 });
 
 export function changed() {

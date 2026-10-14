@@ -2,7 +2,7 @@
   import { onMount } from "svelte";
   import { boot } from "./lib/engine";
   import { ui, view, type Panel } from "./lib/state.svelte";
-  import { droppedFiles, openFiles, openUrl, pickedFiles } from "./lib/actions";
+  import { droppedFiles, openFiles, openUrl, pickedFiles, saveInBrowser, downloadProject, downloadBundle } from "./lib/actions";
   import Icon from "./components/Icon.svelte";
   import MapView from "./components/MapView.svelte";
   import LayersPanel from "./components/LayersPanel.svelte";
@@ -26,6 +26,7 @@
   let dragging = $state(false);
   let menuOpen = $state(false);
   let shareOpen = $state(false);
+  let saveMenu = $state(false);
 
   function railClick(id: Panel | "table") {
     if (id === "table") ui.tableLayerId = ui.tableLayerId ? null : ui.current;
@@ -48,6 +49,9 @@
     if (mod && e.key.toLowerCase() === "k") {
       e.preventDefault();
       ui.palette = !ui.palette;
+    } else if (mod && e.key.toLowerCase() === "s") {
+      e.preventDefault();
+      saveInBrowser();
     } else if (mod && e.key.toLowerCase() === "o") {
       e.preventDefault();
       document.getElementById("pick-files")?.click();
@@ -67,7 +71,7 @@
   };
 </script>
 
-<svelte:window onkeydown={onKey} />
+<svelte:window onkeydown={onKey} onbeforeunload={(e) => { if (ui.dirty) e.preventDefault(); }} />
 
 <div
   class="app"
@@ -80,10 +84,20 @@
   {#if !view.mapOnly && !view.compact}
     <header class="topbar">
       <div class="brand"><span class="logo"></span>QGIS Web</div>
-      <div class="project-name" title={ui.projectName}>{ui.projectName}</div>
+      <div class="project-name" title={ui.projectName}>{ui.projectName}{#if ui.dirty}<span class="dirty" title="Unsaved changes"> •</span>{/if}</div>
       <button class="palette-btn" onclick={() => (ui.palette = true)}>
         <Icon name="search" size={16} /> Search actions <kbd>Ctrl K</kbd>
       </button>
+      <div class="menu-anchor">
+        <button class="ghost" onclick={() => (saveMenu = !saveMenu)} disabled={ui.phase !== "ready"}><Icon name="save" size={18} /> Save</button>
+        {#if saveMenu}
+          <div class="menu card right" role="menu">
+            <button role="menuitem" onclick={() => { saveMenu = false; saveInBrowser(); }}>Save in this browser <kbd>Ctrl S</kbd></button>
+            <button role="menuitem" onclick={() => { saveMenu = false; downloadProject(); }}>Download project file (.qgz)</button>
+            <button role="menuitem" onclick={() => { saveMenu = false; downloadBundle(); }}>Download project with data (.zip)</button>
+          </div>
+        {/if}
+      </div>
       <button class="ghost" onclick={() => (shareOpen = true)} disabled={ui.phase !== "ready"}><Icon name="share" size={18} /> Share</button>
     </header>
   {/if}

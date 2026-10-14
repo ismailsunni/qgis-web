@@ -43,7 +43,7 @@ export const srid = () => projection.getCode();
 export function showProject() {
   const api = engine();
   projection = new Projection({ code: api.srid(), units: projectUnits() });
-  map.setView(new View({ projection }));
+  map.setView(new View({ projection, center: [0, 0], resolution: 1 }));
   highlight.clear();
   redraw();
   zoomToFull();
@@ -57,6 +57,7 @@ export function redraw() {
 
 export function zoomToFull() {
   const e = engine().fullExtent();
+  if (!(e.xMaximum > e.xMinimum)) return map.getView().setResolution(projection.getUnits() === "degrees" ? 0.5 : 40000);
   map.getView().fit([e.xMinimum, e.yMinimum, e.xMaximum, e.yMaximum], { padding: [40, 40, 40, 40] });
 }
 
