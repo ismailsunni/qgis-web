@@ -9,8 +9,18 @@
     <script>
       if (location.protocol === "http:" && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) location.protocol = "https:";
     </script>
-    <!-- Sets COOP/COEP via a service worker so SharedArrayBuffer works on static hosts. -->
-    <script src="./coi-serviceworker.min.js"></script>
+    <!-- Service worker: cross-origin isolation on static hosts and an engine cache (public/sw.js). -->
+    <script>
+      if ("serviceWorker" in navigator && isSecureContext && "%PROD%" === "true") {
+        navigator.serviceWorker.register("./sw.js?v=%VITE_QGIS_JS_VERSION%").then((reg) => {
+          if (crossOriginIsolated || navigator.serviceWorker.controller) return;
+          // First visit: reload once the worker controls the page, so its headers apply.
+          const reload = () => !sessionStorage.qgiswebSw && ((sessionStorage.qgiswebSw = "1"), location.reload());
+          if (reg.active) reload();
+          else navigator.serviceWorker.addEventListener("controllerchange", reload);
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="app"></div>

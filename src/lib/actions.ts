@@ -255,12 +255,29 @@ export function commands(): Command[] {
     { id: "download", label: "Download project file (.qgz)", run: downloadProject },
     { id: "bundle", label: "Download project with data (.zip)", run: downloadBundle },
     { id: "new", label: "New empty project", run: newProject },
+    { id: "add-data", label: "Add data files…", run: () => document.getElementById("pick-data")?.click() },
+    { id: "add-osm", label: "Add OpenStreetMap basemap", run: () => import("./remote").then((r) => r.addRemote(r.PRESETS[0])) },
+    { id: "share", label: "Share / publish…", run: () => (ui.dialog = "share") },
+    ...(ui.editing
+      ? [
+          { id: "edit-stop", label: "Stop editing (saves)", run: () => import("./editing").then((m) => m.stopEditing()) },
+          { id: "edit-undo", label: "Undo edit", hint: "Ctrl+Z", run: () => import("./editing").then((m) => m.undo()) },
+          { id: "edit-redo", label: "Redo edit", hint: "Ctrl+Shift+Z", run: () => import("./editing").then((m) => m.redo()) },
+          ...(["add", "modify", "delete"] as const).map((t) => ({ id: `edit-${t}`, label: `Edit tool: ${{ add: "add feature", modify: "edit vertices", delete: "delete feature" }[t]}`, run: () => import("./editmap").then((m) => m.setTool(t)) })),
+        ]
+      : []),
     ...ALGORITHMS.map((a) => ({ id: `alg-${a.id}`, label: `Processing: ${a.name}`, hint: a.id, run: () => ((ui.panel = "tools"), (ui.pendingAlgorithm = a.id)) })),
     { id: "clear", label: "Clear identify results", run: clearIdentify },
     { id: "close-table", label: "Close attribute table", run: () => (ui.tableLayerId = null) },
     ...layers.flatMap((l) => [
       { id: `toggle-${l.layerId}`, label: `Toggle visibility: ${l.name}`, run: () => setVisible(l, !l.checked) },
-      ...(l.layerType === LayerType.Vector ? [{ id: `table-${l.layerId}`, label: `Open attribute table: ${l.name}`, run: () => (ui.tableLayerId = l.layerId!) }] : []),
+      { id: `style-${l.layerId}`, label: `Style: ${l.name}`, run: () => ((ui.current = l.layerId!), (ui.panel = "style")) },
+      ...(l.layerType === LayerType.Vector && l.valid
+        ? [
+            { id: `table-${l.layerId}`, label: `Open attribute table: ${l.name}`, run: () => (ui.tableLayerId = l.layerId!) },
+            { id: `edit-${l.layerId}`, label: `Start editing: ${l.name}`, run: () => import("./editing").then((m) => (m.canEdit(l.layerId!) ? m.startEditing(l.layerId!) : m.convertToGpkg(l.layerId!).then(() => m.startEditing(l.layerId!)))) },
+          ]
+        : []),
     ]),
   ];
 }

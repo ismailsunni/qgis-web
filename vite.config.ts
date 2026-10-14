@@ -1,6 +1,10 @@
 import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import { readFileSync } from "node:fs";
+
+// Versions the service worker's engine cache.
+process.env.VITE_QGIS_JS_VERSION = JSON.parse(readFileSync("node_modules/qgis-js/package.json", "utf8")).version;
 
 const headers = {
   "Cross-Origin-Opener-Policy": "same-origin",
@@ -18,7 +22,6 @@ export default defineConfig({
       silent: true,
       targets: [
         { src: "node_modules/qgis-js/dist/assets/wasm/*", dest: "assets/wasm", rename: { stripBase: true } },
-        { src: "node_modules/coi-serviceworker/coi-serviceworker.min.js", dest: ".", rename: { stripBase: true } },
       ],
     }),
     {

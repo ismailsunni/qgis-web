@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { undo, redo } from "./lib/editing";
+  import { addData } from "./lib/adddata";
   import { boot } from "./lib/engine";
   import { ui, view, type Panel } from "./lib/state.svelte";
   import { droppedFiles, openFiles, openUrl, openPublished, pickedFiles, saveInBrowser, downloadProject, downloadBundle } from "./lib/actions";
@@ -29,7 +30,6 @@
 
   let dragging = $state(false);
   let menuOpen = $state(false);
-  let shareOpen = $state(false);
   let saveMenu = $state(false);
 
   function railClick(id: Panel | "table") {
@@ -114,7 +114,7 @@
           </div>
         {/if}
       </div>
-      <button class="ghost" onclick={() => (shareOpen = true)} disabled={ui.phase !== "ready"}><Icon name="share" size={18} /> Share</button>
+      <button class="ghost" onclick={() => (ui.dialog = "share")} disabled={ui.phase !== "ready"}><Icon name="share" size={18} /> Share</button>
     </header>
   {/if}
 
@@ -126,7 +126,7 @@
           {#if menuOpen}
             <div class="compact-menu">
               <button onclick={() => { ui.palette = true; menuOpen = false; }}>Search actions…</button>
-              <button onclick={() => { shareOpen = true; menuOpen = false; }} disabled={ui.phase !== "ready"}>Share…</button>
+              <button onclick={() => { ui.dialog = "share"; menuOpen = false; }} disabled={ui.phase !== "ready"}>Share…</button>
             </div>
           {/if}
         {/if}
@@ -174,7 +174,7 @@
   </div>
 
   {#if ui.palette}<CommandPalette />{/if}
-  {#if shareOpen}<ShareDialog onclose={() => (shareOpen = false)} />{/if}
+  {#if ui.dialog === "share"}<ShareDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "project"}<ProjectDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.toast}<div class="toast" role="status">{ui.toast}</div>{/if}
   {#if ui.embedBlocked}
@@ -185,4 +185,5 @@
 
   <input id="pick-files" type="file" multiple hidden onchange={onPick} />
   <input id="pick-folder" type="file" webkitdirectory hidden onchange={onPick} />
+  <input id="pick-data" type="file" multiple hidden onchange={async (e) => { const i = e.currentTarget; if (i.files?.length) await addData(pickedFiles(i.files)); i.value = ""; }} />
 </div>
