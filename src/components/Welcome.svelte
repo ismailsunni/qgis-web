@@ -18,7 +18,10 @@
     {:else}
       <h1><span class="logo big"></span>QGIS Web</h1>
       <p class="lead">Open real QGIS projects in your browser, rendered by QGIS itself.</p>
-      {#if ui.phase === "error"}<p class="error">{ui.error}</p>{/if}
+      {#if ui.phase === "error"}
+        <p class="error">{ui.error}</p>
+        {#if window.top !== window}<a href={location.href} target="_blank" rel="noopener">Open the map in a new tab</a>{/if}
+      {/if}
       <div class="actions">
         <button class="primary" onclick={() => document.getElementById("pick-folder")?.click()}><Icon name="folder" size={18} /> Open project folder</button>
         <button onclick={() => document.getElementById("pick-files")?.click()}><Icon name="file" size={18} /> Open files</button>

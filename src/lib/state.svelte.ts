@@ -4,6 +4,9 @@ const params = new URLSearchParams(location.search);
 
 export const view = {
   url: params.get("url"),
+  /** A published map: "owner/gistId", optionally at a version. */
+  gist: params.get("gist"),
+  rev: params.get("rev"),
   mapOnly: params.has("maponly"),
   compact: params.get("layout") === "compact",
   noPanels: params.get("panels") === "none",
@@ -37,6 +40,8 @@ export const ui = $state({
   hits: [] as IdentifyHit[],
   hitAt: null as [number, number] | null,
   toast: "",
+  /** Set when an embedded map is shown on a domain its owner didn't approve. */
+  embedBlocked: "",
   /** Unsaved edits since the last save. */
   dirty: false,
   /** Layer in edit mode (one at a time, as a GeoPackage write session). */

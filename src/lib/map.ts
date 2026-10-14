@@ -27,6 +27,8 @@ import type { QgsGeometry } from "qgis-js";
 import { engine, projectUnits } from "./engine";
 import { flatLayers, snapshotTree } from "./tree";
 import { drawnByBrowser, remoteSpec, type RemoteSpec } from "./remote";
+import { hooks } from "./doc";
+import { toast } from "./state.svelte";
 
 let map: Map;
 let projection: Projection;
@@ -76,6 +78,7 @@ export function showProject() {
 }
 
 let jobs: QgisJobDataSource[] = [];
+hooks.beforeReload = () => jobs.forEach((j) => j.killPendingJobs());
 const remoteLayers = new globalThis.Map<string, BaseLayer>();
 
 /** Re-renders the map from the engine (after visibility, opacity, style or order changes). */
@@ -129,8 +132,17 @@ function remoteLayer(id: string, s: RemoteSpec): BaseLayer {
       .catch(() => {});
     layer = tile;
   }
+  // A failing web layer gets a named error rather than a silently blank map.
+  const source = (layer as TileLayer).getSource?.();
+  source?.once?.("tileloaderror" as never, () => layerError(s.name));
   remoteLayers.set(key, layer);
   return layer;
+}
+
+const failed = new Set<string>();
+function layerError(name: string) {
+  failed.add(name);
+  toast(`Could not load ${[...failed].join(", ")}: the server may block cross-origin requests (CORS) or be offline.`);
 }
 
 export function zoomToFull() {

@@ -12,9 +12,10 @@ import * as engine from "./lib/engine";
 import { apply } from "./lib/commit";
 import * as editing from "./lib/editing";
 import * as map from "./lib/map";
+import * as publish from "./lib/publish";
 import { ui } from "./lib/state.svelte";
 
 // Scripted access for end-to-end tests (see tests/).
-Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map } });
+Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish } });
 
 mount(App, { target: document.getElementById("app")! });

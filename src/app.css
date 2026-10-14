@@ -273,3 +273,16 @@ textarea.code { font: 12px/1.45 ui-monospace, monospace; width: 100%; min-height
 .hub-hero { width: 100%; border-radius: 6px; }
 .hub-desc { font-size: 13px; white-space: pre-line; max-height: 200px; overflow: auto; }
 .stack > button.primary { justify-content: center; white-space: normal; }
+
+/* Share / publish */
+.share { max-height: 90vh; overflow: auto; }
+.share-section { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; }
+.share-label { width: 70px; flex: none; font-size: 12px; color: var(--muted); }
+.check { border-radius: 6px; padding: 8px 10px; font-size: 13px; }
+.check ul { margin: 4px 0; padding-left: 18px; }
+.check.error { background: #fdecea; border: 1px solid #f5c2bd; }
+.check.warn { background: #fff8e1; border: 1px solid #f3e0a1; }
+.versions { list-style: none; padding: 0; margin: 6px 0 0; font-size: 13px; }
+.versions li { display: flex; gap: 10px; align-items: center; padding: 2px 0; }
+.versions button { padding: 1px 8px; }
+.embed-blocked { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg-2); z-index: 100; text-align: center; padding: 20px; }

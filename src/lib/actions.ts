@@ -2,7 +2,7 @@ import { IdentifyMode, LayerType, type QgsGeometry, type QgsVectorLayer } from "
 import type { Coordinate } from "ol/coordinate";
 import { strToU8, zipSync } from "fflate";
 import { engine, fetchProject, free, mountFiles, PROJECT_EXT } from "./engine";
-import { newDoc, openDoc, project, projectBytes, projectFiles } from "./doc";
+import { newDoc, openDoc, project, projectBytes, projectFiles, reload } from "./doc";
 import emptyProject from "../templates/empty.qgs?raw";
 import { saveProject, loadProjectFiles, type StoredProject } from "./storage";
 import { addData, embeddedProjects, DATA_EXT } from "./adddata";
@@ -25,7 +25,6 @@ function opened(name: string, storedId: string | null) {
   showProject();
   const broken = flatLayers(snapshotTree()).filter((l) => !l.valid && !l.remote);
   if (broken.length) toast(`Missing data for: ${broken.map((l) => l.name).join(", ")}`);
-  hydrateAll();
 }
 
 export async function newProject() {
@@ -44,6 +43,9 @@ async function open(name: string, load: () => Promise<{ root: string; path: stri
   try {
     const { root, path } = await load();
     openDoc(path, root);
+    ui.status = "Loading remote layers…";
+    await hydrateAll();
+    reload();
     opened(name, storedId);
   } catch (e) {
     ui.phase = "error";
@@ -133,6 +135,17 @@ export async function openUrl(url: string) {
 }
 
 export const openDemo = () => openUrl(DEMO_URL);
+
+/** Opens a published map (F21): only the project file is fetched, its layers are all remote. */
+export async function openPublished(ref: string, rev: string | null) {
+  const { loadPublished, embedAllowed } = await import("./publish");
+  await open("shared map", async () => {
+    const { qgs, meta } = await loadPublished(ref, rev);
+    if (!embedAllowed(meta)) ui.embedBlocked = meta!.allowedDomains.join(", ");
+    const root = await mountFiles([{ path: "project.qgs", data: qgs }]);
+    return { root, path: `${root}/project.qgs` };
+  });
+}
 
 /** Flattens a drop (files and folders) into relative paths. */
 export async function droppedFiles(dt: DataTransfer) {

@@ -3,7 +3,7 @@
   import { undo, redo } from "./lib/editing";
   import { boot } from "./lib/engine";
   import { ui, view, type Panel } from "./lib/state.svelte";
-  import { droppedFiles, openFiles, openUrl, pickedFiles, saveInBrowser, downloadProject, downloadBundle } from "./lib/actions";
+  import { droppedFiles, openFiles, openUrl, openPublished, pickedFiles, saveInBrowser, downloadProject, downloadBundle } from "./lib/actions";
   import Icon from "./components/Icon.svelte";
   import MapView from "./components/MapView.svelte";
   import LayersPanel from "./components/LayersPanel.svelte";
@@ -38,10 +38,17 @@
   }
 
   onMount(async () => {
+    // Embedded in a page that isn't cross-origin isolated, multithreaded WebAssembly can't run.
+    if (!crossOriginIsolated && window.top !== window) {
+      ui.phase = "error";
+      ui.error = "This page can't run the QGIS engine inside an embedded frame. Open the map in its own tab.";
+      return;
+    }
     try {
       await boot((s) => s && (ui.status = s));
       ui.phase = "empty";
-      if (view.url) await openUrl(view.url);
+      if (view.gist) await openPublished(view.gist, view.rev);
+      else if (view.url) await openUrl(view.url);
     } catch (e) {
       ui.phase = "error";
       ui.error = `The QGIS engine failed to start: ${(e as Error).message}. qgis-js needs a recent Chromium or Firefox desktop browser.`;
@@ -170,6 +177,11 @@
   {#if shareOpen}<ShareDialog onclose={() => (shareOpen = false)} />{/if}
   {#if ui.dialog === "project"}<ProjectDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.toast}<div class="toast" role="status">{ui.toast}</div>{/if}
+  {#if ui.embedBlocked}
+    <div class="embed-blocked">
+      <div><h2>This map can't be embedded here</h2><p class="muted">Its owner allows embedding on: {ui.embedBlocked}</p><a href={location.href} target="_blank" rel="noopener">Open the map</a></div>
+    </div>
+  {/if}
 
   <input id="pick-files" type="file" multiple hidden onchange={onPick} />
   <input id="pick-folder" type="file" webkitdirectory hidden onchange={onPick} />

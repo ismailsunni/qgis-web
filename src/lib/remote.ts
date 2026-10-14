@@ -1,10 +1,9 @@
 import { strFromU8 } from "fflate";
-import { insertLayerXml, layerSource, mapLayerEl, newLayerId, project, findChild, reload } from "./doc";
+import { insertLayerXml, layerSource, mapLayerEl, newLayerId, project, findChild } from "./doc";
 import { crsByAuthid, spatialRefSys, type CrsDef } from "./crs";
 import { writeFile } from "./engine";
 import { apply } from "./commit";
-import { ui, toast, changed } from "./state.svelte";
-import { redraw } from "./map";
+import { ui, toast } from "./state.svelte";
 
 /**
  * Remote layers are stored as regular QGIS layers (so Desktop opens them) but read by the browser:
@@ -112,16 +111,16 @@ async function hydrate(id: string, s: RemoteSpec) {
   return bytes;
 }
 
-/** Downloads every remote vector layer of the open project, then reloads it. */
+/**
+ * Downloads every remote vector layer of the project. Done before QGIS first loads the project:
+ * a layer that is missing on the first load and appears on a later one gets dropped by QGIS.
+ */
 export async function hydrateAll() {
   const ids = [...project().xml.querySelectorAll("projectlayers > maplayer > id")].map((e) => e.textContent!);
   const todo = ids.map((id) => [id, remoteSpec(id)] as const).filter(([, s]) => s && (s.kind === "file" || s.kind === "wfs"));
   if (!todo.length) return;
   const errors: string[] = [];
   await Promise.all(todo.map(([id, s]) => hydrate(id, s!).catch((e) => errors.push(e.message))));
-  reload();
-  changed();
-  redraw();
   if (errors.length) toast(`Could not load: ${errors.join("; ")} (the server must allow CORS)`);
 }
 

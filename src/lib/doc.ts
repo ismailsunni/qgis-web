@@ -20,11 +20,15 @@ interface ProjectDoc {
 }
 
 let doc: ProjectDoc | null = null;
+
+/** Called before QGIS reloads the project (the map cancels render jobs on the old project). */
+export const hooks = { beforeReload: () => {} };
 export const project = () => doc!;
 export const hasProject = () => !!doc;
 
 const parse = (text: string) => new DOMParser().parseFromString(text, "application/xml");
 
+/** Parses a project; call reload() to load it in QGIS (after fetching remote data, if any). */
 export function openDoc(path: string, root: string) {
   const bytes = readFile(path);
   const file = path.split("/").pop()!;
@@ -41,7 +45,6 @@ export function openDoc(path: string, root: string) {
   const xml = parse(text);
   if (xml.querySelector("parsererror") || !xml.querySelector("qgis")) throw new Error(`${file} is not a QGIS project`);
   doc = { xml, root, dir: path.slice(0, -file.length - 1), file, extra, innerName, local: {} };
-  reload();
 }
 
 export function newDoc(root: string, xmlText: string, file = "untitled.qgz") {
@@ -72,6 +75,7 @@ export function reload() {
     } else if (isRemote(id)) el.remove();
   }
   writeFile(enginePath(), serialize(xml));
+  hooks.beforeReload();
   if (!engine().loadProject(enginePath())) throw new Error("QGIS could not read the project");
 }
 
