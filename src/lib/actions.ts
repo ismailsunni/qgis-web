@@ -7,6 +7,7 @@ import emptyProject from "../templates/empty.qgs?raw";
 import { saveProject, loadProjectFiles, type StoredProject } from "./storage";
 import { addData, embeddedProjects, DATA_EXT } from "./adddata";
 import { hydrateAll } from "./remote";
+import { ALGORITHMS } from "./processing";
 import { showProject, hitBox, srid, setHighlight, zoomToFull } from "./map";
 import { setVisible, snapshotTree, flatLayers } from "./tree";
 import { ui, changed, toast, featureAttributes, type IdentifyHit } from "./state.svelte";
@@ -239,6 +240,7 @@ export function commands(): Command[] {
     { id: "download", label: "Download project file (.qgz)", run: downloadProject },
     { id: "bundle", label: "Download project with data (.zip)", run: downloadBundle },
     { id: "new", label: "New empty project", run: newProject },
+    ...ALGORITHMS.map((a) => ({ id: `alg-${a.id}`, label: `Processing: ${a.name}`, hint: a.id, run: () => ((ui.panel = "tools"), (ui.pendingAlgorithm = a.id)) })),
     { id: "clear", label: "Clear identify results", run: clearIdentify },
     { id: "close-table", label: "Close attribute table", run: () => (ui.tableLayerId = null) },
     ...layers.flatMap((l) => [

@@ -9,6 +9,7 @@
   import LayersPanel from "./components/LayersPanel.svelte";
   import AddDataPanel from "./components/AddDataPanel.svelte";
   import StylePanel from "./components/StylePanel.svelte";
+  import ToolsPanel from "./components/ToolsPanel.svelte";
   import AttributeTable from "./components/AttributeTable.svelte";
   import CommandPalette from "./components/CommandPalette.svelte";
   import Welcome from "./components/Welcome.svelte";
@@ -20,7 +21,7 @@
     { id: "add", icon: "add", label: "Add data" },
     { id: "style", icon: "style", label: "Style" },
     { id: "table", icon: "table", label: "Attribute table" },
-    { id: "tools", icon: "tools", label: "Processing tools", planned: "M4" },
+    { id: "tools", icon: "tools", label: "Processing tools" },
     { id: "hub", icon: "hub", label: "QGIS Hub", planned: "M4" },
   ];
   const titles: Record<Panel, string> = { layers: "Layers", add: "Add data", style: "Style", tools: "Tools", hub: "Hub" };
@@ -144,7 +145,8 @@
           <div class="panel-body">
             {#if ui.panel === "layers"}<LayersPanel />
             {:else if ui.panel === "add"}<AddDataPanel />
-            {:else if ui.panel === "style"}<StylePanel />{/if}
+            {:else if ui.panel === "style"}<StylePanel />
+            {:else if ui.panel === "tools"}<ToolsPanel />{/if}
           </div>
         </aside>
       {/if}

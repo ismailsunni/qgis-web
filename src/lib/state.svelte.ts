@@ -44,6 +44,8 @@ export const ui = $state({
   editTool: null as "add" | "modify" | "delete" | null,
   canUndo: false,
   canRedo: false,
+  /** Algorithm to open in the Tools panel (from the command palette). */
+  pendingAlgorithm: null as string | null,
   /** Open modal dialog, if any. */
   dialog: null as "project" | "publish" | null,
   /** OPFS slot of the open project, once saved in the browser. */
