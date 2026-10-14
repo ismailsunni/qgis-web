@@ -228,6 +228,8 @@ export function commands(): Command[] {
     { id: "panel-layers", label: "Show Layers panel", run: () => (ui.panel = "layers") },
     { id: "panel-add", label: "Show Add data panel", run: () => (ui.panel = "add") },
     { id: "panel-style", label: "Show Style panel", run: () => (ui.panel = "style") },
+    { id: "panel-tools", label: "Show Processing tools", run: () => (ui.panel = "tools") },
+    { id: "panel-hub", label: "Browse the QGIS Hub", run: () => (ui.panel = "hub") },
     { id: "panel-close", label: "Close side panel", run: () => (ui.panel = null) },
   ];
   if (ui.phase !== "ready") return base;

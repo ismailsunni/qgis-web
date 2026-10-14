@@ -10,6 +10,7 @@
   import AddDataPanel from "./components/AddDataPanel.svelte";
   import StylePanel from "./components/StylePanel.svelte";
   import ToolsPanel from "./components/ToolsPanel.svelte";
+  import HubPanel from "./components/HubPanel.svelte";
   import AttributeTable from "./components/AttributeTable.svelte";
   import CommandPalette from "./components/CommandPalette.svelte";
   import Welcome from "./components/Welcome.svelte";
@@ -22,9 +23,9 @@
     { id: "style", icon: "style", label: "Style" },
     { id: "table", icon: "table", label: "Attribute table" },
     { id: "tools", icon: "tools", label: "Processing tools" },
-    { id: "hub", icon: "hub", label: "QGIS Hub", planned: "M4" },
+    { id: "hub", icon: "hub", label: "QGIS Hub" },
   ];
-  const titles: Record<Panel, string> = { layers: "Layers", add: "Add data", style: "Style", tools: "Tools", hub: "Hub" };
+  const titles: Record<Panel, string> = { layers: "Layers", add: "Add data", style: "Style", tools: "Processing", hub: "QGIS Hub" };
 
   let dragging = $state(false);
   let menuOpen = $state(false);
@@ -146,7 +147,8 @@
             {#if ui.panel === "layers"}<LayersPanel />
             {:else if ui.panel === "add"}<AddDataPanel />
             {:else if ui.panel === "style"}<StylePanel />
-            {:else if ui.panel === "tools"}<ToolsPanel />{/if}
+            {:else if ui.panel === "tools"}<ToolsPanel />
+            {:else if ui.panel === "hub"}<HubPanel />{/if}
           </div>
         </aside>
       {/if}

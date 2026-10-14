@@ -185,7 +185,11 @@ export async function addData(files: { path: string; data: Blob | Uint8Array }[]
 export async function embeddedProjects(gpkg: Uint8Array) {
   const db = await openDb(gpkg);
   try {
-    return rows<{ name: string; content: Uint8Array }>(db, "select name, content from qgis_projects");
+    // QGIS stores the .qgz either as a blob or as hex text.
+    return rows<{ name: string; content: Uint8Array | string }>(db, "select name, content from qgis_projects").map((r) => ({
+      name: r.name,
+      content: typeof r.content === "string" ? Uint8Array.from(r.content.match(/../g) ?? [], (h) => parseInt(h, 16)) : r.content,
+    }));
   } catch {
     return [];
   } finally {
