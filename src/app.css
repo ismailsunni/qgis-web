@@ -265,7 +265,7 @@ textarea.code { font: 12px/1.45 ui-monospace, monospace; width: 100%; min-height
 .tabs { display: flex; gap: 4px; }
 .tabs button { flex: 1; justify-content: center; padding: 5px; }
 .tabs button.active { background: var(--accent-bg); border-color: var(--green); color: var(--green-dark); }
-.hub-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.hub-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .hub-grid button { flex-direction: column; align-items: stretch; gap: 3px; padding: 4px; width: 100%; height: 100%; text-align: left; font-size: 12px; }
 .hub-grid img, .hub-grid .noimg { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 4px; background: var(--bg-2); display: grid; place-items: center; color: var(--muted); }
 .hub-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
