@@ -286,3 +286,11 @@ textarea.code { font: 12px/1.45 ui-monospace, monospace; width: 100%; min-height
 .versions li { display: flex; gap: 10px; align-items: center; padding: 2px 0; }
 .versions button { padding: 1px 8px; }
 .embed-blocked { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg-2); z-index: 100; text-align: center; padding: 20px; }
+
+/* Settings */
+.startup { border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px 12px; display: flex; flex-direction: column; gap: 6px; }
+.startup legend { font-weight: 600; padding: 0 4px; }
+.radio { display: flex; gap: 8px; align-items: baseline; cursor: pointer; }
+.radio .muted { font-size: 12px; }
+.specific { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 0 22px; }
+.specific > button:not(.link) { align-self: flex-start; }

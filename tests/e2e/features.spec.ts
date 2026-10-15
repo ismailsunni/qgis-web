@@ -127,3 +127,23 @@ test("phones get the bottom tab bar", async ({ page }) => {
   const rail = (await page.locator(".rail").boundingBox())!;
   expect(rail.y).toBeGreaterThan(700);
 });
+
+test("open project on launch: blank, most recent, specific", async ({ page }) => {
+  const phase = () => page.evaluate(() => [(globalThis as any).qgisWebApp.ui.phase, (globalThis as any).qgisWebApp.ui.projectName]);
+  await boot(page);
+  expect((await phase())[0]).toBe("empty");
+  const set = (s: object) => page.evaluate((s) => (globalThis as any).qgisWebApp.settings.saveSettings(s), s);
+
+  await set({ startup: "blank", specific: null });
+  await page.reload();
+  await expect.poll(phase).toEqual(["ready", "Untitled"]);
+
+  await page.evaluate(() => (globalThis as any).qgisWebApp.actions.openUrl("reference/points_4326/points_4326.qgz"));
+  await set({ startup: "last", specific: null });
+  await page.reload();
+  await expect.poll(phase).toEqual(["ready", "points_4326"]);
+
+  await set({ startup: "specific", specific: { kind: "url", url: new URL("projects/world/world.qgz", page.url()).href, name: "Demo" } });
+  await page.reload();
+  await expect.poll(phase).toEqual(["ready", "World (Natural Earth 1:110m)"]);
+});

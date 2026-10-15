@@ -4,7 +4,7 @@
   import { addData } from "./lib/adddata";
   import { boot } from "./lib/engine";
   import { ui, view, type Panel } from "./lib/state.svelte";
-  import { droppedFiles, openFiles, openUrl, openPublished, pickedFiles, saveInBrowser, downloadProject, downloadBundle } from "./lib/actions";
+  import { droppedFiles, openFiles, openUrl, openPublished, runStartup, pickedFiles, saveInBrowser, downloadProject, downloadBundle } from "./lib/actions";
   import Icon from "./components/Icon.svelte";
   import MapView from "./components/MapView.svelte";
   import LayersPanel from "./components/LayersPanel.svelte";
@@ -17,6 +17,7 @@
   import Welcome from "./components/Welcome.svelte";
   import ShareDialog from "./components/ShareDialog.svelte";
   import ProjectDialog from "./components/ProjectDialog.svelte";
+  import SettingsDialog from "./components/SettingsDialog.svelte";
 
   const rail: { id: Panel | "table"; icon: "layers" | "add" | "style" | "table" | "tools" | "hub"; label: string; planned?: string }[] = [
     { id: "layers", icon: "layers", label: "Layers" },
@@ -49,6 +50,7 @@
       ui.phase = "empty";
       if (view.gist) await openPublished(view.gist, view.rev);
       else if (view.url) await openUrl(view.url);
+      else await runStartup();
     } catch (e) {
       ui.phase = "error";
       ui.error = `The QGIS engine failed to start: ${(e as Error).message}. qgis-js needs a recent Chromium or Firefox desktop browser.`;
@@ -115,6 +117,7 @@
         {/if}
       </div>
       <button class="ghost" onclick={() => (ui.dialog = "share")} disabled={ui.phase !== "ready"}><Icon name="share" size={18} /> Share</button>
+      <button class="icon" title="Settings" aria-label="Settings" onclick={() => (ui.dialog = "settings")}><Icon name="settings" size={18} /></button>
     </header>
   {/if}
 
@@ -127,6 +130,7 @@
             <div class="compact-menu">
               <button onclick={() => { ui.palette = true; menuOpen = false; }}>Search actions…</button>
               <button onclick={() => { ui.dialog = "share"; menuOpen = false; }} disabled={ui.phase !== "ready"}>Share…</button>
+              <button onclick={() => { ui.dialog = "settings"; menuOpen = false; }}>Settings…</button>
             </div>
           {/if}
         {/if}
@@ -176,6 +180,7 @@
   {#if ui.palette}<CommandPalette />{/if}
   {#if ui.dialog === "share"}<ShareDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "project"}<ProjectDialog onclose={() => (ui.dialog = null)} />{/if}
+  {#if ui.dialog === "settings"}<SettingsDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.toast}<div class="toast" role="status">{ui.toast}</div>{/if}
   {#if ui.embedBlocked}
     <div class="embed-blocked">

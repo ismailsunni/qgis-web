@@ -43,6 +43,7 @@
         </div>
       {/if}
       <p class="hint">…or drop a .qgs / .qgz with its data anywhere. Nothing is uploaded: your data never leaves this browser.</p>
+      <button class="link" onclick={() => (ui.dialog = "settings")}>Choose what opens on launch…</button>
     {/if}
   </div>
 </div>

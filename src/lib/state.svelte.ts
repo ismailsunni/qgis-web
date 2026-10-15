@@ -52,7 +52,7 @@ export const ui = $state({
   /** Algorithm to open in the Tools panel (from the command palette). */
   pendingAlgorithm: null as string | null,
   /** Open modal dialog, if any. */
-  dialog: null as "project" | "share" | null,
+  dialog: null as "project" | "share" | "settings" | null,
   /** OPFS slot of the open project, once saved in the browser. */
   storedId: null as string | null,
 });

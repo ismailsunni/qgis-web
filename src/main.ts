@@ -15,9 +15,11 @@ import * as map from "./lib/map";
 import * as publish from "./lib/publish";
 import * as gpkg from "./lib/gpkg";
 import Point from "ol/geom/Point";
+import * as settings from "./lib/settings";
+import * as storage from "./lib/storage";
 import { ui } from "./lib/state.svelte";
 
 // Scripted access for end-to-end tests (see tests/).
-Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish, gpkg, PointGeometry: Point } });
+Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish, gpkg, PointGeometry: Point, settings, storage } });
 
 mount(App, { target: document.getElementById("app")! });

@@ -8,6 +8,8 @@ import { saveProject, loadProjectFiles, type StoredProject } from "./storage";
 import { addData, embeddedProjects, DATA_EXT } from "./adddata";
 import { hydrateAll } from "./remote";
 import { ALGORITHMS } from "./processing";
+import { getSettings, lastProject, rememberLast, type ProjectRef } from "./settings";
+import { listProjects } from "./storage";
 import { showProject, hitBox, srid, setHighlight, zoomToFull } from "./map";
 import { setVisible, snapshotTree, flatLayers } from "./tree";
 import { ui, changed, toast, featureAttributes, type IdentifyHit } from "./state.svelte";
@@ -81,6 +83,7 @@ export async function openFiles(files: { path: string; data: File }[]) {
     return { root, path: `${root}/${project.path}` };
   });
   ui.sourceUrl = null;
+  if (ui.phase === "ready") rememberLast({ kind: "local", name: ui.projectName });
 }
 
 export async function openStored(meta: StoredProject) {
@@ -91,6 +94,7 @@ export async function openStored(meta: StoredProject) {
   }, meta.id);
   ui.sourceUrl = meta.sourceUrl ?? null;
   ui.projectName = meta.name;
+  if (ui.phase === "ready") rememberLast({ kind: "stored", id: meta.id, name: meta.name });
 }
 
 /** Saves the project and its data in the browser (OPFS). */
@@ -104,6 +108,7 @@ export async function saveInBrowser() {
   );
   ui.storedId = id;
   ui.dirty = false;
+  rememberLast({ kind: "stored", id, name: ui.projectName });
   toast(`Saved “${ui.projectName}” in this browser`);
 }
 
@@ -132,6 +137,7 @@ export function downloadBundle() {
 export async function openUrl(url: string) {
   await open(decodeURIComponent(url.split("/").pop()!), () => fetchProject(url));
   ui.sourceUrl = ui.phase === "ready" ? new URL(url, location.href).href : null;
+  if (ui.sourceUrl) rememberLast({ kind: "url", url: ui.sourceUrl, name: ui.projectName });
 }
 
 export const openDemo = () => openUrl(DEMO_URL);
@@ -145,6 +151,34 @@ export async function openPublished(ref: string, rev: string | null) {
     const root = await mountFiles([{ path: "project.qgs", data: qgs }]);
     return { root, path: `${root}/project.qgs` };
   });
+  if (ui.phase === "ready" && !rev) rememberLast({ kind: "gist", ref, name: ui.projectName });
+}
+
+/** Reopens a remembered project; returns false (with a message) if it is no longer available. */
+export async function openRef(ref: ProjectRef): Promise<boolean> {
+  if (ref.kind === "url") await openUrl(ref.url);
+  else if (ref.kind === "gist") await openPublished(ref.ref, null);
+  else if (ref.kind === "stored") {
+    const meta = (await listProjects()).find((p) => p.id === ref.id);
+    if (!meta) return toast(`“${ref.name}” is no longer saved in this browser.`), false;
+    await openStored(meta);
+  } else return toast(`“${ref.name}” was opened from local files. Save it in the browser to reopen it on launch.`), false;
+  return ui.phase === "ready";
+}
+
+/** Applies the "open project on launch" setting (when the URL doesn't name a project). */
+export async function runStartup() {
+  const { startup, specific } = getSettings();
+  if (startup === "blank") await newProject();
+  else if (startup === "last") {
+    const last = lastProject();
+    if (last) await openRef(last);
+  } else if (startup === "specific" && specific) await openRef(specific);
+  // A project that failed to open falls back to the welcome page.
+  if (ui.phase === "error" && startup !== "welcome") {
+    toast(ui.error);
+    ui.phase = "empty";
+  }
 }
 
 /** Flattens a drop (files and folders) into relative paths. */
@@ -255,6 +289,7 @@ export function commands(): Command[] {
     { id: "download", label: "Download project file (.qgz)", run: downloadProject },
     { id: "bundle", label: "Download project with data (.zip)", run: downloadBundle },
     { id: "new", label: "New empty project", run: newProject },
+    { id: "settings", label: "Settings (open project on launch)…", run: () => (ui.dialog = "settings") },
     { id: "add-data", label: "Add data files…", run: () => document.getElementById("pick-data")?.click() },
     { id: "add-osm", label: "Add OpenStreetMap basemap", run: () => import("./remote").then((r) => r.addRemote(r.PRESETS[0])) },
     { id: "share", label: "Share / publish…", run: () => (ui.dialog = "share") },
