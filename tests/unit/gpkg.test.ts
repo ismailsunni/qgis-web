@@ -26,3 +26,17 @@ describe("GeoPackage geometry blobs", () => {
     expect([...d.wkb]).toEqual([...wkb]);
   });
 });
+
+describe("opening GeoPackages", () => {
+  it("reads databases saved in WAL mode (as QGIS/GDAL often leave them)", async () => {
+    const { openDb } = await import("../../src/lib/sqlite");
+    const db = await openDb();
+    db.run("create table t (x integer); insert into t values (42);");
+    const bytes = db.export();
+    db.close();
+    bytes[18] = bytes[19] = 2; // WAL mode
+    const reopened = await openDb(bytes);
+    expect(reopened.rows("select x from t")).toEqual([{ x: 42 }]);
+    reopened.close();
+  });
+});

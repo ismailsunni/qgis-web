@@ -169,7 +169,12 @@ export async function addData(files: { path: string; data: Blob | Uint8Array }[]
   }
   ui.status = "Adding data…";
   const data = await Promise.all(files.map(async (f) => ({ path: f.path, data: f.data instanceof Uint8Array ? f.data : new Uint8Array(await f.data.arrayBuffer()) })));
-  const sources = await prepare(data);
+  let sources: Source[];
+  try {
+    sources = await prepare(data);
+  } catch (e) {
+    return toast(`Could not read the data: ${(e as Error).message}`);
+  }
   if (!sources.length) return toast("No supported data found (GeoPackage, GeoJSON, Shapefile, FlatGeobuf, GeoTIFF, GeoParquet, KML, GPX).");
   const ids: string[] = [];
   apply(() => {
@@ -183,7 +188,8 @@ export async function addData(files: { path: string; data: Blob | Uint8Array }[]
 
 /** GeoPackages can carry QGIS projects (qgis_projects table); returns them as .qgz bytes. */
 export async function embeddedProjects(gpkg: Uint8Array) {
-  const db = await openDb(gpkg);
+  const db = await openDb(gpkg).catch(() => null);
+  if (!db) return [];
   try {
     // QGIS stores the .qgz either as a blob or as hex text.
     return rows<{ name: string; content: Uint8Array | string }>(db, "select name, content from qgis_projects").map((r) => ({

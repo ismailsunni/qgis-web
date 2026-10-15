@@ -37,6 +37,12 @@ export async function openDb(bytes?: Uint8Array): Promise<Db> {
   const s = await lib();
   const db = new s.oo1.DB();
   if (bytes?.length) {
+    // In-memory databases can't use WAL; GeoPackages saved by QGIS/GDAL often are in WAL mode.
+    // Header bytes 18-19 = 2 mark WAL; 1 is the rollback journal (same data, readable in memory).
+    if (bytes[18] === 2 || bytes[19] === 2) {
+      bytes = bytes.slice();
+      bytes[18] = bytes[19] = 1;
+    }
     const p = s.wasm.allocFromTypedArray(bytes);
     const { capi } = s;
     const rc = capi.sqlite3_deserialize(db.pointer!, "main", p, bytes.length, bytes.length, capi.SQLITE_DESERIALIZE_FREEONCLOSE | capi.SQLITE_DESERIALIZE_RESIZEABLE);
