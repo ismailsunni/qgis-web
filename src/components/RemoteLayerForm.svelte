@@ -10,6 +10,10 @@
     ["wmts", "WMTS", "https://…/WMTSCapabilities.xml"],
     ["wfs", "WFS", "https://…/wfs"],
     ["vectortile", "Vector tiles (MVT)", "https://…/{z}/{x}/{y}.pbf"],
+    ["pmtiles", "PMTiles archive", "https://…/tiles.pmtiles"],
+    ["oapif", "OGC API Features", "https://…/ogcapi (landing page)"],
+    ["arcgisfeature", "ArcGIS FeatureServer", "https://…/FeatureServer/0"],
+    ["arcgismap", "ArcGIS MapServer", "https://…/MapServer"],
     ["cog", "Cloud Optimized GeoTIFF", "https://…/image.tif"],
     ["file", "Vector file by URL", "https://…/data.fgb (FlatGeobuf, GeoJSON, GeoPackage)"],
   ];
@@ -22,13 +26,27 @@
   let matrixSet = $state("");
   let loading = $state(false);
 
-  const needsCaps = $derived(kind === "wms" || kind === "wmts" || kind === "wfs");
+  const needsCaps = $derived(["wms", "wmts", "wfs", "oapif", "arcgismap"].includes(kind) || (kind === "arcgisfeature" && !/\/\d+\/?$/.test(url)));
 
   async function loadCaps() {
     loading = true;
     layers = [];
     try {
       const u = new URL(url);
+      if (kind === "oapif") {
+        const r = await (await fetch(`${url.replace(/\/$/, "")}/collections?f=json`, { headers: { Accept: "application/json" } })).json();
+        layers = (r.collections ?? []).map((c: any) => ({ name: c.id, title: c.title || c.id }));
+        layer = layers[0]?.name ?? "";
+        loading = false;
+        return;
+      }
+      if (kind === "arcgisfeature" || kind === "arcgismap") {
+        const r = await (await fetch(`${url.replace(/\/$/, "")}?f=json`)).json();
+        layers = (r.layers ?? []).filter((l: any) => !l.subLayerIds?.length || kind === "arcgismap").map((l: any) => ({ name: String(l.id), title: l.name }));
+        layer = layers[0]?.name ?? "";
+        loading = false;
+        return;
+      }
       if (kind !== "wmts") {
         u.searchParams.set("service", kind.toUpperCase());
         u.searchParams.set("request", "GetCapabilities");
@@ -64,7 +82,9 @@
   async function add(e: Event) {
     e.preventDefault();
     const title = name || layers.find((l) => l.name === layer)?.title || new URL(url).hostname;
-    await addRemote({ kind, name: title, url, layer, matrixSet });
+    // A FeatureServer layer is addressed by its URL (…/FeatureServer/<id>).
+    const full = kind === "arcgisfeature" && layer && !/\/\d+\/?$/.test(url) ? `${url.replace(/\/$/, "")}/${layer}` : url;
+    await addRemote({ kind, name: title, url: full, layer: kind === "arcgisfeature" ? undefined : layer, matrixSet });
     url = name = "";
     layers = [];
   }
@@ -91,4 +111,4 @@
   <label class="field">Name<input bind:value={name} placeholder="Layer name (optional)" /></label>
   <button class="primary" type="submit" disabled={!url || (needsCaps && !layer)}>Add layer</button>
 </form>
-<p class="hint">Tiles and images are drawn by the browser; remote vector files and WFS are downloaded and drawn by QGIS. The QGIS engine can't fetch over the network yet (QEP #294), but the layers are saved as regular QGIS layers.</p>
+<p class="hint">Tiles and images are drawn by the browser; remote vector files, WFS, OGC API Features and ArcGIS feature layers are downloaded and drawn by QGIS. The QGIS engine can't fetch over the network yet (QEP #294), but the layers are saved as regular QGIS layers.</p>

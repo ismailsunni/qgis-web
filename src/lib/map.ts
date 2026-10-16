@@ -13,6 +13,8 @@ import WMTS, { optionsFromCapabilities } from "ol/source/WMTS";
 import GeoTIFF from "ol/source/GeoTIFF";
 import VectorTileSource from "ol/source/VectorTile";
 import MVT from "ol/format/MVT";
+import TileArcGISRest from "ol/source/TileArcGISRest";
+import { PMTilesRasterSource, PMTilesVectorSource } from "ol-pmtiles";
 import WMTSCapabilities from "ol/format/WMTSCapabilities";
 import GeoJSON from "ol/format/GeoJSON";
 import Projection from "ol/proj/Projection";
@@ -21,6 +23,7 @@ import { register } from "ol/proj/proj4";
 import proj4 from "proj4";
 import { ScaleLine, Zoom } from "ol/control";
 import { Style, Stroke, Fill, Circle } from "ol/style";
+import { createDefaultStyle } from "ol/style/Style";
 import type { Coordinate } from "ol/coordinate";
 import { QgisJobDataSource } from "@qgis-js/ol";
 import type { QgsGeometry } from "qgis-js";
@@ -146,6 +149,16 @@ export function createRemoteLayer(s: RemoteSpec): BaseLayer {
     layer = new TileLayer({ source: new TileWMS({ url: s.url, crossOrigin, projection: "EPSG:3857", params: { LAYERS: s.layer, STYLES: s.style ?? "", FORMAT: s.format ?? "image/png", TRANSPARENT: true } }) });
   else if (s.kind === "cog") layer = new TileLayer({ source: new GeoTIFF({ sources: [{ url: s.url }], convertToRGB: "auto" }) as never });
   else if (s.kind === "vectortile") layer = new VectorTileLayer({ source: new VectorTileSource({ format: new MVT(), url: s.url, minZoom: s.zmin, maxZoom: s.zmax }) });
+  else if (s.kind === "pmtiles") {
+    if (s.raster) layer = new TileLayer({ source: new PMTilesRasterSource({ url: s.url, attributions: [] }) as never });
+    else {
+      // One source per archive, shared by its source layers; each layer draws only its own features.
+      let source = pmtilesSources.get(s.url);
+      if (!source) pmtilesSources.set(s.url, (source = new PMTilesVectorSource({ url: s.url }) as never));
+      layer = new VectorTileLayer({ source, style: (f, r) => (f.get("layer") === s.layer ? createDefaultStyle(f, r) : undefined) });
+    }
+  }
+  else if (s.kind === "arcgismap") layer = new TileLayer({ source: new TileArcGISRest({ url: s.url, crossOrigin, params: s.layer ? { LAYERS: `show:${s.layer}`, FORMAT: s.format ?? "png32", TRANSPARENT: true } : { FORMAT: s.format ?? "png32", TRANSPARENT: true } }) });
   else {
     const tile = new TileLayer();
     fetch(s.url)
@@ -164,6 +177,7 @@ export function createRemoteLayer(s: RemoteSpec): BaseLayer {
   return layer;
 }
 
+const pmtilesSources = new globalThis.Map<string, VectorTileSource>();
 const failed = new Set<string>();
 function layerError(name: string) {
   failed.add(name);
