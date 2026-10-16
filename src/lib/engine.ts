@@ -37,9 +37,12 @@ export function listFiles(dir: string): string[] {
 
 /** Files written since the last autosave took them (see autosave.ts). */
 export const modifiedFiles = new Set<string>();
+/** Files written since the project was opened from, or last saved to, the computer (see localfs.ts). */
+export const unsavedFiles = new Set<string>();
 
 export function writeFile(path: string, data: Uint8Array | string) {
   modifiedFiles.add(path);
+  unsavedFiles.add(path);
   const parts = path.split("/").filter(Boolean);
   let dir = "";
   for (const p of parts.slice(0, -1)) {

@@ -18,15 +18,17 @@ Layers whose data can't be found are flagged in the layer tree with a warning ic
 
 ## Saving
 
-The **Save** menu offers:
+A project opened from your computer in **Chrome or Edge** stays linked to its files. **Save to *folder*** (++ctrl+s++) writes the project file and the data files you changed (edited GeoPackages, new layers in `data/`) back to that folder, as QGIS Desktop does; nothing else is copied. Stopping an edit session saves the same way. Recent linked projects are listed on the start page under *Recent on this computer* and reopen in one click (the browser may ask for permission again).
 
-- **Save in this browser** (++ctrl+s++): the project and its data are kept in the browser's storage and listed on the start page.
+The **Save** menu also offers:
+
+- **Save in this browser** (++ctrl+s++ for projects that aren't linked), or **Save a copy in this browser**: the project and its data are kept in the browser's storage and listed on the start page.
 - **Download project file (.qgz)**: the project alone, for data that lives elsewhere.
 - **Download project with data (.zip)**: everything, ready to unzip and open in Desktop.
 
 Saving also writes the current map view into the project, so Desktop opens at the same place.
 
-Changes are **autosaved** a few seconds after each edit. If the tab is closed before you save, the start page offers to recover them.
+Changes are **autosaved** in the browser a few seconds after each edit (for linked projects, only the files that changed). If the tab is closed before you save, the start page offers to recover them.
 
 ## Undo
 

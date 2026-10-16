@@ -9,7 +9,7 @@ export type ProjectRef =
   | { kind: "url"; url: string; name: string }
   | { kind: "gist"; ref: string; name: string }
   /** Opened from local files and not saved in the browser: can't be reopened. */
-  | { kind: "local"; name: string };
+  | { kind: "local"; name: string; id?: string };
 
 export type Theme = "system" | "light" | "dark";
 export type CoordFormat = "project" | "decimal" | "dms" | "utm" | "mgrs";

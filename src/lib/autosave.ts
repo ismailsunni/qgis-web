@@ -1,4 +1,5 @@
-import { readFile, modifiedFiles, exists } from "./engine";
+import { readFile, modifiedFiles, unsavedFiles, exists } from "./engine";
+import { linked } from "./localfs";
 import { hasProject, project, projectBytes, projectFiles } from "./doc";
 import { writeAutosave, clearAutosave } from "./storage";
 import { ui } from "./state.svelte";
@@ -24,14 +25,19 @@ export async function autosaveNow() {
   const rel = (p: string) => p.slice(d.root.length + 1);
   const fresh = session !== d.root;
   let files: Record<string, Uint8Array>;
-  if (fresh) files = projectFiles();
+  // Linked projects keep their data on the computer: only the changes are kept here.
+  if (fresh && !linked()) files = projectFiles();
+  else if (fresh) {
+    files = { [rel(`${d.dir}/${d.file}`)]: projectBytes() };
+    for (const p of unsavedFiles) if (p.startsWith(d.root + "/") && !p.endsWith(".quarkgis.qgs") && exists(p)) files[rel(p)] = readFile(p);
+  }
   else {
     files = { [rel(`${d.dir}/${d.file}`)]: projectBytes() };
     for (const p of modifiedFiles) if (p.startsWith(d.root + "/") && !p.endsWith(".quarkgis.qgs") && exists(p)) files[rel(p)] = readFile(p);
   }
   modifiedFiles.clear();
   await writeAutosave(
-    { id: "autosave", name: ui.projectName, projectPath: rel(`${d.dir}/${d.file}`), savedAt: new Date().toISOString(), sourceUrl: ui.sourceUrl, storedId: ui.storedId },
+    { id: "autosave", name: ui.projectName, projectPath: rel(`${d.dir}/${d.file}`), savedAt: new Date().toISOString(), sourceUrl: ui.sourceUrl, storedId: ui.storedId, localId: linked()?.id ?? null },
     files,
     fresh,
   );

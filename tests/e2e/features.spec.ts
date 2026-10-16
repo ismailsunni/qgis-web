@@ -299,3 +299,28 @@ test("explode multipart features while editing", async ({ page }) => {
   await page.locator('button[aria-label="Explode multipart features"]').click();
   await expect(page.locator(".toast")).toContainText("Exploded into 13 features");
 });
+
+test("local project stays linked: save writes back to the folder", async ({ page }) => {
+  await boot(page);
+  // A folder in the browser's private file system stands in for one picked on the computer.
+  await page.evaluate(async () => {
+    const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle("linked", { create: true });
+    for (const f of ["world.qgz", "world.gpkg"]) {
+      const w = await (await dir.getFileHandle(f, { create: true })).createWritable();
+      await w.write(await (await fetch(new URL(`projects/world/${f}`, location.href))).arrayBuffer());
+      await w.close();
+    }
+    (window as any).showDirectoryPicker = async () => dir;
+  });
+  await page.getByText("Open project folder").click();
+  await expect.poll(() => page.evaluate(() => (globalThis as any).quarkgisApp.ui.local)).toBe("linked");
+  await page.evaluate(() => {
+    const A = (globalThis as any).quarkgisApp;
+    A.apply(() => A.style.setSingle(A.tree.flatLayers(A.tree.snapshotTree()).find((l: any) => l.name === "Countries").layerId));
+  });
+  const stamp = () => page.evaluate(async () => { const f = await (await (await (await navigator.storage.getDirectory()).getDirectoryHandle("linked")).getFileHandle("world.qgz")).getFile(); return `${f.size}@${f.lastModified}`; });
+  const before = await stamp();
+  await page.keyboard.press("Control+s");
+  await expect(page.locator(".toast")).toContainText("Saved to linked");
+  expect(await stamp()).not.toBe(before);
+});

@@ -1,7 +1,7 @@
 import { IdentifyMode, LayerType, type QgsGeometry, type QgsVectorLayer } from "qgis-js";
 import type { Coordinate } from "ol/coordinate";
 import { strToU8, zipSync } from "fflate";
-import { engine, fetchProject, free, mountFiles, PROJECT_EXT } from "./engine";
+import { unsavedFiles, engine, fetchProject, free, mountFiles, PROJECT_EXT } from "./engine";
 import { newDoc, openDoc, project, projectBytes, projectFiles, reload } from "./doc";
 import emptyProject from "../templates/empty.qgs?raw";
 import { saveProject, loadProjectFiles, type StoredProject } from "./storage";
@@ -19,11 +19,14 @@ import { showProject, hitBox, srid, setHighlight, zoomToFull, olMap as olMapRef 
 import { setVisible, snapshotTree, flatLayers } from "./tree";
 import { resetViews, savedExtent, previousView, nextView, toggleGrid } from "./navigation";
 import { isGeoTiff, pixelSampler } from "./raster";
+import { canLink, linked, linkProject, saveToDisk, pickFiles, pickFolder, readRecent, getRecent, unlink, type LocalRecent, type PickedFile } from "./localfs";
 import { ui, changed, toast, featureAttributes, type IdentifyHit } from "./state.svelte";
 import { t, N_ } from "./i18n";
 
 function opened(name: string, storedId: string | null) {
   resetHistory();
+  unlink();
+  ui.local = null;
   ui.storedId = storedId;
   ui.dirty = false;
   ui.editing = null;
@@ -73,7 +76,7 @@ async function open(name: string, load: () => Promise<{ root: string; path: stri
  * Handles picked or dropped files: a project file opens the project (with the data next to it);
  * a GeoPackage carrying a QGIS project opens that project; anything else is added as layers.
  */
-export async function openFiles(files: { path: string; data: File }[]) {
+export async function openFiles(files: PickedFile[], dir: FileSystemDirectoryHandle | null = null, recentId?: string) {
   const projects = files.filter((f) => PROJECT_EXT.test(f.path));
   if (!projects.length) {
     if (ui.phase !== "ready") {
@@ -92,12 +95,47 @@ export async function openFiles(files: { path: string; data: File }[]) {
     return;
   }
   const project = projects.sort((a, b) => a.path.split("/").length - b.path.split("/").length)[0];
+  let root = "";
   await open(project.data.name, async () => {
-    const root = await mountFiles(files);
+    root = await mountFiles(files);
     return { root, path: `${root}/${project.path}` };
   });
   ui.sourceUrl = null;
-  if (ui.phase === "ready") rememberLast({ kind: "local", name: ui.projectName });
+  if (ui.phase !== "ready") return;
+  // Opened through the File System Access API: stay linked to the files, so Save writes back to them.
+  if (dir || project.handle) {
+    const id = await linkProject(root, project.path, ui.projectName, dir, files, recentId);
+    ui.local = dir?.name ?? project.path;
+    rememberLast({ kind: "local", name: ui.projectName, id });
+  } else rememberLast({ kind: "local", name: ui.projectName });
+}
+
+const pickWith = async (pick: () => Promise<{ files: PickedFile[]; dir: FileSystemDirectoryHandle | null }>, recentId?: string) => {
+  try {
+    const { files, dir } = await pick();
+    await openFiles(files, dir, recentId);
+  } catch (e) {
+    if ((e as Error).name !== "AbortError") toast((e as Error).message);
+  }
+};
+
+/** Opens a project folder (linked to it where the browser allows, else read through a file input). */
+export const openFolder = () => (canLink ? pickWith(pickFolder) : document.getElementById("pick-folder")?.click());
+export const openProjectFiles = () => (canLink ? pickWith(pickFiles) : document.getElementById("pick-files")?.click());
+export const openRecentLocal = (r: LocalRecent) => pickWith(() => readRecent(r), r.id);
+
+/** Save: back to the computer for linked projects, otherwise in the browser. */
+export async function save() {
+  if (ui.phase !== "ready") return;
+  if (!linked()) return saveInBrowser();
+  try {
+    const n = await saveToDisk();
+    ui.dirty = false;
+    discardAutosave();
+    toast(n === 1 ? t("Saved to {name}", { name: ui.local ?? "" }) : t("Saved to {name} ({n} files)", { name: ui.local ?? "", n }));
+  } catch (e) {
+    if ((e as Error).name !== "AbortError") toast((e as Error).message);
+  }
 }
 
 export async function openStored(meta: StoredProject) {
@@ -178,7 +216,11 @@ export async function openRef(ref: ProjectRef): Promise<boolean> {
     const meta = (await listProjects()).find((p) => p.id === ref.id);
     if (!meta) return toast(t("“{name}” is no longer saved in this browser.", { name: ref.name })), false;
     await openStored(meta);
-  } else return toast(t("“{name}” was opened from local files. Save it in the browser to reopen it on launch.", { name: ref.name })), false;
+  } else {
+    const recent = ref.id && (await getRecent(ref.id).catch(() => undefined));
+    if (!recent) return toast(t("“{name}” was opened from local files. Save it in the browser to reopen it on launch.", { name: ref.name })), false;
+    await openRecentLocal(recent);
+  }
   return ui.phase === "ready";
 }
 
@@ -187,10 +229,19 @@ export async function recoverAutosave() {
   const meta = await readAutosave();
   if (!meta) return;
   const files = await loadAutosaveFiles();
-  await open(meta.name, async () => {
-    const root = await mountFiles(files);
-    return { root, path: `${root}/${meta.projectPath}` };
-  }, meta.storedId);
+  // A linked project: read its files from the computer again, with the autosaved changes on top.
+  const recent = meta.localId ? await getRecent(meta.localId).catch(() => undefined) : undefined;
+  if (recent) {
+    const local = await readRecent(recent).catch((e) => void toast((e as Error).message));
+    if (!local) return;
+    const changed = new Set(files.map((f) => f.path));
+    await openFiles([...local.files.filter((f) => !changed.has(f.path)), ...files.map((f) => ({ ...f, handle: local.files.find((l) => l.path === f.path)?.handle }))], local.dir, recent.id);
+    for (const f of files) unsavedFiles.add(`${linked()?.root}/${f.path}`);
+  } else
+    await open(meta.name, async () => {
+      const root = await mountFiles(files);
+      return { root, path: `${root}/${meta.projectPath}` };
+    }, meta.storedId);
   ui.projectName = meta.name;
   ui.sourceUrl = meta.sourceUrl ?? null;
   ui.dirty = true;
@@ -319,8 +370,8 @@ export interface Command {
 /** Everything reachable from the command palette (Ctrl/Cmd+K). */
 export function commands(): Command[] {
   const base: Command[] = [
-    { id: "open", label: t("Open project…"), hint: "Ctrl+O", run: () => document.getElementById("pick-files")?.click() },
-    { id: "open-folder", label: t("Open project folder…"), run: () => document.getElementById("pick-folder")?.click() },
+    { id: "open", label: t("Open project…"), hint: "Ctrl+O", run: openProjectFiles },
+    { id: "open-folder", label: t("Open project folder…"), run: openFolder },
     { id: "demo", label: t("Open demo project"), run: openDemo },
     { id: "panel-layers", label: t("Show Layers panel"), run: () => (ui.panel = "layers") },
     { id: "panel-add", label: t("Show Add data panel"), run: () => (ui.panel = "add") },
@@ -344,7 +395,8 @@ export function commands(): Command[] {
     { id: "undo", label: t("Undo"), hint: "Ctrl+Z", run: () => (ui.editing ? import("./editing").then((m) => m.undo()) : undoProject()) },
     { id: "redo", label: t("Redo"), hint: "Ctrl+Shift+Z", run: () => (ui.editing ? import("./editing").then((m) => m.redo()) : redoProject()) },
     { id: "project", label: t("Project properties (title, CRS)…"), run: () => (ui.dialog = "project") },
-    { id: "save", label: t("Save in this browser"), hint: "Ctrl+S", run: saveInBrowser },
+    ...(ui.local ? [{ id: "save-local", label: t("Save to {name}", { name: ui.local }), hint: "Ctrl+S", run: save }] : []),
+    { id: "save", label: ui.local ? t("Save a copy in this browser") : t("Save in this browser"), hint: ui.local ? undefined : "Ctrl+S", run: saveInBrowser },
     { id: "download", label: t("Download project file (.qgz)"), run: downloadProject },
     { id: "bundle", label: t("Download project with data (.zip)"), run: downloadBundle },
     { id: "new", label: t("New empty project"), run: newProject },

@@ -45,4 +45,9 @@ Right-click the map for coordinates in every format, identify, center, zoom and 
 
 ## Where your data lives
 
-Files you open are copied into the browser's private storage (OPFS) for the session. **Save** keeps the project and its data there until you delete it. Unsaved work is autosaved, and offered back if the tab closes unexpectedly. To move a project elsewhere, download it as a `.zip`.
+Nothing is uploaded: there is no server. Files are read into the page's memory, where QGIS reads them.
+
+- **Chrome and Edge** keep a project opened from your computer **linked to its files**: **Save** (++ctrl+s++) writes the project and the data you changed back to them, like QGIS Desktop. The browser asks for permission the first time. The project is listed under *Recent on this computer* on the start page.
+- **Firefox and Safari** can only read local files: **Save** keeps a copy in the browser's private storage, or you download the project.
+
+Unsaved changes are autosaved in the browser (only what changed) and offered back if the tab closes unexpectedly. Copies are made only when you ask for them: *Save a copy in this browser*, a download, or publishing a link.

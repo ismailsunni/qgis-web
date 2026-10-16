@@ -26,13 +26,14 @@ import * as exporter from "./lib/export";
 import * as autosave from "./lib/autosave";
 import * as editops from "./lib/editops";
 import * as editmap from "./lib/editmap";
+import * as localfs from "./lib/localfs";
 import LineString from "ol/geom/LineString";
 import Polygon from "ol/geom/Polygon";
 import { ui } from "./lib/state.svelte";
 import { loadLanguage } from "./lib/i18n";
 
 // Scripted access for end-to-end tests (see tests/).
-Object.assign(globalThis, { quarkgisApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish, gpkg, PointGeometry: Point, settings, storage, history, maptools, clipboard, bookmarks, selection, exporter, autosave, editops, editmap, LineString, Polygon } });
+Object.assign(globalThis, { quarkgisApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish, gpkg, PointGeometry: Point, settings, storage, history, maptools, clipboard, bookmarks, selection, exporter, autosave, editops, editmap, localfs, LineString, Polygon } });
 
 settings.applyTheme();
 loadLanguage().then(() => mount(App, { target: document.getElementById("app")! }));

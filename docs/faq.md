@@ -1,7 +1,7 @@
 # FAQ
 
 **Is my data uploaded anywhere?**
-No. Files are read in your browser and kept in its storage. Data leaves the browser only when you open a URL (the request goes to that server) or publish a share link (only the project file goes to GitHub, never local data).
+No. Files are read in your browser; in Chrome and Edge a project opened from your computer is saved back to its own files, elsewhere a copy is kept in the browser's storage. Data leaves the browser only when you open a URL (the request goes to that server) or publish a share link (only the project file goes to GitHub, never local data).
 
 **Will QGIS Desktop open what I save?**
 Yes. The project is QGIS's own XML, changed in place; layers, styles, labels, bookmarks and temporal settings are written in QGIS's format. The test suite saves projects and opens them in QGIS Desktop to check.

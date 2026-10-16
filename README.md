@@ -4,7 +4,7 @@ A zero-install web GIS that opens, edits and saves real QGIS projects (`.qgs` / 
 
 **Live app:** https://ismailsunni.id/quarkgis/ · **Documentation:** https://ismailsunni.id/quarkgis/docs/ · **Product spec:** [docs/PRD.md](docs/PRD.md)
 
-Everything runs client-side: projects and data stay in your browser unless you open a remote URL or publish a share link.
+Everything runs client-side: nothing is uploaded. In Chrome and Edge, a project opened from your computer stays linked to its files and Save writes back to them; elsewhere a copy is kept in the browser.
 
 ## Features
 

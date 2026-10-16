@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { openDemo, openStored, newProject, recoverAutosave } from "../lib/actions";
+  import { openDemo, openStored, newProject, recoverAutosave, openFolder, openProjectFiles, openRecentLocal } from "../lib/actions";
+  import { recentLocal, deleteRecent, type LocalRecent } from "../lib/localfs";
   import { listProjects, deleteProject, readAutosave, clearAutosave, type StoredProject, type AutosaveMeta } from "../lib/storage";
   import { ui } from "../lib/state.svelte";
   import Icon from "./Icon.svelte";
@@ -10,6 +11,9 @@
   readAutosave().then((a) => (autosave = a)).catch(() => {});
   const refresh = () => listProjects().then((r) => (recent = r)).catch(() => {});
   refresh();
+  let local = $state<LocalRecent[]>([]);
+  const refreshLocal = () => recentLocal().then((r) => (local = r));
+  refreshLocal();
 </script>
 
 <div class="overlay">
@@ -36,11 +40,25 @@
         {#if window.top !== window}<a href={location.href} target="_blank" rel="noopener">{t("Open the map in a new tab")}</a>{/if}
       {/if}
       <div class="actions">
-        <button class="primary" onclick={() => document.getElementById("pick-folder")?.click()}><Icon name="folder" size={18} /> {t("Open project folder")}</button>
-        <button onclick={() => document.getElementById("pick-files")?.click()}><Icon name="file" size={18} /> {t("Open files")}</button>
+        <button class="primary" onclick={openFolder}><Icon name="folder" size={18} /> {t("Open project folder")}</button>
+        <button onclick={openProjectFiles}><Icon name="file" size={18} /> {t("Open files")}</button>
         <button onclick={newProject}><Icon name="add" size={18} /> {t("New project")}</button>
         <button onclick={openDemo}>{t("Try the demo")}</button>
       </div>
+      {#if local.length}
+        <div class="recent">
+          <h3>{t("Recent on this computer")}</h3>
+          <ul>
+            {#each local as p (p.id)}
+              <li>
+                <button class="link-like" title={p.dir ? p.dir.name : p.projectPath} onclick={() => openRecentLocal(p)}>{p.name}</button>
+                <span class="muted">{p.dir?.name ?? p.projectPath}</span>
+                <button class="icon" title={t("Remove from the list")} onclick={async () => { await deleteRecent(p.id); refreshLocal(); }}><Icon name="close" size={16} /></button>
+              </li>
+            {/each}
+          </ul>
+        </div>
+      {/if}
       {#if recent.length}
         <div class="recent">
           <h3>{t("Saved in this browser")}</h3>

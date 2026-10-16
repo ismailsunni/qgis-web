@@ -6,7 +6,8 @@
   import { scheduleAutosave } from "./lib/autosave";
   import { boot } from "./lib/engine";
   import { ui, view, type Panel } from "./lib/state.svelte";
-  import { droppedFiles, openFiles, openUrl, openPublished, runStartup, pickedFiles, saveInBrowser, downloadProject, downloadBundle } from "./lib/actions";
+  import { droppedFiles, openFiles, openUrl, openPublished, runStartup, pickedFiles, openProjectFiles, save, saveInBrowser, downloadProject, downloadBundle } from "./lib/actions";
+  import { canLink, droppedHandles } from "./lib/localfs";
   import Icon from "./components/Icon.svelte";
   import MapView from "./components/MapView.svelte";
   import LayersPanel from "./components/LayersPanel.svelte";
@@ -104,17 +105,23 @@
       pasteFeatures();
     } else if (mod && e.key.toLowerCase() === "s") {
       e.preventDefault();
-      saveInBrowser();
+      save();
     } else if (mod && e.key.toLowerCase() === "o") {
       e.preventDefault();
-      document.getElementById("pick-files")?.click();
+      openProjectFiles();
     }
   }
 
   async function onDrop(e: DragEvent) {
     e.preventDefault();
     dragging = false;
-    if (e.dataTransfer && ui.phase !== "booting") openFiles(await droppedFiles(e.dataTransfer));
+    if (!e.dataTransfer || ui.phase === "booting") return;
+    // The drop's items are only readable now, before anything is awaited.
+    const linked = canLink ? droppedHandles(e.dataTransfer) : null;
+    if (linked) {
+      const l = await linked;
+      openFiles(l.files, l.dir);
+    } else openFiles(await droppedFiles(e.dataTransfer));
   }
 
   const onPick = (e: Event) => {
@@ -149,7 +156,8 @@
         <button class="ghost" onclick={() => (saveMenu = !saveMenu)} disabled={ui.phase !== "ready"}><Icon name="save" size={18} /> {t("Save")}</button>
         {#if saveMenu}
           <div class="menu card right" role="menu">
-            <button role="menuitem" onclick={() => { saveMenu = false; saveInBrowser(); }}>{t("Save in this browser")} <kbd>Ctrl S</kbd></button>
+            {#if ui.local}<button role="menuitem" onclick={() => { saveMenu = false; save(); }}>{t("Save to {name}", { name: ui.local })} <kbd>Ctrl S</kbd></button>{/if}
+            <button role="menuitem" onclick={() => { saveMenu = false; saveInBrowser(); }}>{ui.local ? t("Save a copy in this browser") : t("Save in this browser")} {#if !ui.local}<kbd>Ctrl S</kbd>{/if}</button>
             <button role="menuitem" onclick={() => { saveMenu = false; downloadProject(); }}>{t("Download project file (.qgz)")}</button>
             <button role="menuitem" onclick={() => { saveMenu = false; downloadBundle(); }}>{t("Download project with data (.zip)")}</button>
           </div>

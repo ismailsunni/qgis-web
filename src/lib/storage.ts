@@ -18,7 +18,7 @@ async function dirFor(parent: FileSystemDirectoryHandle, path: string[]) {
   return d;
 }
 
-async function writeAll(dir: FileSystemDirectoryHandle, files: Record<string, Uint8Array>) {
+export async function writeAll(dir: FileSystemDirectoryHandle, files: Record<string, Uint8Array>) {
   for (const [path, data] of Object.entries(files)) {
     const parts = path.split("/");
     const handle = await (await dirFor(dir, parts.slice(0, -1))).getFileHandle(parts.at(-1)!, { create: true });
@@ -42,6 +42,8 @@ export async function saveProject(meta: StoredProject, files: Record<string, Uin
 export interface AutosaveMeta extends StoredProject {
   /** The saved-in-browser project it belongs to, if any. */
   storedId: string | null;
+  /** The linked local project it belongs to (see localfs.ts), if any. */
+  localId?: string | null;
 }
 
 const autosaveDir = async (create = true) => (await navigator.storage.getDirectory()).getDirectoryHandle("autosave", { create });

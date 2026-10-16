@@ -67,8 +67,8 @@ export async function stopEditing() {
   changed();
   redraw();
   if (hadEdits) {
-    const { saveInBrowser } = await import("./actions");
-    await saveInBrowser();
+    const { save } = await import("./actions");
+    await save();
   }
 }
 
