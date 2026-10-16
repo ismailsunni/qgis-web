@@ -1,4 +1,4 @@
-import { findChild, layerSource, project, serialize } from "./doc";
+import { findChild, layerSource, project, serialize, DATABASES } from "./doc";
 import { exists, readFile } from "./engine";
 import { remoteSpec, type RemoteSpec } from "./remote";
 import { cleanDatasource, stripSecrets } from "./secrets";
@@ -23,7 +23,8 @@ export function localLayers(): LayerCheck[] {
     const id = findChild(el, "id")!.textContent!;
     if (remoteSpec(id) && remoteSpec(id)!.kind !== "mbtiles") continue;
     const { provider, datasource } = layerSource(id);
-    const detail = provider === "memory" ? t("uses a temporary (memory) layer") : /\.gpkg/i.test(datasource) ? t("uses a local GeoPackage") : t("uses a local file ({file})", { file: datasource.split("|")[0] });
+    const db = DATABASES[provider.toLowerCase()];
+    const detail = db ? t("reads a {db} database, which viewers' browsers can't reach", { db }) : provider === "memory" ? t("uses a temporary (memory) layer") : /\.gpkg/i.test(datasource) ? t("uses a local GeoPackage") : t("uses a local file ({file})", { file: datasource.split("|")[0] });
     out.push({ id, name: layerName(el), problem: "local", detail });
   }
   return out;

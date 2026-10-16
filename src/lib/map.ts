@@ -30,7 +30,7 @@ import type { QgsGeometry } from "qgis-js";
 import { engine, projectUnits } from "./engine";
 import { flatLayers, snapshotTree } from "./tree";
 import { drawnByBrowser, remoteSpec, attributionFor, arcgisTiles, type RemoteSpec } from "./remote";
-import { hooks } from "./doc";
+import { hooks, unreachable } from "./doc";
 import { mbtilesLayer } from "./mbtiles";
 import { toast } from "./state.svelte";
 import { t } from "./i18n";
@@ -102,6 +102,7 @@ export function layerStack(only?: Set<string>): StackPiece[] {
   };
   for (const l of flatLayers(snapshotTree()).filter((n) => (only ? only.has(n.layerId!) : n.visible)).reverse()) {
     const spec = l.remote ? remoteSpec(l.layerId!) : null;
+    if (unreachable(l.layerId!)?.kind === "database") continue;
     if (spec && drawnByBrowser(spec)) {
       flush();
       stack.push({ kind: "web", layerId: l.layerId!, spec, opacity: l.opacity ?? 1 });

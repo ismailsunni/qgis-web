@@ -73,7 +73,8 @@ const enginePath = () => `${doc!.dir}/${doc!.file.replace(/\.(qgs|qgz)$/i, "")}.
 export function reload() {
   const d = doc!;
   // The engine can't use the network: it reads remote vector data from local copies and never
-  // sees browser-drawn layers (their tree nodes stay, so order and visibility are kept).
+  // sees browser-drawn or database layers (their tree nodes stay, so order and visibility are kept;
+  // a database layer it can't connect to would stop the whole map from rendering).
   const xml = d.xml.cloneNode(true) as XMLDocument;
   for (const el of [...xml.querySelectorAll("projectlayers > maplayer")]) {
     const id = findChild(el, "id")?.textContent ?? "";
@@ -81,7 +82,7 @@ export function reload() {
     if (src?.datasource) {
       child(el, "datasource").textContent = src.datasource;
       child(el, "provider").textContent = src.provider;
-    } else if (isRemote(id)) el.remove();
+    } else if (isRemote(id) || DATABASES[layerSource(id).provider.toLowerCase()]) el.remove();
   }
   writeFile(enginePath(), serialize(xml));
   hooks.beforeReload();
@@ -210,4 +211,15 @@ export function layerFile(id: string) {
 export function missingData(id: string) {
   const file = layerFile(id);
   return !!file && !exists(file);
+}
+
+/** Database providers QGIS Desktop connects to, which a web page can't reach (no TCP from a browser). */
+export const DATABASES: Record<string, string> = { postgres: "PostGIS", mssql: "SQL Server", oracle: "Oracle", hana: "SAP HANA", db2: "DB2" };
+
+/** Why a layer can't load in the browser whatever the user does: a database, or a QGIS saved login. */
+export function unreachable(id: string): { kind: "database"; name: string } | { kind: "login" } | null {
+  const { provider, datasource } = layerSource(id);
+  const db = DATABASES[provider.toLowerCase()];
+  if (db) return { kind: "database", name: db };
+  return /\bauthcfg=/.test(datasource) ? { kind: "login" } : null;
 }

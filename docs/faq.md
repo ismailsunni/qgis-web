@@ -6,6 +6,9 @@ No. Files are read in your browser; in Chrome and Edge a project opened from you
 **Will QGIS Desktop open what I save?**
 Yes. The project is QGIS's own XML, changed in place; layers, styles, labels, bookmarks and temporal settings are written in QGIS's format. The test suite saves projects and opens them in QGIS Desktop to check.
 
+**Can I use PostGIS?**
+Not directly: a browser can't connect to a database. PostGIS layers are flagged and kept in the project for Desktop. Serve the data with pg_featureserv, pg_tileserv or QGIS Server and add that service instead.
+
 **Why does a web layer stay blank?**
 The service probably doesn't allow cross-origin requests (CORS). The browser can only read services that send `Access-Control-Allow-Origin` headers. A message names the layer that failed.
 

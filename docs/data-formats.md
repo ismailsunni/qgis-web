@@ -37,6 +37,12 @@
 
 "Drawn by the browser" layers are rendered with OpenLayers in their place in the layer tree, because the QGIS engine can't use the network yet. They are saved as regular QGIS layers, so QGIS Desktop opens them natively. Vector tiles drawn by the browser use a default style, and show only in Web Mercator projects.
 
+## Databases and saved logins
+
+A web page can't connect to a database, so **PostGIS**, SQL Server, Oracle, SAP HANA and DB2 layers can't be shown. They are flagged in the layer tree, left out of the map, and kept in the project for QGIS Desktop. To show such data on the web, serve it as a web service and add that: [pg_featureserv](https://github.com/CrunchyData/pg_featureserv) (OGC API Features), [pg_tileserv](https://github.com/CrunchyData/pg_tileserv) (vector tiles) or QGIS Server (WMS/WFS).
+
+Layers using a QGIS **saved login** (`authcfg`) are flagged too: those credentials live in QGIS Desktop's password store. Use a service that doesn't need a login, or one with its key in the URL.
+
 ## Coordinate reference systems
 
 Every CRS known to QGIS: definitions are read from QGIS's own `srs.db`. Layers in another CRS than the project are reprojected on the fly, as in Desktop.

@@ -1,7 +1,7 @@
 import { t } from "./i18n";
 import { LayerType, type QgsLayerTreeNode, type QgsLayerTreeLayer } from "qgis-js";
 import { engine } from "./engine";
-import { child, mapLayerEl, removeLayerXml, treeChildren, treeEl, treeRootEl, project, isRemote, xmlOpacity, missingData } from "./doc";
+import { child, mapLayerEl, removeLayerXml, treeChildren, treeEl, treeRootEl, project, isRemote, xmlOpacity, missingData, unreachable } from "./doc";
 import { apply } from "./commit";
 import { snapshot } from "./history";
 import { redraw } from "./map";
@@ -19,6 +19,8 @@ export interface TreeNode {
   valid?: boolean;
   /** Read from the network by the browser rather than by QGIS (XYZ, WMS, COG…). */
   remote?: boolean;
+  /** Why the layer can't load in a browser at all (a database, a QGIS saved login). */
+  unreachable?: ReturnType<typeof unreachable>;
   editing?: boolean;
   /** Number of selected features. */
   selected?: number;
@@ -41,7 +43,8 @@ export function snapshotTree(): TreeNode[] {
       isGroup: false,
       layerId: (n as QgsLayerTreeLayer).layerId(),
       layerType: layer?.type(),
-      valid: !!layer?.isValid() && !missingData((n as QgsLayerTreeLayer).layerId()),
+      valid: !!layer?.isValid() && !missingData((n as QgsLayerTreeLayer).layerId()) && !unreachable((n as QgsLayerTreeLayer).layerId()),
+      unreachable: unreachable((n as QgsLayerTreeLayer).layerId()),
       remote: isRemote((n as QgsLayerTreeLayer).layerId()),
       editing: ui.editing === (n as QgsLayerTreeLayer).layerId(),
       selected: ui.selection[(n as QgsLayerTreeLayer).layerId()]?.length ?? 0,

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { snapshotTree, addGroup } from "../lib/tree";
+  import { snapshotTree, addGroup, flatLayers } from "../lib/tree";
   import { canLink, chooseFolder, projectHandle } from "../lib/localfs";
   import { unavailableLayers, locateInFolder, locateInAllowed } from "../lib/relocate";
   import { toast } from "../lib/state.svelte";
@@ -9,6 +9,7 @@
   import { t } from "../lib/i18n";
 
   const tree = $derived.by(() => (ui.version, ui.phase === "ready" ? snapshotTree() : []));
+  const blocked = $derived(flatLayers(tree).filter((l) => l.unreachable));
   const missing = $derived((ui.version, ui.phase === "ready" ? unavailableLayers() : []));
 
   // What to pick: the browser can't follow a path by itself, only inside a folder the user allows.
@@ -50,6 +51,21 @@
     <button class="icon" title={t("Add group")} onclick={() => addGroup()}><Icon name="group" size={18} /></button>
     <button class="icon" title={t("Add data")} onclick={() => (ui.panel = "add")}><Icon name="add" size={18} /></button>
   </div>
+  {#if blocked.length}
+    <div class="notice warn-notice">
+      <p>{blocked.length === 1 ? t("1 layer can't be loaded in a browser:") : t("{n} layers can't be loaded in a browser:", { n: blocked.length })}</p>
+      <ul class="missing-files">
+        {#each blocked.slice(0, 4) as l}<li>{l.name} <span class="muted">({l.unreachable!.kind === "database" ? l.unreachable!.name : t("QGIS saved login")})</span></li>{/each}
+        {#if blocked.length > 4}<li>…</li>{/if}
+      </ul>
+      {#if blocked.some((l) => l.unreachable!.kind === "database")}
+        <p class="hint">{t("A browser can't connect to a database. Serve the data as a web service and add that instead: pg_featureserv (OGC API Features), pg_tileserv (vector tiles) or QGIS Server (WMS/WFS). The layers stay in the project for QGIS Desktop.")}</p>
+      {/if}
+      {#if blocked.some((l) => l.unreachable!.kind === "login")}
+        <p class="hint">{t("QGIS saved logins live in QGIS Desktop's password store. Use a service that doesn't need a login, or put the key in the URL.")}</p>
+      {/if}
+    </div>
+  {/if}
   {#if missing.length}
     {@const paths = [...new Set(missing.map((u) => u.path))]}
     <div class="notice">

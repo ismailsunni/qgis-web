@@ -389,3 +389,16 @@ test("layers whose data is outside the project folder can be located", async ({ 
   await expect(page.locator(".notice")).toHaveCount(0);
   expect(await page.evaluate(() => new XMLSerializer().serializeToString((globalThis as any).quarkgisApp.doc.project().xml).includes("../data/world.gpkg"))).toBe(true);
 });
+
+test("database layers are flagged and don't stop the map", async ({ page }) => {
+  await demo(page);
+  await page.evaluate(() => {
+    const A = (globalThis as any).quarkgisApp;
+    A.apply(() => A.doc.insertLayerXml(`<maplayer type="vector" geometry="Point"><id>pts_0123456789abcdef</id><datasource>dbname='gis' host=db.example.org port=5432 key='id' srid=4326 type=Point table="public"."pts" (geom)</datasource><layername>pts</layername><provider>postgres</provider></maplayer>`, "pts"));
+  });
+  await expect(page.locator(".notice")).toContainText("pts (PostGIS)");
+  await expect(page.locator(".node", { hasText: "pts" }).locator(".warn")).toHaveAttribute("title", /PostGIS/);
+  // QGIS never sees the layer, so the rest of the map still renders; the project keeps it for Desktop.
+  expect(await page.evaluate(() => (globalThis as any).quarkgisApp.map.layerStack()[0].layerIds.length)).toBe(3);
+  expect(await page.evaluate(() => new XMLSerializer().serializeToString((globalThis as any).quarkgisApp.doc.project().xml).includes("<provider>postgres</provider>"))).toBe(true);
+});

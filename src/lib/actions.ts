@@ -43,8 +43,10 @@ function opened(name: string, storedId: string | null) {
   const saved = getSettings().view === "saved" && savedExtent();
   if (saved) olMapRef().getView().fit(saved);
   resetViews();
-  const broken = flatLayers(snapshotTree()).filter((l) => !l.valid && !l.remote);
-  if (broken.length) toast(unavailableLayers().length ? t("Data not found: {files}", { files: missingSummary() }) : t("Missing data for: {names}", { names: broken.map((l) => l.name).join(", ") }));
+  const blocked = flatLayers(snapshotTree()).filter((l) => l.unreachable);
+  const broken = flatLayers(snapshotTree()).filter((l) => !l.valid && !l.remote && !l.unreachable);
+  if (blocked.length) toast(t("Can't be loaded in a browser: {names}", { names: blocked.map((l) => `${l.name} (${l.unreachable!.kind === "database" ? l.unreachable!.name : t("QGIS saved login")})`).join(", ") }));
+  else if (broken.length) toast(unavailableLayers().length ? t("Data not found: {files}", { files: missingSummary() }) : t("Missing data for: {names}", { names: broken.map((l) => l.name).join(", ") }));
   emit("projectLoaded", { name: ui.projectName, layers: flatLayers(snapshotTree()).map((l) => ({ id: l.layerId, name: l.name })) });
 }
 

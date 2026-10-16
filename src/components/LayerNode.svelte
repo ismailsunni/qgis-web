@@ -99,7 +99,9 @@
         {node.name}
       </button>
     {/if}
-    {#if !node.isGroup && !node.valid && !node.remote}
+    {#if node.unreachable}
+      <span class="warn" title={node.unreachable.kind === "database" ? t("{db} databases can't be reached from a browser", { db: node.unreachable.name }) : t("Uses a QGIS saved login (authcfg), which isn't available in the browser")}><Icon name="warn" size={16} /></span>
+    {:else if !node.isGroup && !node.valid && !node.remote}
       <span class="warn" title={unavailableLayers().find((u) => u.id === node.layerId) ? t("Data not found: {files}", { files: unavailableLayers().find((u) => u.id === node.layerId)!.path }) : t("Layer data not found")}><Icon name="warn" size={16} /></span>
     {/if}
     {#if node.editing}<span class="badge">{t("editing")}</span>{/if}
