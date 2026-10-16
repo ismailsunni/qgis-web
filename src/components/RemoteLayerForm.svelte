@@ -1,7 +1,7 @@
 <script lang="ts">
   import WMSCapabilities from "ol/format/WMSCapabilities";
   import WMTSCapabilities from "ol/format/WMTSCapabilities";
-  import { addRemote, PRESETS, type RemoteKind } from "../lib/remote";
+  import { addRemote, type RemoteKind } from "../lib/remote";
   import { toast } from "../lib/state.svelte";
 
   const KINDS: [RemoteKind, string, string][] = [
@@ -90,9 +90,6 @@
   }
 </script>
 
-<div class="row presets">
-  {#each PRESETS as p}<button onclick={() => addRemote(p)}>{p.name}</button>{/each}
-</div>
 <form class="stack-tight" onsubmit={add}>
   <label class="field">Type
     <select bind:value={kind} onchange={() => (layers = [])}>{#each KINDS as [k, label]}<option value={k}>{label}</option>{/each}</select>

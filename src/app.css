@@ -388,3 +388,22 @@ textarea.code.small { min-height: 90px; }
 .history { list-style: none; margin: 0; padding: 0; font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
 .history li { border-bottom: 1px solid var(--bg-2); padding-bottom: 4px; }
 .small-params { font-size: 11px; word-break: break-all; }
+.dialog.stats { width: min(720px, 94vw); }
+.stats-body { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+.chart svg { width: 100%; height: 160px; border-bottom: 1px solid var(--line); }
+.chart rect { fill: var(--green); }
+.chart rect:hover { fill: var(--green-dark); }
+.chart figcaption { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+.chart { margin: 0; }
+.bars { list-style: none; margin: 0; padding: 0; font-size: 12px; display: flex; flex-direction: column; gap: 3px; }
+.bars li { display: grid; grid-template-columns: 110px 1fr 40px; gap: 6px; align-items: center; }
+.bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar { height: 12px; background: var(--green); border-radius: 2px; }
+@media (max-width: 700px) { .stats-body { grid-template-columns: 1fr; } }
+.basemaps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.basemaps button { flex-direction: column; align-items: stretch; padding: 3px; gap: 2px; width: 100%; font-size: 12px; }
+.basemaps img { width: 100%; aspect-ratio: 2 / 1; object-fit: cover; border-radius: 4px; background: var(--bg-2); }
+.ol-attribution { right: 6px; bottom: 30px; }
+.maponly .ol-attribution { bottom: 6px; }
+.statusbar .coord { border: none; background: none; padding: 0 4px; font: inherit; color: inherit; cursor: pointer; }
+.statusbar .coord:hover { color: var(--text); text-decoration: underline dotted; }

@@ -14,6 +14,7 @@ import { IdentifyMode, LayerType, type QgsVectorLayer } from "qgis-js";
 import { engine, free } from "./engine";
 import { olMap, overlays, mapProjection, hitBox, srid, layerStack, createRemoteLayer } from "./map";
 import { flatLayers, snapshotTree } from "./tree";
+import { attributionFor } from "./remote";
 import { ui } from "./state.svelte";
 
 /** Map tools: measuring, search, legend, map tips and image export. */
@@ -270,6 +271,17 @@ export async function exportImage(o: ExportOptions): Promise<Blob> {
       ctx.fillRect(x, y, img.width + pad * 2, img.height + pad * 2);
       ctx.drawImage(img, x + pad, y + pad);
     }
+  }
+  // Credits of the web layers drawn (their terms require them).
+  const credits = [...new Set(layerStack().flatMap((p) => (p.kind === "web" ? [attributionFor(p.spec.url)] : [])).filter(Boolean))].join(" · ");
+  if (credits) {
+    const size = 10 * o.scale;
+    ctx.font = `${size}px system-ui, sans-serif`;
+    const tw = ctx.measureText(credits).width;
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.fillRect(4 * o.scale, H - size * 1.8, tw + 8 * o.scale, size * 1.8);
+    ctx.fillStyle = "#333";
+    ctx.fillText(credits, 8 * o.scale, H - size * 0.5);
   }
   if (o.title) {
     const size = 20 * o.scale;

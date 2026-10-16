@@ -199,7 +199,7 @@ async function detectCrs(s: RemoteSpec, bytes?: Uint8Array): Promise<CrsDef | nu
   return null;
 }
 
-export async function addRemote(spec: RemoteSpec) {
+export async function addRemote(spec: RemoteSpec, where: "top" | "bottom" = "top") {
   let s = spec;
   if (ui.phase !== "ready") {
     const { newProject } = await import("./actions");
@@ -222,7 +222,14 @@ export async function addRemote(spec: RemoteSpec) {
     const { type, provider, ds } = datasourceFor(s);
     const crs = await detectCrs(s, bytes).catch(() => null);
     const srs = crs ? `<srs>${spatialRefSys(crs)}</srs>` : "";
-    apply(() => insertLayerXml(`<maplayer type="${type}"><id>${id}</id><datasource>${esc(ds)}</datasource><layername>${esc(s.name)}</layername>${srs}<provider encoding="UTF-8">${provider}</provider></maplayer>`, s.name));
+    apply(() => {
+      insertLayerXml(`<maplayer type="${type}"><id>${id}</id><datasource>${esc(ds)}</datasource><layername>${esc(s.name)}</layername>${srs}<provider encoding="UTF-8">${provider}</provider></maplayer>`, s.name);
+      // Basemaps go under everything else.
+      if (where === "bottom") {
+        const node = project().xml.querySelector(`layer-tree-layer[id="${CSS.escape(id)}"]`)!;
+        node.parentElement!.appendChild(node);
+      }
+    }, `add ${s.name}`);
     ui.current = id;
   } catch (e) {
     delete project().local[id];
@@ -250,8 +257,34 @@ async function addPmtilesGroup(s: RemoteSpec, archive: import("pmtiles").PMTiles
   }, `add ${s.name}`);
 }
 
+/** Basemaps that allow cross-origin use (needed to draw and export them). */
 export const PRESETS: RemoteSpec[] = [
   { kind: "xyz", name: "OpenStreetMap", url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", zmax: 19 },
-  { kind: "xyz", name: "Esri World Imagery", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", zmax: 19 },
+  { kind: "xyz", name: "CARTO Positron", url: "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", zmax: 20 },
+  { kind: "xyz", name: "CARTO Voyager", url: "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png", zmax: 20 },
+  { kind: "xyz", name: "CARTO Dark Matter", url: "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", zmax: 20 },
   { kind: "xyz", name: "OpenTopoMap", url: "https://tile.opentopomap.org/{z}/{x}/{y}.png", zmax: 17 },
+  { kind: "xyz", name: "Esri World Imagery", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", zmax: 19 },
+  { kind: "xyz", name: "Esri World Topo", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", zmax: 19 },
+  { kind: "xyz", name: "Esri Light Gray", url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}", zmax: 16 },
 ];
+
+/** Required credits per tile host, shown on the map and in exports. */
+export function attributionFor(url: string) {
+  const host = (() => {
+    try {
+      return new URL(url.replace(/[{}]/g, "")).hostname;
+    } catch {
+      return "";
+    }
+  })();
+  if (host.endsWith("openstreetmap.org")) return "© OpenStreetMap contributors";
+  if (host.endsWith("cartocdn.com")) return "© OpenStreetMap contributors © CARTO";
+  if (host.endsWith("opentopomap.org")) return "© OpenStreetMap contributors, SRTM | © OpenTopoMap (CC-BY-SA)";
+  if (host.endsWith("arcgisonline.com") || host.endsWith("arcgis.com")) return "Powered by Esri";
+  return "";
+}
+
+/** A tile of the template at z/x/y, for previews. */
+export const tileUrl = (template: string, z = 2, x = 2, y = 1) => template.replace("{z}", String(z)).replace("{x}", String(x)).replace("{y}", String(y)).replace("{-y}", String(2 ** z - 1 - y));
+

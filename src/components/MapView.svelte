@@ -13,12 +13,15 @@
   import { createCompareMap, refreshCompare, updateCompareSize } from "../lib/compare";
   import ComparePanel from "./ComparePanel.svelte";
   import { viewChanged } from "../lib/embed";
+  import { formatCoord, FORMATS, FORMAT_LABELS } from "../lib/coords";
+  import { getSettings, saveSettings } from "../lib/settings";
 
   let target: HTMLDivElement;
   let coord = $state("");
   let scale = $state(0);
   let crs = $state("");
-  let lonlat = $state("");
+  let coordFormat = $state(getSettings().coords);
+  let lastCoord: number[] = [0, 0];
   let tip = $state<{ html: string; x: number; y: number } | null>(null);
   let tipTimer = 0;
   let compareTarget = $state<HTMLDivElement>();
@@ -63,11 +66,8 @@
     });
     map.on("pointermove", (e) => {
       if (ui.phase !== "ready" || e.dragging) return;
-      const [x, y] = e.coordinate;
-      const digits = Math.abs(x) < 400 && Math.abs(y) < 400 ? 5 : 1;
-      coord = `${x.toFixed(digits)}, ${y.toFixed(digits)}`;
-      const ll = digits === 1 ? projectToLonLat(e.coordinate) : null;
-      lonlat = ll ? `${ll[1].toFixed(5)}, ${ll[0].toFixed(5)}` : "";
+      lastCoord = e.coordinate;
+      coord = formatCoord(coordFormat, e.coordinate, coordFormat === "project" ? null : projectToLonLat(e.coordinate));
       // Map tips: after the pointer rests, show what QGIS's map tip says about the feature.
       clearTimeout(tipTimer);
       tip = null;
@@ -122,8 +122,11 @@
 
 {#if ui.phase === "ready" && !view.mapOnly}
   <div class="statusbar">
-    {#if lonlat}<span title="Latitude, longitude">{lonlat}</span>{/if}
-    <span title="Coordinates in project CRS">{coord}</span>
+    <button class="coord" title="{FORMAT_LABELS[coordFormat]}: click for another format" onclick={() => {
+      coordFormat = FORMATS[(FORMATS.indexOf(coordFormat) + 1) % FORMATS.length];
+      saveSettings({ coords: coordFormat });
+      coord = formatCoord(coordFormat, lastCoord, coordFormat === "project" ? null : projectToLonLat(lastCoord));
+    }}>{coord || FORMAT_LABELS[coordFormat]}</button>
     <span>1:{Math.round(scale).toLocaleString()}</span>
     <span>{crs}</span>
   </div>

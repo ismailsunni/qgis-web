@@ -8,6 +8,7 @@
   import FieldCalculator from "./FieldCalculator.svelte";
   import FieldsDialog from "./FieldsDialog.svelte";
   import ExportLayerDialog from "./ExportLayerDialog.svelte";
+  import StatisticsDialog from "./StatisticsDialog.svelte";
   import { setAttribute, editSession, deleteFeatures } from "../lib/editing";
   import * as Sel from "../lib/selection";
   import { readForm, displayValue, parseInput, validate } from "../lib/forms";
@@ -27,7 +28,7 @@
   let sortCol = $state(-1);
   let sortDir = $state(1);
   let scrollTop = $state(0);
-  let dialog = $state<"filter" | "select" | "calc" | "fields" | "export" | null>(null);
+  let dialog = $state<"filter" | "select" | "calc" | "fields" | "export" | "stats" | null>(null);
   let selectedOnly = $state(false);
   let editingCell = $state<[number, number] | null>(null);
   let height = $state(240);
@@ -168,6 +169,14 @@
   <FieldsDialog {layerId} onclose={() => (dialog = null)} />
 {:else if dialog === "export"}
   <ExportLayerDialog {layerId} onclose={() => (dialog = null)} />
+{:else if dialog === "stats"}
+  <StatisticsDialog
+    title={layer.name}
+    {fields}
+    scope={selectedOnly ? "selected features" : filter ? "filtered features" : "all features"}
+    column={(f) => { const c = fields.indexOf(f); return order.map((i) => rows[i][c]); }}
+    onclose={() => (dialog = null)}
+  />
 {/if}
 
 <section class="drawer" aria-label="Attribute table">
@@ -185,6 +194,7 @@
       <span class="sep"></span>
       <button class="icon" title="Field calculator" aria-label="Field calculator" onclick={() => (dialog = "calc")}><Icon name="calc" size={16} /></button>
       <button class="icon" title="Fields (add, rename, delete)" aria-label="Fields" onclick={() => (dialog = "fields")}><Icon name="columns" size={16} /></button>
+      <button class="icon" title="Statistics" aria-label="Statistics" onclick={() => (dialog = "stats")}><Icon name="chart" size={16} /></button>
       <button class="icon" title="Export layer" aria-label="Export layer" onclick={() => (dialog = "export")}><Icon name="download" size={16} /></button>
       {#if editable}<button class="icon" title="Delete selected features" aria-label="Delete selected features" disabled={!selection.size} onclick={deleteSelected}><Icon name="trash" size={16} /></button>{/if}
     </div>

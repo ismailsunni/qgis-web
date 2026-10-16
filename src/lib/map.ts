@@ -21,7 +21,7 @@ import Projection from "ol/proj/Projection";
 import { get as getProjection } from "ol/proj";
 import { register } from "ol/proj/proj4";
 import proj4 from "proj4";
-import { ScaleLine, Zoom } from "ol/control";
+import { ScaleLine, Zoom, Attribution } from "ol/control";
 import { Style, Stroke, Fill, Circle } from "ol/style";
 import { createDefaultStyle } from "ol/style/Style";
 import type { Coordinate } from "ol/coordinate";
@@ -29,7 +29,7 @@ import { QgisJobDataSource } from "@qgis-js/ol";
 import type { QgsGeometry } from "qgis-js";
 import { engine, projectUnits } from "./engine";
 import { flatLayers, snapshotTree } from "./tree";
-import { drawnByBrowser, remoteSpec, type RemoteSpec } from "./remote";
+import { drawnByBrowser, remoteSpec, attributionFor, type RemoteSpec } from "./remote";
 import { hooks } from "./doc";
 import { toast } from "./state.svelte";
 
@@ -53,7 +53,7 @@ highlightLayer.setStyle(
 export function createMap(target: HTMLElement, controls: boolean) {
   map = new Map({
     target,
-    controls: controls ? [new Zoom(), new ScaleLine({ bar: true, minWidth: 100 })] : [],
+    controls: controls ? [new Zoom(), new ScaleLine({ bar: true, minWidth: 100 }), new Attribution({ collapsible: true, collapsed: false })] : [],
     layers: [highlightLayer],
   });
   return map;
@@ -144,7 +144,8 @@ function remoteLayer(id: string, s: RemoteSpec): BaseLayer {
 export function createRemoteLayer(s: RemoteSpec): BaseLayer {
   let layer: BaseLayer;
   const crossOrigin = "anonymous";
-  if (s.kind === "xyz") layer = new TileLayer({ source: new XYZ({ url: s.url, crossOrigin, minZoom: s.zmin, maxZoom: s.zmax }) });
+  const attributions = attributionFor(s.url) || undefined;
+  if (s.kind === "xyz") layer = new TileLayer({ source: new XYZ({ url: s.url, crossOrigin, minZoom: s.zmin, maxZoom: s.zmax, attributions }) });
   else if (s.kind === "wms")
     layer = new TileLayer({ source: new TileWMS({ url: s.url, crossOrigin, projection: "EPSG:3857", params: { LAYERS: s.layer, STYLES: s.style ?? "", FORMAT: s.format ?? "image/png", TRANSPARENT: true } }) });
   else if (s.kind === "cog") layer = new TileLayer({ source: new GeoTIFF({ sources: [{ url: s.url }], convertToRGB: "auto" }) as never });
@@ -158,7 +159,7 @@ export function createRemoteLayer(s: RemoteSpec): BaseLayer {
       layer = new VectorTileLayer({ source, style: (f, r) => (f.get("layer") === s.layer ? createDefaultStyle(f, r) : undefined) });
     }
   }
-  else if (s.kind === "arcgismap") layer = new TileLayer({ source: new TileArcGISRest({ url: s.url, crossOrigin, params: s.layer ? { LAYERS: `show:${s.layer}`, FORMAT: s.format ?? "png32", TRANSPARENT: true } : { FORMAT: s.format ?? "png32", TRANSPARENT: true } }) });
+  else if (s.kind === "arcgismap") layer = new TileLayer({ source: new TileArcGISRest({ url: s.url, crossOrigin, attributions, params: s.layer ? { LAYERS: `show:${s.layer}`, FORMAT: s.format ?? "png32", TRANSPARENT: true } : { FORMAT: s.format ?? "png32", TRANSPARENT: true } }) });
   else {
     const tile = new TileLayer();
     fetch(s.url)

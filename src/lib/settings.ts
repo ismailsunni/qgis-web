@@ -12,18 +12,20 @@ export type ProjectRef =
   | { kind: "local"; name: string };
 
 export type Theme = "system" | "light" | "dark";
+export type CoordFormat = "project" | "decimal" | "dms" | "utm";
 
 interface Settings {
   startup: Startup;
   specific: ProjectRef | null;
   theme: Theme;
+  coords: CoordFormat;
 }
 
 const KEY = "qgisweb:settings";
 const LAST = "qgisweb:last-project";
 
 export function getSettings(): Settings {
-  return { startup: "welcome", specific: null, theme: "system", ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
+  return { startup: "welcome", specific: null, theme: "system", coords: "decimal", ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
 }
 
 export function saveSettings(s: Partial<Settings>) {

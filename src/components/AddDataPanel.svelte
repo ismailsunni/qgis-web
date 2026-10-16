@@ -4,6 +4,7 @@
   import { ui } from "../lib/state.svelte";
   import Icon from "./Icon.svelte";
   import RemoteLayerForm from "./RemoteLayerForm.svelte";
+  import BasemapGallery from "./BasemapGallery.svelte";
 
   let url = $state("");
 
@@ -19,6 +20,11 @@
   <p class="muted">GeoPackage, GeoJSON, Shapefile (.shp with its files, or .zip), FlatGeobuf, GeoTIFF, GeoParquet, KML, GPX, CSV and Excel.</p>
   <label class="button-like primary-like"><Icon name="add" size={18} /> Add data files…<input type="file" multiple hidden onchange={pickData} /></label>
   <p class="hint">Data is copied into the project's data/ folder and stays in this browser. You can also drop files on the map.</p>
+</section>
+
+<section class="stack">
+  <h3>Basemaps</h3>
+  <BasemapGallery />
 </section>
 
 <section class="stack">

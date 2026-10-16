@@ -6,7 +6,7 @@ import { newDoc, openDoc, project, projectBytes, projectFiles, reload } from "./
 import emptyProject from "../templates/empty.qgs?raw";
 import { saveProject, loadProjectFiles, type StoredProject } from "./storage";
 import { addData, embeddedProjects, DATA_EXT } from "./adddata";
-import { hydrateAll } from "./remote";
+import { hydrateAll, PRESETS, addRemote } from "./remote";
 import { ALGORITHMS } from "./processing";
 import { resetHistory, undoProject, redoProject } from "./history";
 import { readBookmarks, zoomToBookmark } from "./bookmarks";
@@ -326,7 +326,7 @@ export function commands(): Command[] {
     { id: "new", label: "New empty project", run: newProject },
     { id: "settings", label: "Settings (open project on launch)…", run: () => (ui.dialog = "settings") },
     { id: "add-data", label: "Add data files…", run: () => document.getElementById("pick-data")?.click() },
-    { id: "add-osm", label: "Add OpenStreetMap basemap", run: () => import("./remote").then((r) => r.addRemote(r.PRESETS[0])) },
+    ...PRESETS.map((p) => ({ id: `basemap-${p.name}`, label: `Add basemap: ${p.name}`, run: () => addRemote(p, "bottom") })),
     { id: "share", label: "Share / publish…", run: () => (ui.dialog = "share") },
     { id: "export-image", label: "Export map image (PNG)…", run: () => (ui.dialog = "export") },
     { id: "measure-line", label: "Measure distance", run: () => import("./maptools").then((m) => m.startMeasure("line")) },
