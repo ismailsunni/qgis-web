@@ -27,6 +27,7 @@
   import ExpressionBuilder from "./components/ExpressionBuilder.svelte";
   import FieldCalculator from "./components/FieldCalculator.svelte";
   import CsvDialog from "./components/CsvDialog.svelte";
+  import ProfilePanel from "./components/ProfilePanel.svelte";
   import { selectByExpression } from "./lib/selection";
 
   const rail: { id: Panel | "table"; icon: "layers" | "add" | "style" | "table" | "tools" | "hub" | "bookmark"; label: string; planned?: string }[] = [
@@ -195,6 +196,7 @@
         {#if ui.phase !== "ready"}<Welcome />{/if}
         {#if dragging}<div class="drop-hint">Drop a QGIS project (.qgs / .qgz) with its data files or folder</div>{/if}
       </div>
+      {#if ui.profile && !view.mapOnly}<ProfilePanel />{/if}
       {#if ui.tableLayerId && !view.mapOnly}
         {#key ui.tableLayerId}<AttributeTable layerId={ui.tableLayerId} />{/key}
       {/if}

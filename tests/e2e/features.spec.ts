@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { boot, layers } from "./helpers";
 
 /** UI-level checks of the main features, on the demo project. */
@@ -239,4 +239,20 @@ window.call=(command,args)=>new Promise(r=>{const id=++n;p.set(id,r);document.ge
   expect(layers.result.map((l: { name: string }) => l.name)).toEqual(["Places", "Rivers", "Countries"]);
   const n = await page.evaluate(() => (window as any).call("selectByExpression", { layer: "Countries", expression: `"CONTINENT" = 'Africa'` }));
   expect(n.result).toBe(51);
+});
+
+test("elevation profile along a line", async ({ page }) => {
+  await demo(page);
+  const dem = [...readFileSync("tests/fixtures/dem.tif")];
+  await page.evaluate(async (b) => {
+    const A = (globalThis as any).qgisWebApp;
+    const [id] = await A.adddata.addData([{ path: "dem.tif", data: new Uint8Array(b) }]);
+    const e = A.engine.engine().fullExtent([id]);
+    A.map.olMap().getView().fit([e.xMinimum, e.yMinimum, e.xMaximum, e.yMaximum]);
+  }, dem);
+  await page.locator('button[aria-label="Elevation profile"]').click();
+  const box = (await page.locator(".map").boundingBox())!;
+  await page.mouse.click(box.x + box.width * 0.3, box.y + box.height * 0.5);
+  await page.mouse.dblclick(box.x + box.width * 0.7, box.y + box.height * 0.5);
+  await expect(page.locator(".drawer.profile header")).toContainText("max 1");
 });

@@ -21,17 +21,17 @@ Everything runs client-side: projects and data stay in your browser unless you o
 | F9 | QML import/export per layer, plus an Advanced QML editor | ✅ | Desktop QML applied verbatim |
 | F10 | Save: in the browser (OPFS), `.qgz` download, project + data `.zip` | ✅ | Round-trip suite: 10/10 projects verified by QGIS Desktop |
 | F11 | Add GeoPackage, GeoJSON, Shapefile (+zip), FlatGeobuf, GeoTIFF, GeoParquet, KML, GPX | ✅ | CRS detected per format |
-| F12 | Remote layers: XYZ, WMS, WMTS, WFS, vector tiles, COG, files by URL | ✅* | Saved as QGIS layers; see notes |
+| F12 | Remote layers: XYZ, WMS, WMTS, WFS, OGC API Features, ArcGIS FeatureServer/MapServer, vector tiles, PMTiles, COG, files by URL | ✅* | Saved as QGIS layers; see notes |
 | F13 | Editing (attributes, add/move/delete features) written to GeoPackage, with undo/redo | ✅ | Edits persist (saved in the browser), readable by Desktop |
-| F14 | Processing: buffer, centroids, clip, difference, intersection, dissolve, reproject, … | ✅ | Outputs match Desktop's native algorithms (`scripts/compare_processing.py`) |
+| F14 | Processing: buffer, centroids, clip, difference, intersection, union, dissolve, join by location, merge, points along lines, reproject, … | ✅ | Outputs match Desktop's native algorithms (`scripts/compare_processing.py`) |
 | F15 | Expression builder with QGIS's function list and live preview | ✅ | Evaluated by QGIS itself |
 | F16 | QGIS Hub browser: apply styles, open projects, add layer definitions | ✅ | One-click style apply |
 | F17–F23 | Publishing (M5): local-data blockers, CORS/credential warnings, secret stripping, embedded SVGs, share links, embed domain allowlist, versions | ✅* | Secret stripping unit-tested; see notes |
 
 Also:
 
-- **Navigation and output:** place search (OpenStreetMap Nominatim) and coordinate search, measuring distance and area, spatial bookmarks (saved in the project), an on-map QGIS legend, swipe and side-by-side compare, and map export as PNG up to 384 dpi with title and legend.
-- **Data work:** feature selection (click, rectangle, expression, location) synced with the attribute table, field calculator and field management, layer export (GeoPackage, GeoJSON, CSV), CSV and Excel import.
+- **Navigation and output:** place search (OpenStreetMap Nominatim) and coordinate search, coordinates in decimal degrees, DMS, UTM or the project CRS, measuring distance and area, elevation profiles from a GeoTIFF DEM, a basemap gallery, spatial bookmarks (saved in the project), an on-map QGIS legend, swipe and side-by-side compare, and map export as PNG up to 384 dpi with title and legend.
+- **Data work:** feature selection (click, rectangle, polygon, freehand, expression, location) synced with the attribute table, field statistics with histograms, field calculator and field management, layer export (GeoPackage, GeoJSON, FlatGeobuf, Shapefile, KML, CSV), CSV and Excel import, and a processing history to re-run tools.
 - **Styling:** rule-based, heatmap and point cluster renderers; raster pseudocolor, grayscale, hillshade and RGB; popups (display name and HTML map tips, shown in Identify and on hover); copy/paste style.
 - **Editing:** snapping to visible layers, merge and split, and QGIS attribute forms (widgets, aliases, constraints, default values).
 - **App:** undo/redo for every project change, autosave with crash recovery, dark mode, "open project on launch" setting, an [embed API](docs/embed-api.md), a command palette (Ctrl/Cmd+K) with every action, keyboard shortcuts, project properties (title, CRS), and a phone layout.

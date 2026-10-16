@@ -330,6 +330,7 @@ export function commands(): Command[] {
     { id: "share", label: "Share / publish…", run: () => (ui.dialog = "share") },
     { id: "export-image", label: "Export map image (PNG)…", run: () => (ui.dialog = "export") },
     { id: "measure-line", label: "Measure distance", run: () => import("./maptools").then((m) => m.startMeasure("line")) },
+    { id: "profile", label: "Elevation profile", run: () => import("./profile").then((m) => m.startProfile()) },
     { id: "measure-area", label: "Measure area", run: () => import("./maptools").then((m) => m.startMeasure("area")) },
     { id: "legend", label: "Show/hide legend on map", run: () => (ui.showLegend = !ui.showLegend) },
     { id: "select-tool", label: "Select features (click)", run: () => (ui.mapTool = "select") },

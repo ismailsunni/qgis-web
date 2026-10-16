@@ -8,6 +8,9 @@ import { getArea, getLength } from "ol/sphere";
 import { getTransform, transform, transformExtent, get as getProjection } from "ol/proj";
 import { Style, Stroke, Fill, Circle } from "ol/style";
 import type Geometry from "ol/geom/Geometry";
+import type LineString from "ol/geom/LineString";
+import Point from "ol/geom/Point";
+import Feature from "ol/Feature";
 import type { Extent } from "ol/extent";
 import type BaseLayer from "ol/layer/Base";
 import { IdentifyMode, LayerType, type QgsVectorLayer } from "qgis-js";
@@ -86,6 +89,15 @@ export function startBoxTool(onBox: (extent: Extent, e: MouseEvent) => void) {
   olMap().addInteraction(box);
 }
 
+/** Line tool (profile): calls back with the drawn line, in the project CRS. */
+export function startLineTool(onLine: (g: LineString) => void) {
+  stopTool();
+  draw = new Draw({ source: measureSource, type: "LineString" });
+  draw.on("drawstart", () => measureSource.clear());
+  draw.on("drawend", (e) => onLine(e.feature.getGeometry() as LineString));
+  olMap().addInteraction(draw);
+}
+
 /** Polygon (click vertices) or freehand (drag) shape tool used by selection. */
 export function startShapeTool(freehand: boolean, onShape: (g: Geometry, e: MouseEvent) => void) {
   stopTool();
@@ -106,6 +118,14 @@ export function stopTool() {
   measureSource.clear();
   ui.measure = "";
   ui.mapTool = "identify";
+}
+
+/** A single marker on the map (e.g. the position under the profile cursor). */
+const markerSource = new VectorSource();
+overlays.push(new VectorLayer({ source: markerSource, zIndex: 1001, style: new Style({ image: new Circle({ radius: 6, fill: new Fill({ color: accent }), stroke: new Stroke({ color: "white", width: 2 }) }) }) }));
+export function setMarker(xy: number[] | null) {
+  markerSource.clear();
+  if (xy) markerSource.addFeature(new Feature(new Point(xy)));
 }
 
 // ---- Search -----------------------------------------------------------------------------

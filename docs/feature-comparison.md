@@ -36,7 +36,7 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 
 | Feature | GeoLibre | RustGIS | QGIS Web |
 | --- | --- | --- | --- |
-| Basemap gallery with previews | ✅ | ✅ (5 offline basemaps) | ◐ (3 presets) |
+| Basemap gallery with previews | ✅ | ✅ (5 offline basemaps) | ✅ (8 basemaps, with credits) |
 | Vector basemaps / MapLibre styles | ✅ | ✅ | — |
 | Projections (Equal Earth, Robinson, any EPSG) | ◐ (ArcGIS engine) | ✅ | ✅ (QGIS, any CRS) |
 | 3D globe | ✅ (Cesium, MapLibre globe) | ✅ | — |
@@ -46,7 +46,7 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | Split / side-by-side linked views | ✅ | ✅ | ✅ |
 | Swipe compare | ✅ | ✅ | ✅ |
 | Scale bar, coordinates readout | ✅ | ✅ | ✅ |
-| Coordinates in DMS / UTM / MGRS, grid overlays | ✅ | ◐ | ◐ (lat/lon and project CRS; search accepts DMS) |
+| Coordinates in DMS / UTM / MGRS, grid overlays | ✅ | ◐ | ◐ (decimal, DMS, UTM, project CRS; no MGRS or grids) |
 | Go to coordinate / place search (geocoding) | ✅ | ✅ (Go To XY, locators) | ✅ |
 | Bookmarks | ✅ | ✅ | ✅ (saved in the project) |
 | Extent history (back/forward) | ✅ | ✅ | — |
@@ -56,7 +56,7 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | Annotations / graphics layer (text, arrows, shapes) | ✅ | ✅ | — |
 | Time slider (temporal data) | ✅ | — | — |
 | Timelapse, weather overlays, sun simulation, Wikipedia cards | ✅ | — | — |
-| Elevation profile, line of sight, viewshed | ✅ | ✅ | — |
+| Elevation profile, line of sight, viewshed | ✅ | ✅ | ◐ (profile from a GeoTIFF DEM) |
 
 ### Data in
 
@@ -70,11 +70,11 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | OpenStreetMap PBF | ✅ | ✅ | — |
 | LiDAR (LAS, LAZ, COPC) | ✅ | ✅ | — |
 | NetCDF, HDF5, Zarr | ✅ | ✅ | — |
-| PMTiles, MBTiles | ✅ | ✅ | — |
+| PMTiles, MBTiles | ✅ | ✅ | ◐ (PMTiles) |
 | Geotagged photos (EXIF) | ✅ | ✅ | — |
 | XYZ, WMS, WMTS, WFS, vector tiles, COG by URL | ✅ | ✅ | ✅ |
-| OGC API Features / Tiles | ✅ | ✅ | — |
-| ArcGIS REST (Feature/Map/Image/VectorTile Server) | ✅ | ✅ | — |
+| OGC API Features / Tiles | ✅ | ✅ | ◐ (Features) |
+| ArcGIS REST (Feature/Map/Image/VectorTile Server) | ✅ | ✅ | ◐ (FeatureServer, MapServer) |
 | STAC catalogs | ✅ | — | — |
 | Data-catalog plugins (Planetary Computer, Earth Engine, Overture, HF, NASA…) | ✅ (dozens) | — | — |
 | Databases (PostGIS, SQL Server, DuckDB, Iceberg) | ✅ | ✅ (desktop) | — (PRD non-goal) |
@@ -115,14 +115,14 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | --- | --- | --- | --- |
 | Attribute table: sort, filter, zoom to row, virtual scrolling | ✅ | ✅ | ✅ |
 | Multi-row selection synced with the map | ✅ | ✅ | ✅ |
-| Select on map (click, rectangle, polygon) | ✅ | ✅ | ◐ (click, rectangle) |
+| Select on map (click, rectangle, polygon) | ✅ | ✅ | ✅ (also freehand) |
 | Select by expression / attributes | ✅ | ✅ | ✅ |
 | Select by location | ✅ | ✅ | ✅ |
 | Field calculator, add/delete/rename fields | ✅ | ✅ | ✅ |
 | Virtual fields, joins | ✅ | ✅ (relationships) | — |
 | Attribute forms (widgets, constraints) | ✅ | ✅ (domains, subtypes, rules) | ✅ (from the project) |
-| Field statistics, charts | ✅ | ✅ | — |
-| Export layer (GeoJSON, GPKG, CSV, Shapefile…) | ✅ | ✅ | ◐ (GeoPackage, GeoJSON, CSV) |
+| Field statistics, charts | ✅ | ✅ | ✅ (statistics, histogram) |
+| Export layer (GeoJSON, GPKG, CSV, Shapefile…) | ✅ | ✅ | ✅ (GeoPackage, GeoJSON, FlatGeobuf, Shapefile, KML, CSV) |
 | Expression builder with live preview | ✅ | ◐ | ✅ (QGIS functions) |
 | SQL workspace (DuckDB, PGlite) | ✅ | ◐ (where clauses) | — |
 
@@ -146,11 +146,11 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | Feature | GeoLibre | RustGIS | QGIS Web |
 | --- | --- | --- | --- |
 | Core vector tools (buffer, clip, dissolve, intersection…) | ✅ | ✅ | ✅ (14, match Desktop) |
-| Union, spatial join, merge, points along lines | ✅ | ◐ | — |
+| Union, spatial join, merge, points along lines | ✅ | ◐ | ✅ (match Desktop) |
 | 1,000+ Whitebox/GeoLibre WASM tools (terrain, hydrology, LiDAR) | ✅ | ✅ | — |
 | Raster tools (hillshade, slope, calculator, zonal stats) | ✅ | ✅ | — |
 | Model builder | ✅ | ✅ | — |
-| Processing history, re-run | ✅ | ✅ | — |
+| Processing history, re-run | ✅ | ✅ | ✅ (this session) |
 | Batch runs | ✅ | — | — |
 | Network: routing, isochrones | ✅ | ✅ (shortest path) | — |
 | Geocoding | ✅ | ✅ (locators) | — |

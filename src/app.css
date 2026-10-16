@@ -407,3 +407,11 @@ textarea.code.small { min-height: 90px; }
 .maponly .ol-attribution { bottom: 6px; }
 .statusbar .coord { border: none; background: none; padding: 0 4px; font: inherit; color: inherit; cursor: pointer; }
 .statusbar .coord:hover { color: var(--text); text-decoration: underline dotted; }
+.drawer.profile { height: 210px; min-height: 0; }
+.drawer.profile header { flex-wrap: wrap; }
+.drawer.profile header .muted { font-size: 12px; flex: 1; }
+.drawer.profile svg { flex: 1; width: 100%; min-height: 0; cursor: crosshair; }
+.profile .area { fill: var(--accent-bg); }
+.profile .line { fill: none; stroke: var(--green); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.profile .cursor { stroke: #e8590c; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.profile text { font: 11px system-ui; fill: var(--muted); }
