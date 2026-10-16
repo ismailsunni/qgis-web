@@ -88,7 +88,7 @@ from qgis.core import (
     QgsVectorLayer,
 )
 
-tmp = "/tmp/qgisweb_template.tif"
+tmp = "/tmp/quarkgis_template.tif"
 ds = gdal.GetDriverByName("GTiff").Create(tmp, 4, 4, 3, gdal.GDT_Float32)
 ds.SetGeoTransform([0, 1, 0, 4, 0, -1])
 srs = osr.SpatialReference()

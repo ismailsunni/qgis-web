@@ -1,6 +1,6 @@
 # Development
 
-The source is on [GitHub](https://github.com/ismailsunni/qgis-web), under GPL-2.0-or-later like QGIS.
+The source is on [GitHub](https://github.com/ismailsunni/quarkgis), under GPL-2.0-or-later like QGIS.
 
 ## Setup
 
@@ -58,4 +58,4 @@ zensical serve                               # http://localhost:8000
 node scripts/docs-screenshots.mjs <app-url>  # refresh the screenshots
 ```
 
-It is published with the app, at `/qgis-web/docs/`.
+It is published with the app, at `/quarkgis/docs/`.

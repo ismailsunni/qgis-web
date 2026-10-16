@@ -25,8 +25,8 @@ interface Settings {
   language: string;
 }
 
-const KEY = "qgisweb:settings";
-const LAST = "qgisweb:last-project";
+const KEY = "quarkgis:settings";
+const LAST = "quarkgis:last-project";
 
 export function getSettings(): Settings {
   return { startup: "welcome", specific: null, theme: "system", coords: "decimal", view: "saved", language: "auto", ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
@@ -52,7 +52,7 @@ export const exportSettings = () => new Blob([JSON.stringify(getSettings(), null
 
 export function importSettings(text: string) {
   const s = JSON.parse(text);
-  if (typeof s !== "object" || !s || !("startup" in s)) throw new Error("Not a QGIS Web settings file");
+  if (typeof s !== "object" || !s || !("startup" in s)) throw new Error("Not a QuarkGIS settings file");
   saveSettings(s);
 }
 

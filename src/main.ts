@@ -32,7 +32,7 @@ import { ui } from "./lib/state.svelte";
 import { loadLanguage } from "./lib/i18n";
 
 // Scripted access for end-to-end tests (see tests/).
-Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish, gpkg, PointGeometry: Point, settings, storage, history, maptools, clipboard, bookmarks, selection, exporter, autosave, editops, editmap, LineString, Polygon } });
+Object.assign(globalThis, { quarkgisApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish, gpkg, PointGeometry: Point, settings, storage, history, maptools, clipboard, bookmarks, selection, exporter, autosave, editops, editmap, LineString, Polygon } });
 
 settings.applyTheme();
 loadLanguage().then(() => mount(App, { target: document.getElementById("app")! }));

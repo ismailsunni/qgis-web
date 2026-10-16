@@ -434,3 +434,5 @@ textarea.code.small { min-height: 90px; }
 .time-slider input[type="range"] { flex: 1; min-width: 80px; }
 .time-slider .time-label { font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .time-slider .step { width: 52px; }
+.welcome-links { display: flex; justify-content: center; align-items: baseline; gap: 6px; margin: 0; }
+a.link { color: var(--green-dark); }

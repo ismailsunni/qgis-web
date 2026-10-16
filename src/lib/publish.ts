@@ -127,7 +127,7 @@ export interface Published { id: string; owner: string; public: boolean; url: st
 
 /** The gist a project was published to, kept in the project's own custom properties (Desktop preserves them). */
 export function publishedRef(): { owner: string; id: string; public: boolean } | null {
-  const el = project().xml.querySelector("qgis > properties > QGISWeb > published");
+  const el = project().xml.querySelector("qgis > properties > QuarkGIS > published");
   return el ? JSON.parse(el.textContent ?? "null") : null;
 }
 
@@ -135,8 +135,8 @@ export function setPublishedRef(ref: { owner: string; id: string; public: boolea
   const xml = project().xml;
   let props = xml.querySelector("qgis > properties");
   if (!props) props = xml.documentElement.appendChild(xml.createElement("properties"));
-  let group = props.querySelector(":scope > QGISWeb");
-  if (!group) group = props.appendChild(xml.createElement("QGISWeb"));
+  let group = props.querySelector(":scope > QuarkGIS");
+  if (!group) group = props.appendChild(xml.createElement("QuarkGIS"));
   let el = group.querySelector(":scope > published");
   if (!el) {
     el = group.appendChild(xml.createElement("published"));
@@ -146,7 +146,7 @@ export function setPublishedRef(ref: { owner: string; id: string; public: boolea
 }
 
 const API = "https://api.github.com";
-const TOKEN_KEY = "qgisweb:github-token";
+const TOKEN_KEY = "quarkgis:github-token";
 export const getToken = () => localStorage.getItem(TOKEN_KEY) ?? "";
 export const setToken = (t: string) => (t ? localStorage.setItem(TOKEN_KEY, t) : localStorage.removeItem(TOKEN_KEY));
 
@@ -159,8 +159,8 @@ async function gh(path: string, init: RequestInit = {}) {
 /** Publishes (or republishes, F23) the project. The share link stays the same across versions. */
 export async function publish(meta: PublishMeta, opts: { gistId?: string | null; public: boolean }): Promise<Published> {
   const { qgs } = publishableProject();
-  const files = { "project.qgs": { content: qgs }, "qgisweb.json": { content: JSON.stringify(meta, null, 2) } };
-  const body = JSON.stringify({ description: `QGIS Web map: ${meta.name}`, files, ...(opts.gistId ? {} : { public: opts.public }) });
+  const files = { "project.qgs": { content: qgs }, "quarkgis.json": { content: JSON.stringify(meta, null, 2) } };
+  const body = JSON.stringify({ description: `QuarkGIS map: ${meta.name}`, files, ...(opts.gistId ? {} : { public: opts.public }) });
   const g = opts.gistId ? await gh(`/gists/${opts.gistId}`, { method: "PATCH", body }) : await gh("/gists", { method: "POST", body });
   return { id: g.id, owner: g.owner.login, public: g.public, url: g.html_url };
 }
@@ -188,7 +188,7 @@ export async function loadPublished(ref: string, rev?: string | null) {
       if (!r.ok) throw new Error(t("This shared map was not found ({status})", { status: r.status }));
       return r.arrayBuffer();
     }),
-    fetch(raw(owner, id, "qgisweb.json", rev)).then((r) => (r.ok ? (r.json() as Promise<PublishMeta>) : null)).catch(() => null),
+    fetch(raw(owner, id, "quarkgis.json", rev)).then((r) => (r.ok ? (r.json() as Promise<PublishMeta>) : null)).catch(() => null),
   ]);
   return { qgs: new Uint8Array(qgs), meta };
 }

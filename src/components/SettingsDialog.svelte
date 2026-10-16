@@ -22,7 +22,7 @@
   function download() {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(exportSettings());
-    a.download = "qgis-web-settings.json";
+    a.download = "quarkgis-settings.json";
     a.click();
     URL.revokeObjectURL(a.href);
   }

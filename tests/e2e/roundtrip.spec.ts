@@ -20,7 +20,7 @@ for (const ref of manifest) {
     await boot(page);
     await openProject(page, ref.project);
     const result = await page.evaluate(async (name) => {
-      const { tree, style, apply, doc, ui } = (globalThis as any).qgisWebApp;
+      const { tree, style, apply, doc, ui } = (globalThis as any).quarkgisApp;
       const top = () => tree.snapshotTree();
       // Reorder: last top-level node to the top.
       const t = top();
@@ -35,12 +35,12 @@ for (const ref of manifest) {
       if (vector) {
         apply(() => style.setSingle(vector.layerId));
         apply(() => style.setAllSymbols(vector.layerId, { color: "#ff0000" }));
-        const field = (globalThis as any).qgisWeb.api.layerTreeRoot().findLayer(vector.layerId).layer().fields().at(1)?.name() ?? "fid";
+        const field = (globalThis as any).quarkgisEngine.api.layerTreeRoot().findLayer(vector.layerId).layer().fields().at(1)?.name() ?? "fid";
         apply(() => style.writeLabels(vector.layerId, { ...style.readLabels(vector.layerId), enabled: true, field, isExpression: false }));
         apply(() => style.writePopup(vector.layerId, { display: `"${field}"`, mapTip: `<b>[% "${field}" %]</b>` }));
       }
       // A spatial bookmark of the current view.
-      (globalThis as any).qgisWebApp.bookmarks.addBookmark("Round-trip view");
+      (globalThis as any).quarkgisApp.bookmarks.addBookmark("Round-trip view");
       const expected = {
         bookmarks: ["Round-trip view"],
         order: top().map((n: any) => n.name),
@@ -67,10 +67,10 @@ for (const ref of manifest) {
 
     // The saved file reopens in the web app with the same edits.
     await page.evaluate(async ({ name, bytes }) => {
-      const { actions } = (globalThis as any).qgisWebApp;
+      const { actions } = (globalThis as any).quarkgisApp;
       await actions.openFiles([{ path: `${name}.qgz`, data: new File([new Uint8Array(bytes)], `${name}.qgz`) }]);
     }, { name: ref.name, bytes: result.bytes });
-    const order = await page.evaluate(() => (globalThis as any).qgisWebApp.tree.snapshotTree().map((n: any) => n.name));
+    const order = await page.evaluate(() => (globalThis as any).quarkgisApp.tree.snapshotTree().map((n: any) => n.name));
     expect(order).toEqual(result.expected.order);
   });
 }

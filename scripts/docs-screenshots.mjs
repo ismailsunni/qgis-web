@@ -15,7 +15,7 @@ async function demo() {
   await page.waitForTimeout(1500);
 }
 const app = (fn, arg) => page.evaluate(fn, arg);
-const layer = (name) => app((n) => { const A = globalThis.qgisWebApp; return A.tree.flatLayers(A.tree.snapshotTree()).find((l) => l.name === n).layerId; }, name);
+const layer = (name) => app((n) => { const A = globalThis.quarkgisApp; return A.tree.flatLayers(A.tree.snapshotTree()).find((l) => l.name === n).layerId; }, name);
 
 await page.goto(url);
 await page.waitForSelector("text=Try the demo", { timeout: 120_000 });
@@ -25,27 +25,27 @@ await demo();
 await page.screenshot({ path: out("app") });
 
 const countries = await layer("Countries");
-await app((id) => { const A = globalThis.qgisWebApp; A.ui.current = id; A.ui.panel = "style"; A.apply(() => A.style.setGraduated(id, "POP_EST", A.style.classify(id, "POP_EST", "Jenks", 6, "YlOrRd"), "YlOrRd", "Jenks")); }, countries);
+await app((id) => { const A = globalThis.quarkgisApp; A.ui.current = id; A.ui.panel = "style"; A.apply(() => A.style.setGraduated(id, "POP_EST", A.style.classify(id, "POP_EST", "Jenks", 6, "YlOrRd"), "YlOrRd", "Jenks")); }, countries);
 await page.waitForTimeout(1500);
 await page.screenshot({ path: out("style") });
 
-await app((id) => { const A = globalThis.qgisWebApp; A.ui.panel = "layers"; A.ui.tableLayerId = id; A.selection.selectByExpression(id, `"CONTINENT" = 'Africa'`, "new"); }, countries);
+await app((id) => { const A = globalThis.quarkgisApp; A.ui.panel = "layers"; A.ui.tableLayerId = id; A.selection.selectByExpression(id, `"CONTINENT" = 'Africa'`, "new"); }, countries);
 await page.waitForTimeout(1500);
 await page.screenshot({ path: out("table") });
 
-await app(() => { const A = globalThis.qgisWebApp; A.ui.tableLayerId = null; A.selection.clearSelection(); A.ui.panel = "tools"; A.ui.pendingAlgorithm = "native:buffer"; });
+await app(() => { const A = globalThis.quarkgisApp; A.ui.tableLayerId = null; A.selection.clearSelection(); A.ui.panel = "tools"; A.ui.pendingAlgorithm = "native:buffer"; });
 await page.waitForTimeout(1000);
 await page.screenshot({ path: out("processing") });
 
-await app(async (id) => { const A = globalThis.qgisWebApp; A.ui.panel = "layers"; await A.editing.startEditing(id); A.selection.selectByExpression(id, `"NAME" = 'France'`, "new"); A.editmap.setTool("move"); }, countries);
+await app(async (id) => { const A = globalThis.quarkgisApp; A.ui.panel = "layers"; await A.editing.startEditing(id); A.selection.selectByExpression(id, `"NAME" = 'France'`, "new"); A.editmap.setTool("move"); }, countries);
 await page.waitForTimeout(1500);
 await page.screenshot({ path: out("editing") });
-await app(() => globalThis.qgisWebApp.editing.stopEditing());
+await app(() => globalThis.quarkgisApp.editing.stopEditing());
 
 await demo();
 const dem = [...readFileSync("tests/fixtures/dem.tif")];
 await app(async (b) => {
-  const A = globalThis.qgisWebApp;
+  const A = globalThis.quarkgisApp;
   const [id] = await A.adddata.addData([{ path: "dem.tif", data: new Uint8Array(b) }]);
   const e = A.engine.engine().fullExtent([id]);
   A.map.olMap().getView().fit([e.xMinimum, e.yMinimum, e.xMaximum, e.yMaximum], { padding: [60, 60, 60, 60] });
@@ -59,7 +59,7 @@ await page.screenshot({ path: out("profile") });
 
 await demo();
 const events = { type: "FeatureCollection", features: Array.from({ length: 60 }, (_, i) => ({ type: "Feature", properties: { when: `2024-${String(1 + (i % 12)).padStart(2, "0")}-15T12:00:00` }, geometry: { type: "Point", coordinates: [-10 + ((i * 37) % 45), 36 + ((i * 13) % 24)] } })) };
-await app(async (fc) => { const A = globalThis.qgisWebApp; const [id] = await A.adddata.addData([{ path: "events.geojson", data: new TextEncoder().encode(JSON.stringify(fc)) }]); A.ui.current = id; A.ui.panel = "style"; A.map.olMap().getView().fit([-1500000, 3800000, 3500000, 7500000]); }, events);
+await app(async (fc) => { const A = globalThis.quarkgisApp; const [id] = await A.adddata.addData([{ path: "events.geojson", data: new TextEncoder().encode(JSON.stringify(fc)) }]); A.ui.current = id; A.ui.panel = "style"; A.map.olMap().getView().fit([-1500000, 3800000, 3500000, 7500000]); }, events);
 await page.locator("section", { hasText: "Time (temporal controller)" }).locator('input[type="checkbox"]').first().check();
 await page.locator('button[aria-label="Time slider"]').click();
 await page.locator('button[aria-label="Next step"]').click();

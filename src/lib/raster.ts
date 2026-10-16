@@ -107,7 +107,7 @@ export function readRasterStyle(id: string): RasterStyle {
     band: Number(r?.getAttribute("band") ?? r?.getAttribute("grayBand") ?? 1),
     min: Number(shader?.getAttribute("minimumValue") ?? num(r, "contrastEnhancement > minValue", 0)),
     max: Number(shader?.getAttribute("maximumValue") ?? num(r, "contrastEnhancement > maxValue", 255)),
-    ramp: r?.getAttribute("qgisweb_ramp") ?? "Viridis",
+    ramp: r?.getAttribute("quarkgis_ramp") ?? "Viridis",
     red: Number(r?.getAttribute("redBand") ?? 1),
     green: Number(r?.getAttribute("greenBand") ?? 2),
     blue: Number(r?.getAttribute("blueBand") ?? 3),
@@ -140,7 +140,7 @@ export function setRasterStyle(id: string, type: RasterType, s: RasterStyle, inf
     r.setAttribute("band", String(s.band));
     r.setAttribute("classificationMin", String(s.min));
     r.setAttribute("classificationMax", String(s.max));
-    r.setAttribute("qgisweb_ramp", s.ramp);
+    r.setAttribute("quarkgis_ramp", s.ramp);
     const shader = r.querySelector("rastershader > colorrampshader")!;
     shader.setAttribute("minimumValue", String(s.min));
     shader.setAttribute("maximumValue", String(s.max));

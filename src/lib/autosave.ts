@@ -27,7 +27,7 @@ export async function autosaveNow() {
   if (fresh) files = projectFiles();
   else {
     files = { [rel(`${d.dir}/${d.file}`)]: projectBytes() };
-    for (const p of modifiedFiles) if (p.startsWith(d.root + "/") && !p.endsWith(".qgisweb.qgs") && exists(p)) files[rel(p)] = readFile(p);
+    for (const p of modifiedFiles) if (p.startsWith(d.root + "/") && !p.endsWith(".quarkgis.qgs") && exists(p)) files[rel(p)] = readFile(p);
   }
   modifiedFiles.clear();
   await writeAutosave(

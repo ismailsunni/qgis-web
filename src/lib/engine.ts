@@ -10,7 +10,7 @@ let fs: EmFS;
 export async function boot(onStatus: (s: string) => void) {
   ({ api, fs } = await qgis({ prefix: `${import.meta.env.BASE_URL}assets/wasm`, onStatus }));
   // Handle for end-to-end tests and debugging from the console.
-  Object.assign(globalThis, { qgisWeb: { api, fs } });
+  Object.assign(globalThis, { quarkgisEngine: { api, fs } });
   return api;
 }
 

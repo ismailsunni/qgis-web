@@ -136,7 +136,7 @@
 >
   {#if !view.mapOnly && !view.compact}
     <header class="topbar">
-      <div class="brand"><span class="logo"></span>QGIS Web</div>
+      <div class="brand"><span class="logo"></span>QuarkGIS</div>
       <div class="project-name">
         {#if ui.phase === "ready"}<button title={t("Project properties")} onclick={() => (ui.dialog = "project")}>{ui.projectName}</button>{/if}{#if ui.dirty}<span class="dirty" title={t("Unsaved changes")}>•</span>{/if}
       </div>

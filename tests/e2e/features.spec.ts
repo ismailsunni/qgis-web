@@ -7,7 +7,7 @@ import { boot, layers } from "./helpers";
 async function demo(page: import("@playwright/test").Page, query = "") {
   await boot(page, query);
   if (!query.includes("url=")) await page.getByText("Try the demo").click();
-  await expect.poll(() => page.evaluate(() => (globalThis as any).qgisWebApp.ui.phase)).toBe("ready");
+  await expect.poll(() => page.evaluate(() => (globalThis as any).quarkgisApp.ui.phase)).toBe("ready");
 }
 
 test("identify shows attributes from QGIS (F4)", async ({ page }) => {
@@ -30,7 +30,7 @@ test("attribute table filters with a QGIS expression (F6)", async ({ page }) => 
 test("attribute table handles 100k features (F6)", async ({ page }) => {
   await demo(page);
   const ms = await page.evaluate(async () => {
-    const app = (globalThis as any).qgisWebApp;
+    const app = (globalThis as any).quarkgisApp;
     const gpkg = app.gpkg.writeGpkgTable;
     const features = Array.from({ length: 100_000 }, (_, i) => {
       const b = new DataView(new ArrayBuffer(21));
@@ -63,7 +63,7 @@ test("style editor switches to graduated and saves labels (F7, F8)", async ({ pa
   await expect(page.locator(".classes li")).toHaveCount(5);
   await page.locator(".panel label.row", { hasText: "Labels" }).locator("input").check();
   const r = await page.evaluate(() => {
-    const { style, ui } = (globalThis as any).qgisWebApp;
+    const { style, ui } = (globalThis as any).quarkgisApp;
     return [style.readRenderer(ui.current).type, style.readLabels(ui.current).enabled];
   });
   expect(r).toEqual(["graduatedSymbol", true]);
@@ -72,12 +72,12 @@ test("style editor switches to graduated and saves labels (F7, F8)", async ({ pa
 test("editing adds a feature and undo removes it (F13)", async ({ page }) => {
   await demo(page);
   const count = await page.evaluate(async () => {
-    const { tree, editing, engine } = (globalThis as any).qgisWebApp;
+    const { tree, editing, engine } = (globalThis as any).quarkgisApp;
     const id = tree.flatLayers(tree.snapshotTree()).find((l: any) => l.name === "Places").layerId;
     await editing.startEditing(id);
     const n = () => engine.findMapLayer(id).featureCount();
     const before = n();
-    await editing.addFeature(new (globalThis as any).qgisWebApp.PointGeometry([0, 0]));
+    await editing.addFeature(new (globalThis as any).quarkgisApp.PointGeometry([0, 0]));
     const added = n();
     editing.undo();
     return [before, added, n()];
@@ -129,16 +129,16 @@ test("phones get the bottom tab bar", async ({ page }) => {
 });
 
 test("open project on launch: blank, most recent, specific", async ({ page }) => {
-  const phase = () => page.evaluate(() => [(globalThis as any).qgisWebApp.ui.phase, (globalThis as any).qgisWebApp.ui.projectName]);
+  const phase = () => page.evaluate(() => [(globalThis as any).quarkgisApp.ui.phase, (globalThis as any).quarkgisApp.ui.projectName]);
   await boot(page);
   expect((await phase())[0]).toBe("empty");
-  const set = (s: object) => page.evaluate((s) => (globalThis as any).qgisWebApp.settings.saveSettings(s), s);
+  const set = (s: object) => page.evaluate((s) => (globalThis as any).quarkgisApp.settings.saveSettings(s), s);
 
   await set({ startup: "blank", specific: null });
   await page.reload();
   await expect.poll(phase).toEqual(["ready", "Untitled"]);
 
-  await page.evaluate(() => (globalThis as any).qgisWebApp.actions.openUrl("reference/points_4326/points_4326.qgz"));
+  await page.evaluate(() => (globalThis as any).quarkgisApp.actions.openUrl("reference/points_4326/points_4326.qgz"));
   await set({ startup: "last", specific: null });
   await page.reload();
   await expect.poll(phase).toEqual(["ready", "points_4326"]);
@@ -151,11 +151,11 @@ test("open project on launch: blank, most recent, specific", async ({ page }) =>
 
 test("undo and redo project changes", async ({ page }) => {
   await demo(page);
-  await page.evaluate(() => { const { tree } = (globalThis as any).qgisWebApp; tree.rename(tree.snapshotTree()[0], "Renamed"); });
+  await page.evaluate(() => { const { tree } = (globalThis as any).quarkgisApp; tree.rename(tree.snapshotTree()[0], "Renamed"); });
   await page.keyboard.press("Control+z");
-  await expect.poll(() => page.evaluate(() => (globalThis as any).qgisWebApp.tree.snapshotTree()[0].name)).toBe("Places");
+  await expect.poll(() => page.evaluate(() => (globalThis as any).quarkgisApp.tree.snapshotTree()[0].name)).toBe("Places");
   await page.keyboard.press("Control+Shift+z");
-  await expect.poll(() => page.evaluate(() => (globalThis as any).qgisWebApp.tree.snapshotTree()[0].name)).toBe("Renamed");
+  await expect.poll(() => page.evaluate(() => (globalThis as any).quarkgisApp.tree.snapshotTree()[0].name)).toBe("Renamed");
 });
 
 test("measure distance", async ({ page }) => {
@@ -191,27 +191,27 @@ test("rectangle selection syncs with the attribute table", async ({ page }) => {
 test("field calculator creates a field from an expression", async ({ page }) => {
   await demo(page);
   page.on("dialog", (d) => d.accept());
-  await page.evaluate(() => { const A = (globalThis as any).qgisWebApp; A.ui.current = A.tree.flatLayers(A.tree.snapshotTree()).find((l: any) => l.name === "Countries").layerId; A.ui.dialog = "field-calc"; });
+  await page.evaluate(() => { const A = (globalThis as any).quarkgisApp; A.ui.current = A.tree.flatLayers(A.tree.snapshotTree()).find((l: any) => l.name === "Countries").layerId; A.ui.dialog = "field-calc"; });
   await page.locator(".dialog input").first().fill("name_upper");
   await page.locator(".dialog select").first().selectOption("TEXT");
   await page.locator(".dialog .expr-input input").fill('upper("NAME")');
   await page.locator(".dialog .expr-input input").press("Tab");
   await page.locator(".dialog button.primary").click();
-  await expect.poll(() => page.evaluate(() => { const A = (globalThis as any).qgisWebApp; const id = A.tree.flatLayers(A.tree.snapshotTree()).find((l: any) => l.name === "Countries").layerId; const api = (globalThis as any).qgisWeb.api; const r = new api.QgsFeatureRequest(); r.setFilterFid(16); return A.engine.findMapLayer(id).getFeatures(r).nextFeature()?.attribute("name_upper"); })).toBe("CHAD");
+  await expect.poll(() => page.evaluate(() => { const A = (globalThis as any).quarkgisApp; const id = A.tree.flatLayers(A.tree.snapshotTree()).find((l: any) => l.name === "Countries").layerId; const api = (globalThis as any).quarkgisEngine.api; const r = new api.QgsFeatureRequest(); r.setFilterFid(16); return A.engine.findMapLayer(id).getFeatures(r).nextFeature()?.attribute("name_upper"); })).toBe("CHAD");
 });
 
 test("CSV with coordinates becomes a delimited text layer", async ({ page }) => {
   await demo(page);
-  const added = page.evaluate(() => (globalThis as any).qgisWebApp.adddata.addData([{ path: "pts.csv", data: new TextEncoder().encode("name,lon,lat\nParis,2.35,48.85\nRome,12.5,41.9\n") }]));
+  const added = page.evaluate(() => (globalThis as any).quarkgisApp.adddata.addData([{ path: "pts.csv", data: new TextEncoder().encode("name,lon,lat\nParis,2.35,48.85\nRome,12.5,41.9\n") }]));
   await page.locator(".dialog.csv button.primary").click();
   await added;
-  const n = await page.evaluate(() => { const A = (globalThis as any).qgisWebApp; const l = A.tree.flatLayers(A.tree.snapshotTree()).find((x: any) => x.name === "pts"); const it = A.engine.findMapLayer(l.layerId).getFeatures(); let k = 0; while (it.nextFeature()) k++; return k; });
+  const n = await page.evaluate(() => { const A = (globalThis as any).quarkgisApp; const l = A.tree.flatLayers(A.tree.snapshotTree()).find((x: any) => x.name === "pts"); const it = A.engine.findMapLayer(l.layerId).getFeatures(); let k = 0; while (it.nextFeature()) k++; return k; });
   expect(n).toBe(2);
 });
 
 test("rule-based style from categories", async ({ page }) => {
   await demo(page);
-  const rules = await page.evaluate(() => { const A = (globalThis as any).qgisWebApp; const id = A.tree.flatLayers(A.tree.snapshotTree()).find((l: any) => l.name === "Countries").layerId; A.apply(() => A.style.setRuleBased(id)); return A.style.readRules(id).length; });
+  const rules = await page.evaluate(() => { const A = (globalThis as any).quarkgisApp; const id = A.tree.flatLayers(A.tree.snapshotTree()).find((l: any) => l.name === "Countries").layerId; A.apply(() => A.style.setRuleBased(id)); return A.style.readRules(id).length; });
   expect(rules).toBe(8);
 });
 
@@ -229,8 +229,8 @@ test("embed API answers the parent page", async ({ page, baseURL }) => {
       contentType: "text/html",
       headers: { "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Embedder-Policy": "require-corp" },
       body: `<iframe id="m" src="${baseURL}?url=projects/world/world.qgz&maponly" width="800" height="500" allow="cross-origin-isolated"></iframe>
-<script>let n=0;const p=new Map();addEventListener("message",e=>{if(e.data?.qgisweb===1&&!e.data.event)p.get(e.data.id)?.(e.data)});
-window.call=(command,args)=>new Promise(r=>{const id=++n;p.set(id,r);document.getElementById("m").contentWindow.postMessage({qgisweb:1,id,command,args},location.origin)});</script>`,
+<script>let n=0;const p=new Map();addEventListener("message",e=>{if(e.data?.quarkgis===1&&!e.data.event)p.get(e.data.id)?.(e.data)});
+window.call=(command,args)=>new Promise(r=>{const id=++n;p.set(id,r);document.getElementById("m").contentWindow.postMessage({quarkgis:1,id,command,args},location.origin)});</script>`,
     }),
   );
   await page.goto("embed-host.html");
@@ -245,7 +245,7 @@ test("elevation profile along a line", async ({ page }) => {
   await demo(page);
   const dem = [...readFileSync("tests/fixtures/dem.tif")];
   await page.evaluate(async (b) => {
-    const A = (globalThis as any).qgisWebApp;
+    const A = (globalThis as any).quarkgisApp;
     const [id] = await A.adddata.addData([{ path: "dem.tif", data: new Uint8Array(b) }]);
     const e = A.engine.engine().fullExtent([id]);
     A.map.olMap().getView().fit([e.xMinimum, e.yMinimum, e.xMaximum, e.yMaximum]);
@@ -259,7 +259,7 @@ test("elevation profile along a line", async ({ page }) => {
 
 test("previous view and map context menu", async ({ page }) => {
   await demo(page);
-  const res = () => page.evaluate(() => (globalThis as any).qgisWebApp.map.olMap().getView().getResolution());
+  const res = () => page.evaluate(() => (globalThis as any).quarkgisApp.map.olMap().getView().getResolution());
   const r0 = await res();
   await page.locator(".ol-zoom-in").click();
   await expect.poll(res).toBeLessThan(r0);
@@ -275,14 +275,14 @@ test("time slider filters temporal layers", async ({ page }) => {
   await demo(page);
   const features = [1, 2, 3].map((m) => ({ type: "Feature", properties: { when: `2024-0${m}-15T12:00:00` }, geometry: { type: "Point", coordinates: [m, 45] } }));
   await page.evaluate(async (fc) => {
-    const A = (globalThis as any).qgisWebApp;
+    const A = (globalThis as any).quarkgisApp;
     const [id] = await A.adddata.addData([{ path: "events.geojson", data: new TextEncoder().encode(JSON.stringify(fc)) }]);
     A.ui.current = id;
     A.ui.panel = "style";
   }, { type: "FeatureCollection", features });
   await page.locator("section", { hasText: "Time (temporal controller)" }).locator('input[type="checkbox"]').first().check();
   await page.locator('button[aria-label="Time slider"]').click();
-  const count = () => page.evaluate(() => { const A = (globalThis as any).qgisWebApp; const it = A.engine.findMapLayer(A.ui.current).getFeatures(); let n = 0; while (it.nextFeature()) n++; it.delete(); return n; });
+  const count = () => page.evaluate(() => { const A = (globalThis as any).quarkgisApp; const it = A.engine.findMapLayer(A.ui.current).getFeatures(); let n = 0; while (it.nextFeature()) n++; it.delete(); return n; });
   await expect.poll(count).toBe(1);
   await page.locator('button[aria-label="Close time slider"]').click();
   await expect.poll(count).toBe(3);
@@ -291,7 +291,7 @@ test("time slider filters temporal layers", async ({ page }) => {
 test("explode multipart features while editing", async ({ page }) => {
   await demo(page);
   await page.evaluate(async () => {
-    const A = (globalThis as any).qgisWebApp;
+    const A = (globalThis as any).quarkgisApp;
     const id = A.tree.flatLayers(A.tree.snapshotTree()).find((l: any) => l.name === "Countries").layerId;
     await A.editing.startEditing(id);
     A.selection.selectByExpression(id, `"NAME" = 'Indonesia'`, "new");

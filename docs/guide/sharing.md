@@ -35,7 +35,7 @@ Publishing needs a GitHub token with the `gist` scope, created once and kept onl
 ## Embedding
 
 ```html
-<iframe src="https://ismailsunni.id/qgis-web/?url=https://example.org/project.qgz&maponly"
+<iframe src="https://ismailsunni.id/quarkgis/?url=https://example.org/project.qgz&maponly"
         width="800" height="500" allow="cross-origin-isolated"></iframe>
 ```
 

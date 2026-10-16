@@ -5,7 +5,7 @@ import { olMap, srid, redraw, scaleDenominator, zoomToFull } from "./map";
 import { ui } from "./state.svelte";
 
 /**
- * postMessage API for pages that embed QGIS Web in an iframe (docs/embed-api.md).
+ * postMessage API for pages that embed QuarkGIS in an iframe (docs/embed-api.md).
  * Only the direct parent can talk to it, events go only to the origin that said hello, and a
  * published map's embed allowlist applies. Commands change the view, never the saved project.
  */
@@ -24,7 +24,7 @@ const originAllowed = (origin: string) => {
 };
 
 export function emit(event: string, data: unknown = {}) {
-  if (embedded && parentOrigin) window.parent.postMessage({ qgisweb: 1, event, data }, parentOrigin);
+  if (embedded && parentOrigin) window.parent.postMessage({ quarkgis: 1, event, data }, parentOrigin);
 }
 
 function layerRef(ref: string) {
@@ -119,9 +119,9 @@ const commands: Record<string, (a: Args) => unknown | Promise<unknown>> = {
 if (embedded) {
   window.addEventListener("message", async (e) => {
     const msg = e.data;
-    if (e.source !== window.parent || !msg || msg.qgisweb !== 1 || !msg.command || !originAllowed(e.origin)) return;
+    if (e.source !== window.parent || !msg || msg.quarkgis !== 1 || !msg.command || !originAllowed(e.origin)) return;
     parentOrigin ??= e.origin;
-    const reply = (body: object) => window.parent.postMessage({ qgisweb: 1, id: msg.id, ...body }, e.origin);
+    const reply = (body: object) => window.parent.postMessage({ quarkgis: 1, id: msg.id, ...body }, e.origin);
     const fn = commands[msg.command];
     if (!fn) return reply({ ok: false, error: `Unknown command ${msg.command}` });
     try {

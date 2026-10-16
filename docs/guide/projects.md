@@ -1,6 +1,6 @@
 # Projects
 
-QGIS Web works on QGIS project files. The open project is kept as its QGIS XML: every change you make (styles, layers, tree, bookmarks) is written into it, so what you save is exactly what QGIS Desktop reads.
+QuarkGIS works on QGIS project files. The open project is kept as its QGIS XML: every change you make (styles, layers, tree, bookmarks) is written into it, so what you save is exactly what QGIS Desktop reads.
 
 ## Opening
 

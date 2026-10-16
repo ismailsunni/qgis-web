@@ -1,9 +1,9 @@
 [project]
-site_name = "QGIS Web"
+site_name = "QuarkGIS"
 site_description = "Open, edit and share real QGIS projects in your browser, rendered by QGIS itself."
-site_url = "https://ismailsunni.id/qgis-web/docs/"
-repo_url = "https://github.com/ismailsunni/qgis-web"
-repo_name = "ismailsunni/qgis-web"
+site_url = "https://ismailsunni.id/quarkgis/docs/"
+repo_url = "https://github.com/ismailsunni/quarkgis"
+repo_name = "ismailsunni/quarkgis"
 edit_uri = "edit/main/docs/"
 docs_dir = "docs"
 site_dir = "site"

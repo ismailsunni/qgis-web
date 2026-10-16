@@ -28,7 +28,7 @@ async function writeAll(dir: FileSystemDirectoryHandle, files: Record<string, Ui
   }
 }
 
-const metaFile = (meta: object) => ({ "qgisweb-meta.json": new TextEncoder().encode(JSON.stringify(meta)) });
+const metaFile = (meta: object) => ({ "quarkgis-meta.json": new TextEncoder().encode(JSON.stringify(meta)) });
 
 export async function saveProject(meta: StoredProject, files: Record<string, Uint8Array>) {
   const root = await projectsDir();
@@ -55,7 +55,7 @@ export async function writeAutosave(meta: AutosaveMeta, files: Record<string, Ui
 
 export async function readAutosave(): Promise<AutosaveMeta | null> {
   try {
-    const f = await (await (await autosaveDir(false)).getFileHandle("qgisweb-meta.json")).getFile();
+    const f = await (await (await autosaveDir(false)).getFileHandle("quarkgis-meta.json")).getFile();
     return JSON.parse(await f.text());
   } catch {
     return null;
@@ -74,7 +74,7 @@ export async function listProjects(): Promise<StoredProject[]> {
   for await (const [, handle] of (await projectsDir()).entries()) {
     if (handle.kind !== "directory") continue;
     try {
-      const f = await (await (handle as FileSystemDirectoryHandle).getFileHandle("qgisweb-meta.json")).getFile();
+      const f = await (await (handle as FileSystemDirectoryHandle).getFileHandle("quarkgis-meta.json")).getFile();
       out.push(JSON.parse(await f.text()));
     } catch {}
   }
@@ -86,7 +86,7 @@ async function walkFiles(root: FileSystemDirectoryHandle) {
   const walk = async (dir: FileSystemDirectoryHandle, prefix: string): Promise<void> => {
     for await (const [name, h] of dir.entries()) {
       if (h.kind === "directory") await walk(h as FileSystemDirectoryHandle, `${prefix}${name}/`);
-      else if (name !== "qgisweb-meta.json") files.push({ path: prefix + name, data: await (h as FileSystemFileHandle).getFile() });
+      else if (name !== "quarkgis-meta.json") files.push({ path: prefix + name, data: await (h as FileSystemFileHandle).getFile() });
     }
   };
   await walk(root, "");

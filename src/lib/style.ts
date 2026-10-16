@@ -186,7 +186,7 @@ export function readRenderer(id: string): RendererState {
           render: c.getAttribute("render") !== "false",
         }))
       : [],
-    ramp: r?.getAttribute("qgisweb_ramp") ?? "",
+    ramp: r?.getAttribute("quarkgis_ramp") ?? "",
     mode: findChild(r ?? layerEl(id), "classificationMethod")?.getAttribute("id") ?? "EqualInterval",
   };
 }
@@ -218,7 +218,7 @@ export function setSingle(id: string, base = baseSymbol(id)) {
 
 export function setCategorized(id: string, attr: string, cats: Category[], ramp: string) {
   const base = baseSymbol(id);
-  const r = newRenderer("categorizedSymbol", { attr, qgisweb_ramp: ramp });
+  const r = newRenderer("categorizedSymbol", { attr, quarkgis_ramp: ramp });
   const categories = child(r, "categories");
   const symbols = child(r, "symbols");
   cats.forEach((c, i) => {
@@ -233,7 +233,7 @@ export function setCategorized(id: string, attr: string, cats: Category[], ramp:
 
 export function setGraduated(id: string, attr: string, ranges: Range[], ramp: string, mode: string) {
   const base = baseSymbol(id);
-  const r = newRenderer("graduatedSymbol", { attr, graduatedMethod: "GraduatedColor", qgisweb_ramp: ramp });
+  const r = newRenderer("graduatedSymbol", { attr, graduatedMethod: "GraduatedColor", quarkgis_ramp: ramp });
   const rangesEl = child(r, "ranges");
   const symbols = child(r, "symbols");
   ranges.forEach((g, i) => {
@@ -539,7 +539,7 @@ export function exportQml(id: string): string {
   const el = layerEl(id);
   const qml = document.implementation.createDocument(null, "qgis", null);
   const root = qml.documentElement;
-  root.setAttribute("version", "4.2.3-QGIS Web");
+  root.setAttribute("version", "4.2.3-QuarkGIS");
   root.setAttribute("styleCategories", "AllStyleCategories");
   for (const a of STYLE_ATTRS) if (el.hasAttribute(a)) root.setAttribute(a, el.getAttribute(a)!);
   for (const c of el.children) if (!NOT_STYLE.has(c.tagName)) root.appendChild(qml.importNode(c, true));
@@ -671,7 +671,7 @@ export interface Heatmap { radius: number; ramp: string; weight: string; maxValu
 
 export function readHeatmap(id: string): Heatmap {
   const r = rendererEl(id)!;
-  return { radius: Number(r.getAttribute("radius") ?? 10), ramp: r.getAttribute("qgisweb_ramp") ?? "YlOrRd", weight: r.getAttribute("weight_expression") ?? "", maxValue: Number(r.getAttribute("max_value") ?? 0) };
+  return { radius: Number(r.getAttribute("radius") ?? 10), ramp: r.getAttribute("quarkgis_ramp") ?? "YlOrRd", weight: r.getAttribute("weight_expression") ?? "", maxValue: Number(r.getAttribute("max_value") ?? 0) };
 }
 
 /** A QGIS gradient color ramp (transparent at the low end, so sparse areas fade out). */
@@ -700,7 +700,7 @@ export function setHeatmap(id: string, h: Partial<Heatmap> = {}) {
   r.setAttribute("radius_unit", "0");
   r.setAttribute("weight_expression", next.weight);
   r.setAttribute("max_value", String(next.maxValue));
-  r.setAttribute("qgisweb_ramp", next.ramp);
+  r.setAttribute("quarkgis_ramp", next.ramp);
   writeGradient(r.querySelector(":scope > colorramp")!, next.ramp);
   replaceRenderer(id, r);
 }

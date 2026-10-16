@@ -19,7 +19,7 @@
       <p>{ui.status}</p>
       {#if ui.phase === "booting"}<p class="hint">{t("The QGIS engine is about 20 MB; it is cached after the first visit.")}</p>{/if}
     {:else}
-      <h1><span class="logo big"></span>QGIS Web</h1>
+      <h1><span class="logo big"></span>QuarkGIS</h1>
       <p class="lead">{t("Open real QGIS projects in your browser, rendered by QGIS itself.")}</p>
       {#if autosave && ui.phase !== "error"}
         {@const msg = t("{found} in “{name}” ({date}).", { name: autosave.name, date: new Date(autosave.savedAt).toLocaleString() }).split("{found}")}
@@ -56,8 +56,10 @@
         </div>
       {/if}
       <p class="hint">{t("…or drop a .qgs / .qgz with its data anywhere. Nothing is uploaded: your data never leaves this browser.")}</p>
-      <button class="link" onclick={() => (ui.dialog = "settings")}>{t("Choose what opens on launch…")}</button>
-      · <a href={`${import.meta.env.BASE_URL}docs/`} target="_blank" rel="noopener">{t("Documentation")}</a>
+      <p class="welcome-links">
+        <button class="link" onclick={() => (ui.dialog = "settings")}>{t("Choose what opens on launch…")}</button> ·
+        <a class="link" href={`${import.meta.env.BASE_URL}docs/`} target="_blank" rel="noopener">{t("Documentation")}</a>
+      </p>
     {/if}
   </div>
 </div>

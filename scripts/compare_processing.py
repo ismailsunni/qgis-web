@@ -1,4 +1,4 @@
-"""Compares QGIS Web processing outputs with QGIS Desktop's native algorithms.
+"""Compares QuarkGIS processing outputs with QGIS Desktop's native algorithms.
 
 QT_QPA_PLATFORM=offscreen PYTHONPATH=/usr/share/qgis/python:/usr/share/qgis/python/plugins \\
   python3 scripts/compare_processing.py <processing.gpkg> <world.gpkg>
@@ -18,7 +18,7 @@ import processing  # noqa: E402
 from processing.core.Processing import Processing  # noqa: E402
 
 Processing.initialize()
-# QGIS Web, like GEOS, doesn't pre-validate geometries: compare without Desktop's validity check.
+# QuarkGIS, like GEOS, doesn't pre-validate geometries: compare without Desktop's validity check.
 context = QgsProcessingContext()
 context.setInvalidGeometryCheck(QgsFeatureRequest.InvalidGeometryCheck.GeometryNoCheck)
 

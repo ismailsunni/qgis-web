@@ -1,8 +1,8 @@
-# QGIS Web
+# QuarkGIS
 
 A zero-install web GIS that opens, edits and saves real QGIS projects (`.qgs` / `.qgz`) in the browser, rendered by QGIS core itself through [qgis-js](https://github.com/qgis/qgis-js) (QGIS compiled to WebAssembly).
 
-**Live app:** https://ismailsunni.id/qgis-web/ · **Documentation:** https://ismailsunni.id/qgis-web/docs/ · **Product spec:** [docs/PRD.md](docs/PRD.md)
+**Live app:** https://ismailsunni.id/quarkgis/ · **Documentation:** https://ismailsunni.id/quarkgis/docs/ · **Product spec:** [docs/PRD.md](docs/PRD.md)
 
 Everything runs client-side: projects and data stay in your browser unless you open a remote URL or publish a share link.
 
@@ -67,7 +67,7 @@ See [docs/feature-comparison.md](docs/feature-comparison.md) for how this compar
 | `panels=none` | Start with all panels closed. |
 | `maponly` | Only the map, for iframes. |
 
-Example: https://ismailsunni.id/qgis-web/?url=projects/world/world.qgz&maponly
+Example: https://ismailsunni.id/quarkgis/?url=projects/world/world.qgz&maponly
 
 ## Development
 

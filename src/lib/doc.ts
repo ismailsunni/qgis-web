@@ -64,7 +64,7 @@ export function serialize(xml = doc!.xml) {
 }
 
 /** Path of the copy the engine reads; it sits next to the original so relative paths resolve. */
-const enginePath = () => `${doc!.dir}/${doc!.file.replace(/\.(qgs|qgz)$/i, "")}.qgisweb.qgs`;
+const enginePath = () => `${doc!.dir}/${doc!.file.replace(/\.(qgs|qgz)$/i, "")}.quarkgis.qgs`;
 
 /** Writes the document for the engine and reloads it. */
 export function reload() {
@@ -98,7 +98,7 @@ export function projectFiles(): Record<string, Uint8Array> {
   const d = doc!;
   const out: Record<string, Uint8Array> = {};
   for (const p of listFilesSafe(d.root)) {
-    if (p.endsWith(".qgisweb.qgs") || p === `${d.dir}/${d.file}`) continue;
+    if (p.endsWith(".quarkgis.qgs") || p === `${d.dir}/${d.file}`) continue;
     out[p.slice(d.root.length + 1)] = readFile(p);
   }
   out[`${d.dir}/${d.file}`.slice(d.root.length + 1)] = projectBytes();

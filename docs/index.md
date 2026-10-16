@@ -3,17 +3,17 @@ hide:
   - navigation
 ---
 
-# QGIS Web
+# QuarkGIS
 
 **Open, edit and share real QGIS projects in your browser, rendered by QGIS itself.**
 
-QGIS Web runs [QGIS](https://qgis.org) compiled to WebAssembly ([qgis-js](https://github.com/qgis/qgis-js)), so a `.qgs` / `.qgz` project looks the same as in QGIS Desktop: same symbols, same labels, same CRS. There's nothing to install and no server: projects and data stay in your browser.
+QuarkGIS runs [QGIS](https://qgis.org) compiled to WebAssembly ([qgis-js](https://github.com/qgis/qgis-js)), so a `.qgs` / `.qgz` project looks the same as in QGIS Desktop: same symbols, same labels, same CRS. There's nothing to install and no server: projects and data stay in your browser.
 
-[Open the app](https://ismailsunni.id/qgis-web/){ .md-button .md-button--primary }
+[Open the app](https://ismailsunni.id/quarkgis/){ .md-button .md-button--primary }
 [Get started](getting-started.md){ .md-button }
-[Source on GitHub](https://github.com/ismailsunni/qgis-web){ .md-button }
+[Source on GitHub](https://github.com/ismailsunni/quarkgis){ .md-button }
 
-![QGIS Web with the demo project](assets/screenshots/app.png)
+![QuarkGIS with the demo project](assets/screenshots/app.png)
 
 ## What it does
 
@@ -85,7 +85,7 @@ QGIS Web runs [QGIS](https://qgis.org) compiled to WebAssembly ([qgis-js](https:
 
 </div>
 
-## Why QGIS Web
+## Why QuarkGIS
 
 - **What you see is what QGIS draws.** Rendering is done by QGIS core, not re-implemented, so styles and labels match Desktop. Test projects differ from Desktop renders by less than 0.2% of pixels.
 - **The project file is the source of truth.** Every change is written into the QGIS project XML, so nothing is lost or converted when you go back to Desktop.
@@ -93,4 +93,4 @@ QGIS Web runs [QGIS](https://qgis.org) compiled to WebAssembly ([qgis-js](https:
 - **In your language.** English, German, French, Spanish and Indonesian.
 
 !!! note "Status"
-    QGIS Web is an independent open-source project built on qgis-js. It is not an official QGIS.ORG product. See [how it works](how-it-works.md) for what runs where and the current limitations.
+    QuarkGIS is an independent open-source project built on qgis-js. It is not an official QGIS.ORG product. See [how it works](how-it-works.md) for what runs where and the current limitations.

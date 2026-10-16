@@ -1,16 +1,16 @@
-# QGIS Web App — PRD
+# QuarkGIS App — PRD
 
 Oct 14, 2026 · @Sunni
 
 ## Overview
 
-A zero-install web GIS that opens, edits and saves real QGIS projects in the browser, with rendering identical to QGIS Desktop because it runs QGIS core itself. Working name: QGIS Web.
+A zero-install web GIS that opens, edits and saves real QGIS projects in the browser, with rendering identical to QGIS Desktop because it runs QGIS core itself. Working name: QuarkGIS.
 
 The engine already exists: [qgis-js](https://github.com/qgis/qgis-js) compiles QGIS core to WebAssembly and can load a project and render it to images. It ships no application UI, no layer panel, no style editor, no attribute table. This product is that application.
 
 **Positioning**
 
-|  | GeoLibre | qgis-js today | QGIS Web (this product) |
+|  | GeoLibre | qgis-js today | QuarkGIS (this product) |
 | --- | --- | --- | --- |
 | What it is | Full browser GIS app | Engine + demos | Full browser GIS app |
 | Rendering | MapLibre / deck.gl | QGIS core (wasm) | QGIS core (wasm) |
@@ -22,7 +22,7 @@ The bet: GeoLibre proves people want a light, private, in-browser GIS. QGIS user
 
 ## Goals and non-goals
 
-The one goal that overrides the rest: a project round-tripped through QGIS Web opens in QGIS Desktop with nothing lost.
+The one goal that overrides the rest: a project round-tripped through QuarkGIS opens in QGIS Desktop with nothing lost.
 
 **Goals**
 
@@ -158,7 +158,7 @@ Phases are shown at equal width; durations are not set yet. Each milestone's ups
 
 ## Cloud sharing (paid, M5)
 
-Users can publish a project to a share link or an embed, but only if every layer reads from a remote source; QGIS Web never hosts user data, only the project file.
+Users can publish a project to a share link or an embed, but only if every layer reads from a remote source; QuarkGIS never hosts user data, only the project file.
 
 This keeps hosting to a few kilobytes per project and avoids storing, licensing or securing anyone's data. It depends on remote-layer support (F12), so M5 follows M3.
 

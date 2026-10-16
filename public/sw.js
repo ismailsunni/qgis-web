@@ -1,16 +1,16 @@
-// QGIS Web service worker.
+// QuarkGIS service worker.
 // 1. Adds COOP/COEP headers so the page is cross-origin isolated (needed for multithreaded
 //    WebAssembly) on static hosts that can't set headers, like GitHub Pages.
 // 2. Caches the QGIS engine (assets/wasm, ~20 MB compressed) per qgis-js version, so later
 //    visits start without downloading it again.
 const version = new URL(location.href).searchParams.get("v") ?? "dev";
-const ENGINE_CACHE = `qgisweb-engine-${version}`;
+const ENGINE_CACHE = `quarkgis-engine-${version}`;
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) =>
   event.waitUntil(
     (async () => {
-      for (const key of await caches.keys()) if (key.startsWith("qgisweb-engine-") && key !== ENGINE_CACHE) await caches.delete(key);
+      for (const key of await caches.keys()) if (key.startsWith("quarkgis-engine-") && key !== ENGINE_CACHE) await caches.delete(key);
       await self.clients.claim();
     })(),
   ),

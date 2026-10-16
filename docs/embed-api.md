@@ -1,9 +1,9 @@
 # Embed API
 
-A page that embeds QGIS Web in an iframe can drive the map and listen to it with `postMessage`.
+A page that embeds QuarkGIS in an iframe can drive the map and listen to it with `postMessage`.
 
 ```html
-<iframe id="map" src="https://ismailsunni.id/qgis-web/?url=https://example.org/project.qgz&maponly"
+<iframe id="map" src="https://ismailsunni.id/quarkgis/?url=https://example.org/project.qgz&maponly"
         width="800" height="500" allow="cross-origin-isolated"></iframe>
 ```
 
@@ -13,11 +13,11 @@ The QGIS engine needs a cross-origin isolated page: the host page must be served
 
 ## Protocol
 
-Every message is an object with `qgisweb: 1`.
+Every message is an object with `quarkgis: 1`.
 
-- **Command** (host → map): `{ qgisweb: 1, id, command, args }`
-- **Reply** (map → host): `{ qgisweb: 1, id, ok: true, result }` or `{ qgisweb: 1, id, ok: false, error }`
-- **Event** (map → host): `{ qgisweb: 1, event, data }`
+- **Command** (host → map): `{ quarkgis: 1, id, command, args }`
+- **Reply** (map → host): `{ quarkgis: 1, id, ok: true, result }` or `{ quarkgis: 1, id, ok: false, error }`
+- **Event** (map → host): `{ quarkgis: 1, event, data }`
 
 Only the frame's direct parent can send commands. Events are sent to the origin of the first
 command (send `hello` first). A map published with an embed allowlist only answers pages on those
@@ -63,7 +63,7 @@ function connect(frame) {
   const pending = new Map();
   const listeners = {};
   addEventListener("message", (e) => {
-    if (e.source !== frame.contentWindow || e.data?.qgisweb !== 1) return;
+    if (e.source !== frame.contentWindow || e.data?.quarkgis !== 1) return;
     if (e.data.event) (listeners[e.data.event] ?? []).forEach((fn) => fn(e.data.data));
     else pending.get(e.data.id)?.(e.data), pending.delete(e.data.id);
   });
@@ -71,7 +71,7 @@ function connect(frame) {
     new Promise((resolve, reject) => {
       const id = ++n;
       pending.set(id, (r) => (r.ok ? resolve(r.result) : reject(new Error(r.error))));
-      frame.contentWindow.postMessage({ qgisweb: 1, id, command, args }, new URL(frame.src).origin);
+      frame.contentWindow.postMessage({ quarkgis: 1, id, command, args }, new URL(frame.src).origin);
     });
   const on = (event, fn) => (listeners[event] ??= []).push(fn);
   return { call, on };

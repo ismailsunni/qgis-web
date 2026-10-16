@@ -6,7 +6,7 @@ A recent desktop **Chrome, Edge or Firefox**. The QGIS engine is about 20 MB; it
 
 ## Open the app
 
-Go to **<https://ismailsunni.id/qgis-web/>**. The start page offers:
+Go to **<https://ismailsunni.id/quarkgis/>**. The start page offers:
 
 ![Start page](assets/screenshots/welcome.png)
 
@@ -19,7 +19,7 @@ Go to **<https://ismailsunni.id/qgis-web/>**. The start page offers:
 You can also drop files or a whole folder anywhere on the page.
 
 !!! tip "Open a project from the web"
-    Add `?url=` to the address: `https://ismailsunni.id/qgis-web/?url=https://example.org/maps/project.qgz`. Relative data paths are fetched next to the project, so the server must allow cross-origin requests (CORS).
+    Add `?url=` to the address: `https://ismailsunni.id/quarkgis/?url=https://example.org/maps/project.qgz`. Relative data paths are fetched next to the project, so the server must allow cross-origin requests (CORS).
 
 ## A first tour
 

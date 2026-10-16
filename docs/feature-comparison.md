@@ -1,22 +1,22 @@
-# Feature comparison: GeoLibre, RustGIS and QGIS Web
+# Feature comparison: GeoLibre, RustGIS and QuarkGIS
 
-October 2026. Sources: the GeoLibre repository ([README](https://github.com/opengeos/GeoLibre), `docs/features.md`, user guide) and the RustGIS repository ([README](https://github.com/opengeos/RustGIS), `ROADMAP.md`, user guide), compared with QGIS Web as of commit `545ac3d` (inventory updated after the "worth adding" items were built).
+October 2026. Sources: the GeoLibre repository ([README](https://github.com/opengeos/GeoLibre), `docs/features.md`, user guide) and the RustGIS repository ([README](https://github.com/opengeos/RustGIS), `ROADMAP.md`, user guide), compared with QuarkGIS as of commit `545ac3d` (inventory updated after the "worth adding" items were built).
 
-The goal is a list to decide from, not a plan: part 1 inventories what the two apps do, part 2 sorts what QGIS Web lacks into worth adding, maybe later, and not needed, judged against the [PRD](PRD.md).
+The goal is a list to decide from, not a plan: part 1 inventories what the two apps do, part 2 sorts what QuarkGIS lacks into worth adding, maybe later, and not needed, judged against the [PRD](PRD.md).
 
-**Legend:** ✅ has it · ◐ partly · — doesn't have it. Effort for QGIS Web: **S** about a day, **M** a few days, **L** a week or more.
+**Legend:** ✅ has it · ◐ partly · — doesn't have it. Effort for QuarkGIS: **S** about a day, **M** a few days, **L** a week or more.
 
 ## The three apps in one paragraph each
 
 - **GeoLibre** (TypeScript, React, MapLibre, DuckDB-WASM, deck.gl, Tauri): a very broad cloud-native GIS for web, desktop, iOS, Android and Jupyter. Its own `.geolibre` project format; imports QGIS and ArcGIS Pro projects (lossy). Four rendering engines, 1,000+ WASM processing tools, dozens of data-catalog plugins, AI assistant, collaboration, story maps.
 - **RustGIS** (pure Rust, egui, tiny-skia; desktop and WASM): an ArcGIS Pro-like desktop GIS with a ribbon, where every action is a scriptable command (CLI, Python, MCP). Its own `.rgis` format. Strong on editing, data design, layouts/reports, and sharing to open formats.
-- **QGIS Web** (this project): opens, edits and saves real `.qgs`/`.qgz` projects, rendered by QGIS itself; anything saved opens unchanged in QGIS Desktop. Narrower by design (PRD: "the everyday 80%"), but the only one of the three with exact QGIS rendering and lossless round-trip.
+- **QuarkGIS** (this project): opens, edits and saves real `.qgs`/`.qgz` projects, rendered by QGIS itself; anything saved opens unchanged in QGIS Desktop. Narrower by design (PRD: "the everyday 80%"), but the only one of the three with exact QGIS rendering and lossless round-trip.
 
 ## Part 1. Inventory
 
 ### Interface and app
 
-| Feature | GeoLibre | RustGIS | QGIS Web |
+| Feature | GeoLibre | RustGIS | QuarkGIS |
 | --- | --- | --- | --- |
 | Command palette (Ctrl/Cmd+K) | ✅ | ✅ | ✅ |
 | Keyboard shortcuts, shortcut cheat sheet | ✅ | ✅ | ✅ |
@@ -34,7 +34,7 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 
 ### Map and basemaps
 
-| Feature | GeoLibre | RustGIS | QGIS Web |
+| Feature | GeoLibre | RustGIS | QuarkGIS |
 | --- | --- | --- | --- |
 | Basemap gallery with previews | ✅ | ✅ (5 offline basemaps) | ✅ (8 basemaps, with credits) |
 | Vector basemaps / MapLibre styles | ✅ | ✅ | — |
@@ -60,7 +60,7 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 
 ### Data in
 
-| Feature | GeoLibre | RustGIS | QGIS Web |
+| Feature | GeoLibre | RustGIS | QuarkGIS |
 | --- | --- | --- | --- |
 | GeoPackage, GeoJSON, Shapefile (+zip), FlatGeobuf, GeoParquet, KML, GPX, GeoTIFF/COG | ✅ | ✅ | ✅ |
 | KMZ, GML, TopoJSON, MapInfo MIF | ◐ | ✅ | — (KML/GML via GDAL may work, untested) |
@@ -85,7 +85,7 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 
 ### Layers, styling, labels
 
-| Feature | GeoLibre | RustGIS | QGIS Web |
+| Feature | GeoLibre | RustGIS | QuarkGIS |
 | --- | --- | --- | --- |
 | Layer tree: groups, visibility, opacity, reorder, rename | ✅ | ✅ | ✅ |
 | Group opacity, multi-select, sort A–Z | ✅ | — | — |
@@ -111,7 +111,7 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 
 ### Attribute data and selection
 
-| Feature | GeoLibre | RustGIS | QGIS Web |
+| Feature | GeoLibre | RustGIS | QuarkGIS |
 | --- | --- | --- | --- |
 | Attribute table: sort, filter, zoom to row, virtual scrolling | ✅ | ✅ | ✅ |
 | Multi-row selection synced with the map | ✅ | ✅ | ✅ |
@@ -128,7 +128,7 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 
 ### Editing
 
-| Feature | GeoLibre | RustGIS | QGIS Web |
+| Feature | GeoLibre | RustGIS | QuarkGIS |
 | --- | --- | --- | --- |
 | Add / delete features, edit attributes | ✅ | ✅ | ✅ |
 | Move vertices | ✅ | ◐ (planned) | ✅ |
@@ -143,7 +143,7 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 
 ### Processing and analysis
 
-| Feature | GeoLibre | RustGIS | QGIS Web |
+| Feature | GeoLibre | RustGIS | QuarkGIS |
 | --- | --- | --- | --- |
 | Core vector tools (buffer, clip, dissolve, intersection…) | ✅ | ✅ | ✅ (14, match Desktop) |
 | Union, spatial join, merge, points along lines | ✅ | ◐ | ✅ (match Desktop) |
@@ -162,7 +162,7 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 
 ### Output, sharing and collaboration
 
-| Feature | GeoLibre | RustGIS | QGIS Web |
+| Feature | GeoLibre | RustGIS | QuarkGIS |
 | --- | --- | --- | --- |
 | Save project, Save As, open recent | ✅ | ✅ | ✅ |
 | Export map image (PNG at DPI) | ✅ | ✅ | ✅ |
@@ -180,7 +180,7 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 
 ### Automation, AI and platforms
 
-| Feature | GeoLibre | RustGIS | QGIS Web |
+| Feature | GeoLibre | RustGIS | QuarkGIS |
 | --- | --- | --- | --- |
 | AI assistant (natural language to actions) | ✅ | ✅ | — |
 | MCP server for AI agents | ✅ | ✅ | — |
@@ -271,7 +271,7 @@ Out of scope for the PRD, against its design, or better left to other tools.
 | Ribbon UI, UI profiles, pane sets, workflow manager | PRD: simple shell, few panels, not a Desktop clone. |
 | Domains, subtypes, attribute rules, archiving (RustGIS data design) | Esri concepts; QGIS forms and constraints (item 17 above) cover the QGIS side. |
 
-## Where QGIS Web is ahead
+## Where QuarkGIS is ahead
 
 - Exact QGIS rendering of any project, including renderers, symbol layers, labels and expressions that neither app reproduces (rule-based labels, geometry generators, data-defined properties).
 - Lossless `.qgs`/`.qgz` round-trip, verified in CI against QGIS Desktop. GeoLibre's QGIS import is lossy and one-way; RustGIS doesn't read QGIS projects.
