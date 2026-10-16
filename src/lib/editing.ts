@@ -3,7 +3,7 @@ import type Geometry from "ol/geom/Geometry";
 import type { QgsVectorLayer } from "qgis-js";
 import { layerSource, mapLayerEl, project, child, reload } from "./doc";
 import { engine, exists, findMapLayer, free, readFile, writeFile } from "./engine";
-import { encodeBlob, openGpkg, tableInfo } from "./gpkg";
+import { encodeBlob, decodeBlob, openGpkg, tableInfo } from "./gpkg";
 import { rows, type Db } from "./sqlite";
 import { apply } from "./commit";
 import { srid, redraw } from "./map";
@@ -236,6 +236,11 @@ async function layerTransform() {
 
 /** Encodes a geometry drawn on the map (project CRS) for the layer's table. */
 async function toBlob(g: Geometry) {
+  return encodeBlob(await toLayerWkb(g), session!.info.srsId);
+}
+
+/** WKB in the layer's CRS (and multi type, if the layer is multi) of a map geometry. */
+export async function toLayerWkb(g: Geometry) {
   const s = session!;
   const geom = g.clone();
   const t = await layerTransform();
@@ -255,8 +260,51 @@ async function toBlob(g: Geometry) {
     const c = (geom as never as { getCoordinates(): never }).getCoordinates();
     olGeom = geom.getType() === "Polygon" ? new MultiPolygon([c]) : geom.getType() === "LineString" ? new MultiLineString([c]) : new MultiPoint([c]);
   }
-  const wkb = new Uint8Array(wkbFormat.writeGeometry(olGeom) as ArrayBuffer);
-  return encodeBlob(wkb, s.info.srsId);
+  return new Uint8Array(wkbFormat.writeGeometry(olGeom) as ArrayBuffer);
+}
+
+/** Geometries (WKB, layer CRS) of features of the edit layer. */
+export function geometries(fids: number[]) {
+  const s = session!;
+  const out = new Map<number, Uint8Array>();
+  for (const r of rows<{ fid: number; g: Uint8Array | null }>(s.db, `select ${q(s.info.fid)} as fid, ${q(s.info.geom!)} as g from ${q(s.table)} where ${q(s.info.fid)} in (${fids.map(() => "?").join(",")})`, fids)) {
+    const d = r.g ? decodeBlob(r.g) : null;
+    if (d && !d.empty) out.set(r.fid, d.wkb.slice());
+  }
+  return out;
+}
+
+export const isMultiLayer = () => session!.info.geomType.startsWith("MULTI");
+
+/**
+ * One undoable geometry operation: update features, insert copies of features (same attributes)
+ * with new geometries, and delete features. Used by merge and split.
+ */
+export function replaceFeatures(label: string, op: { update?: [number, Uint8Array][]; insert?: [number, Uint8Array][]; remove?: number[] }) {
+  const s = session!;
+  const doSql: Stmt[] = [];
+  const undoSql: Stmt[] = [];
+  const set = `update ${q(s.table)} set ${q(s.info.geom!)} = ? where ${q(s.info.fid)} = ?`;
+  for (const [fid, wkb] of op.update ?? []) {
+    doSql.push([set, [encodeBlob(wkb, s.info.srsId), fid]]);
+    undoSql.push([set, [row(fid)?.[s.info.geom!] ?? null, fid]]);
+  }
+  let [{ next }] = rows<{ next: number }>(s.db, `select coalesce(max(${q(s.info.fid)}), 0) + 1 as next from ${q(s.table)}`);
+  for (const [from, wkb] of op.insert ?? []) {
+    const r = { ...row(from), [s.info.fid]: next, [s.info.geom!]: encodeBlob(wkb, s.info.srsId) };
+    const cols = Object.keys(r);
+    doSql.push([`insert into ${q(s.table)} (${cols.map(q).join(",")}) values (${cols.map(() => "?").join(",")})`, cols.map((c) => r[c])]);
+    undoSql.push([`delete from ${q(s.table)} where ${q(s.info.fid)} = ?`, [next++]]);
+  }
+  for (const fid of op.remove ?? []) {
+    const r = row(fid);
+    if (!r) continue;
+    const cols = Object.keys(r);
+    doSql.push([`delete from ${q(s.table)} where ${q(s.info.fid)} = ?`, [fid]]);
+    undoSql.push([`insert into ${q(s.table)} (${cols.map(q).join(",")}) values (${cols.map(() => "?").join(",")})`, cols.map((c) => r[c])]);
+  }
+  // Undo runs inserts back before restoring geometries.
+  commit({ label, doSql, undoSql: undoSql.reverse() });
 }
 
 export async function addFeature(g: Geometry) {

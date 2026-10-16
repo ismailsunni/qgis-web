@@ -17,6 +17,7 @@ import { ui } from "./state.svelte";
 type Geos = Awaited<ReturnType<typeof import("geos-wasm").default>>;
 let geosPromise: Promise<Geos> | null = null;
 const getGeos = () => (geosPromise ??= import("geos-wasm").then((m) => m.default()));
+export const geosOps = async () => new GeosOps(await getGeos());
 
 export type ParamType = "layer" | "number" | "enum" | "field" | "crs" | "bool" | "expression";
 export interface Param {
@@ -92,6 +93,22 @@ export class GeosOps {
     const out = op(g);
     this.geos.GEOSGeom_destroy(g);
     return this.write(out);
+  }
+
+  /** Polygons formed by a set of lines (GEOSPolygonize takes an array of geometry pointers). */
+  polygonize(lines: number) {
+    const arr = this.geos.Module._malloc(4);
+    // Emscripten's setValue(ptr, value, type); the bundled typings declare another order.
+    (this.geos.Module.setValue as unknown as (ptr: number, value: number, type: string) => void)(arr, lines, "i32");
+    const out = this.geos.GEOSPolygonize(arr, 1);
+    this.geos.Module._free(arr);
+    return out;
+  }
+
+  /** The parts of a geometry, as new geometries (WKB). */
+  parts(g: number): Uint8Array[] {
+    const n = this.geos.GEOSGetNumGeometries(g);
+    return Array.from({ length: n }, (_, i) => this.write(this.geos.GEOSGeom_clone(this.geos.GEOSGetGeometryN(g, i)))!).filter(Boolean);
   }
 
   /** Union of many WKB geometries. */

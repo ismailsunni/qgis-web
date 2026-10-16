@@ -41,6 +41,9 @@
     paste: "M9 4h6v3H9V4ZM6 6H5v15h14V6h-1M9 12h6M9 16h4",
     calc: "M6 3h12v18H6V3Zm2 3h8v3H8V6Zm1 7h.01M12 13h.01M15 13h.01M9 16h.01M12 16h.01M15 16h.01",
     columns: "M4 4h16v16H4V4Zm6 0v16m6-16v16",
+    split: "M4 20 20 4M7 4h-3v3M17 20h3v-3M5 12h3M16 12h3",
+    merge: "M5 5h6v6H5V5Zm8 8h6v6h-6v-6ZM8 11v5h5M16 13V8h-5",
+    magnet: "M6 3v9a6 6 0 0 0 12 0V3h-4v9a2 2 0 0 1-4 0V3H6Zm0 4h4m4 0h4",
     warn: "M12 3 2 20h20L12 3Zm0 6v5m0 3v.5",
   };
   let { name, size = 20 }: { name: keyof typeof paths; size?: number } = $props();

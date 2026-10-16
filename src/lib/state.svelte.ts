@@ -50,7 +50,9 @@ export const ui = $state({
   dirty: false,
   /** Layer in edit mode (one at a time, as a GeoPackage write session). */
   editing: null as string | null,
-  editTool: null as "add" | "modify" | "delete" | null,
+  editTool: null as "add" | "modify" | "delete" | "split" | null,
+  /** Snap to vertices and edges of visible layers while editing. */
+  snapping: true,
   /** What a click on the map does. */
   mapTool: "identify" as "identify" | "measure-line" | "measure-area" | "select" | "select-box",
   /** A CSV waiting for its import options (see CsvDialog). */

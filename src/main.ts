@@ -24,10 +24,13 @@ import * as bookmarks from "./lib/bookmarks";
 import * as selection from "./lib/selection";
 import * as exporter from "./lib/export";
 import * as autosave from "./lib/autosave";
+import * as editops from "./lib/editops";
+import * as editmap from "./lib/editmap";
+import LineString from "ol/geom/LineString";
 import { ui } from "./lib/state.svelte";
 
 // Scripted access for end-to-end tests (see tests/).
-Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish, gpkg, PointGeometry: Point, settings, storage, history, maptools, clipboard, bookmarks, selection, exporter, autosave } });
+Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish, gpkg, PointGeometry: Point, settings, storage, history, maptools, clipboard, bookmarks, selection, exporter, autosave, editops, editmap, LineString } });
 
 settings.applyTheme();
 mount(App, { target: document.getElementById("app")! });

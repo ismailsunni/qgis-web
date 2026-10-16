@@ -8,7 +8,10 @@ import GeoJSON from "ol/format/GeoJSON";
 import type { Coordinate } from "ol/coordinate";
 import type { Interaction } from "ol/interaction";
 import { Style, Stroke, Fill, Circle } from "ol/style";
-import { IdentifyMode } from "qgis-js";
+import { IdentifyMode, LayerType, type QgsVectorLayer } from "qgis-js";
+import { unByKey } from "ol/Observable";
+import { flatLayers, snapshotTree } from "./tree";
+import { splitWith } from "./editops";
 import { engine, free } from "./engine";
 import { olMap, overlays, hitBox, srid } from "./map";
 import { symbolKind } from "./style";
@@ -32,6 +35,34 @@ const sketchLayer = new VectorLayer({
 overlays.push(sketchLayer);
 const geojson = new GeoJSON();
 let interactions: Interaction[] = [];
+
+/** Snapping targets: vertices and edges of the visible vector layers in view (QGIS's "all layers"). */
+const snapSource = new VectorSource();
+const SNAP_LIMIT = 5000;
+
+function refreshSnap() {
+  snapSource.clear();
+  if (!ui.editing || !ui.snapping) return;
+  const api = engine();
+  const [x0, y0, x1, y1] = olMap().getView().calculateExtent(olMap().getSize());
+  let n = 0;
+  for (const l of flatLayers(snapshotTree()).filter((l) => l.visible && l.valid && l.layerType === LayerType.Vector)) {
+    const layer = engine().layerTreeRoot().findLayer(l.layerId!)?.layer() as QgsVectorLayer | undefined;
+    if (!layer || n >= SNAP_LIMIT) break;
+    const req = new api.QgsFeatureRequest();
+    req.setDestinationCrs(srid());
+    req.setFilterRect(new api.QgsRectangle(x0, y0, x1, y1));
+    req.setLimit(SNAP_LIMIT - n);
+    const it = layer.getFeatures(req);
+    for (let f = it.nextFeature(); f; f = it.nextFeature(), n++) {
+      if (f.hasGeometry()) snapSource.addFeature(new Feature(geojson.readGeometry(f.geometry().asJson(10))!));
+      free(f);
+    }
+    free(it);
+    free(req);
+  }
+}
+let snapKey: unknown = null;
 let selectedFid: number | null = null;
 
 function clear() {
@@ -40,23 +71,48 @@ function clear() {
   interactions = [];
   source.clear();
   selectedFid = null;
+  if (snapKey) unByKey(snapKey as never);
+  snapKey = null;
+  snapSource.clear();
+}
+
+/** Adds an interaction plus snapping (to other layers and to the sketch itself). */
+function use(...list: Interaction[]) {
+  if (ui.snapping) {
+    refreshSnap();
+    snapKey = olMap().on("moveend", refreshSnap);
+    list.push(new Snap({ source: snapSource }), new Snap({ source }));
+  }
+  interactions = list;
+  list.forEach((i) => olMap().addInteraction(i));
 }
 
 export function setTool(tool: typeof ui.editTool) {
   clear();
   ui.editTool = tool;
-  if (tool !== "add" || !ui.editing) return;
-  const kind = symbolKind(ui.editing);
-  const type = kind === "marker" ? "Point" : kind === "line" ? "LineString" : "Polygon";
-  const draw = new Draw({ source, type });
-  draw.on("drawend", async (e) => {
-    const fid = await addFeature(e.feature.getGeometry()!);
-    setTimeout(() => source.clear());
-    if (fid !== undefined) showFeatureForm(fid);
-  });
-  interactions = [draw];
-  olMap().addInteraction(draw);
+  if (!ui.editing) return;
+  if (tool === "add") {
+    const kind = symbolKind(ui.editing);
+    const type = kind === "marker" ? "Point" : kind === "line" ? "LineString" : "Polygon";
+    const draw = new Draw({ source, type });
+    draw.on("drawend", async (e) => {
+      const fid = await addFeature(e.feature.getGeometry()!);
+      setTimeout(() => source.clear());
+      if (fid !== undefined) showFeatureForm(fid);
+    });
+    use(draw);
+  } else if (tool === "split") {
+    const draw = new Draw({ source, type: "LineString" });
+    draw.on("drawend", (e) => {
+      splitWith(e.feature.getGeometry()!).catch((err) => toast(err.message));
+      setTimeout(() => source.clear());
+    });
+    use(draw);
+  }
 }
+
+/** Re-applies the current tool (e.g. after snapping was switched). */
+export const resetTool = () => setTool(ui.editTool);
 
 /** Opens the identify panel on a feature of the edit layer so its attributes can be typed in. */
 async function showFeatureForm(fid: number) {
@@ -77,7 +133,7 @@ function editLayerHit(coord: Coordinate) {
 
 /** Handles a map click while editing; returns true if it was consumed. */
 export function editClick(coord: Coordinate) {
-  if (!ui.editing || !ui.editTool || ui.editTool === "add") return ui.editTool === "add";
+  if (!ui.editing || !ui.editTool || ui.editTool === "add" || ui.editTool === "split") return ui.editTool === "add" || ui.editTool === "split";
   const fid = editLayerHit(coord);
   if (fid === null) {
     clear();
@@ -89,6 +145,7 @@ export function editClick(coord: Coordinate) {
   }
   // Modify: show the feature's vertices.
   clear();
+  ui.editTool = "modify";
   selectedFid = fid;
   const json = featureGeometry(fid);
   if (!json) return true;
@@ -96,8 +153,7 @@ export function editClick(coord: Coordinate) {
   source.addFeature(feature);
   const modify = new Modify({ source });
   modify.on("modifyend", () => setGeometry(selectedFid!, feature.getGeometry()!).catch((e) => toast(e.message)));
-  interactions = [modify, new Snap({ source })];
-  interactions.forEach((i) => olMap().addInteraction(i));
+  use(modify);
   return true;
 }
 
