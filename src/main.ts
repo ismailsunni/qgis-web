@@ -29,9 +29,10 @@ import * as editmap from "./lib/editmap";
 import LineString from "ol/geom/LineString";
 import Polygon from "ol/geom/Polygon";
 import { ui } from "./lib/state.svelte";
+import { loadLanguage } from "./lib/i18n";
 
 // Scripted access for end-to-end tests (see tests/).
 Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish, gpkg, PointGeometry: Point, settings, storage, history, maptools, clipboard, bookmarks, selection, exporter, autosave, editops, editmap, LineString, Polygon } });
 
 settings.applyTheme();
-mount(App, { target: document.getElementById("app")! });
+loadLanguage().then(() => mount(App, { target: document.getElementById("app")! }));

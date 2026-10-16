@@ -21,13 +21,15 @@ interface Settings {
   coords: CoordFormat;
   /** Map view when a project opens: the view saved in the project (as QGIS does) or its full extent. */
   view: "saved" | "full";
+  /** UI language code, or "auto" for the browser's. */
+  language: string;
 }
 
 const KEY = "qgisweb:settings";
 const LAST = "qgisweb:last-project";
 
 export function getSettings(): Settings {
-  return { startup: "welcome", specific: null, theme: "system", coords: "decimal", view: "saved", ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
+  return { startup: "welcome", specific: null, theme: "system", coords: "decimal", view: "saved", language: "auto", ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
 }
 
 export function saveSettings(s: Partial<Settings>) {

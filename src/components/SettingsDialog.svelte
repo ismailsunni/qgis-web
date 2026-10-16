@@ -4,6 +4,7 @@
   import { DEMO_URL } from "../lib/actions";
   import { ui, toast } from "../lib/state.svelte";
   import Icon from "./Icon.svelte";
+  import { LANGUAGES } from "../lib/i18n";
 
   let { onclose }: { onclose: () => void } = $props();
 
@@ -12,6 +13,7 @@
   let specific = $state<ProjectRef | null>(initial.specific);
   let theme = $state<Theme>(initial.theme);
   let mapView = $state(initial.view);
+  let language = $state(initial.language);
   let stored = $state<StoredProject[]>([]);
   let url = $state(initial.specific?.kind === "url" ? initial.specific.url : "");
   listProjects().then((p) => (stored = p));
@@ -54,7 +56,9 @@
 
   function save() {
     if (startup === "specific" && !specific) return toast("Choose the project to open on launch.");
-    saveSettings({ startup, specific, theme, view: mapView });
+    saveSettings({ startup, specific, theme, view: mapView, language });
+    // Translations are applied when the app starts.
+    if (language !== initial.language) location.reload();
     toast("Settings saved");
     onclose();
   }
@@ -103,6 +107,12 @@
         <option value="system">Follow the system</option>
         <option value="light">Light</option>
         <option value="dark">Dark</option>
+      </select>
+    </label>
+    <label class="field">Language
+      <select bind:value={language}>
+        <option value="auto">Browser language</option>
+        {#each Object.entries(LANGUAGES) as [code, name]}<option value={code}>{name}</option>{/each}
       </select>
     </label>
     <label class="field">Map view when a project opens
