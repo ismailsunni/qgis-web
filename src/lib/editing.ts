@@ -151,6 +151,18 @@ export function setAttribute(fid: number, field: string, value: unknown) {
   commit({ label: `edit ${field}`, doSql: [[sql, [value, fid]]], undoSql: [[sql, [old, fid]]] });
 }
 
+/** Sets several attributes of a feature as one undoable edit. */
+export function setAttributes(fid: number, values: Record<string, unknown>, label = "edit attributes") {
+  const s = session!;
+  const r = row(fid);
+  if (!r) return;
+  const entries = Object.entries(values).filter(([k]) => k in r);
+  if (!entries.length) return;
+  const set = (k: string) => `update ${q(s.table)} set ${q(k)} = ? where ${q(s.info.fid)} = ?`;
+  const norm = (v: unknown) => (typeof v === "boolean" ? Number(v) : v instanceof Date ? v.toISOString() : v ?? null);
+  commit({ label, doSql: entries.map(([k, v]): Stmt => [set(k), [norm(v), fid]]), undoSql: entries.map(([k]): Stmt => [set(k), [r[k], fid]]) });
+}
+
 export function deleteFeature(fid: number) {
   deleteFeatures([fid]);
 }

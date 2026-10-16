@@ -15,7 +15,8 @@ import { splitWith } from "./editops";
 import { engine, free } from "./engine";
 import { olMap, overlays, hitBox, srid } from "./map";
 import { symbolKind } from "./style";
-import { addFeature, deleteFeature, featureGeometry, setGeometry } from "./editing";
+import { addFeature, deleteFeature, featureGeometry, setGeometry, setAttributes } from "./editing";
+import { defaultValues } from "./forms";
 import { ui, toast } from "./state.svelte";
 
 /** Map interactions for editing: sketching new features and moving vertices. */
@@ -98,7 +99,11 @@ export function setTool(tool: typeof ui.editTool) {
     draw.on("drawend", async (e) => {
       const fid = await addFeature(e.feature.getGeometry()!);
       setTimeout(() => source.clear());
-      if (fid !== undefined) showFeatureForm(fid);
+      if (fid === undefined) return;
+      // Default values from the project's form configuration, evaluated by QGIS.
+      const defaults = defaultValues(ui.editing!, fid);
+      if (Object.keys(defaults).length) setAttributes(fid, defaults, "default values");
+      showFeatureForm(fid);
     });
     use(draw);
   } else if (tool === "split") {

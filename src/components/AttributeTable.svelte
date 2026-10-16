@@ -2,7 +2,7 @@
   import { untrack } from "svelte";
   import { FeatureRequestFlag, type QgsVectorLayer } from "qgis-js";
   import { engine, findMapLayer, free } from "../lib/engine";
-  import { ui } from "../lib/state.svelte";
+  import { ui, toast } from "../lib/state.svelte";
   import Icon from "./Icon.svelte";
   import ExpressionBuilder from "./ExpressionBuilder.svelte";
   import FieldCalculator from "./FieldCalculator.svelte";
@@ -10,6 +10,7 @@
   import ExportLayerDialog from "./ExportLayerDialog.svelte";
   import { setAttribute, editSession, deleteFeatures } from "../lib/editing";
   import * as Sel from "../lib/selection";
+  import { readForm, displayValue, parseInput, validate } from "../lib/forms";
 
   let props: { layerId: string } = $props();
   // Re-created per layer ({#key} in App), so reading the prop once is intended.
@@ -36,11 +37,17 @@
   const editable = $derived(ui.editing === layerId);
   const selection = $derived(new Set(ui.selection[layerId] ?? []));
 
+  const forms = $derived((ui.version, readForm(layerId)));
+
   function commitCell(row: number, col: number, text: string) {
     editingCell = null;
     const old = rows[row][col];
-    const value = text === "" ? null : typeof old === "number" && !Number.isNaN(Number(text)) ? Number(text) : text;
+    const form = forms.get(fields[col]);
+    const value = parseInput(form, text, old);
     if (value === old) return;
+    const check = validate(layerId, fids[row], form, value);
+    if (check.error) return toast(check.error);
+    if (check.warning) toast(check.warning);
     setAttribute(fids[row], fields[col], value);
     rows[row][col] = value;
     rows = [...rows];
@@ -195,7 +202,7 @@
       <thead>
         <tr>
           {#each fields as name, i}
-            <th><button onclick={() => sortBy(i)}>{name}{sortCol === i ? (sortDir > 0 ? " ▲" : " ▼") : ""}</button></th>
+            {#if !forms.get(name)?.hidden}<th><button title={forms.get(name)?.alias ? name : undefined} onclick={() => sortBy(i)}>{forms.get(name)?.alias || name}{sortCol === i ? (sortDir > 0 ? " ▲" : " ▼") : ""}</button></th>{/if}
           {/each}
         </tr>
       </thead>
@@ -204,11 +211,22 @@
         {#each visible as i (fids[i])}
           <tr class:selected={selection.has(fids[i])} onclick={(e) => rowClick(i, e)} style:height="{ROW}px">
             {#each rows[i] as v, c}
+              {@const form = forms.get(fields[c])}
               {#if editingCell?.[0] === i && editingCell?.[1] === c}
-                <!-- svelte-ignore a11y_autofocus -->
-                <td><input value={v === null ? "" : String(v)} autofocus onblur={(e) => commitCell(i, c, e.currentTarget.value)} onkeydown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); if (e.key === "Escape") editingCell = null; }} /></td>
-              {:else}
-                <td class:null={v === null} ondblclick={() => editable && fields[c] !== editSession()?.info.fid && (editingCell = [i, c])}>{fmt(v)}</td>
+                <td>
+                  {#if form?.widget === "ValueMap"}
+                    <!-- svelte-ignore a11y_autofocus -->
+                    <select autofocus value={v === null ? "" : String(v)} onchange={(e) => commitCell(i, c, e.currentTarget.value)} onblur={() => (editingCell = null)}>
+                      {#if !form.notNull}<option value="">NULL</option>{/if}
+                      {#each form.options as [label, val]}<option value={val}>{label}</option>{/each}
+                    </select>
+                  {:else}
+                    <!-- svelte-ignore a11y_autofocus -->
+                    <input value={v === null ? "" : String(v)} autofocus onblur={(e) => commitCell(i, c, e.currentTarget.value)} onkeydown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); if (e.key === "Escape") editingCell = null; }} />
+                  {/if}
+                </td>
+              {:else if !form?.hidden}
+                <td class:null={v === null} ondblclick={() => editable && fields[c] !== editSession()?.info.fid && !form?.readOnly && (editingCell = [i, c])}>{form ? displayValue(form, v) : fmt(v)}</td>
               {/if}
             {/each}
           </tr>

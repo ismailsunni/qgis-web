@@ -1,19 +1,10 @@
 <script lang="ts">
   import { ui } from "../lib/state.svelte";
-  import { setAttribute, editSession } from "../lib/editing";
+  import FeatureForm from "./FeatureForm.svelte";
   import Icon from "./Icon.svelte";
 
   let { onclose }: { onclose: () => void } = $props();
   let open = $state(0);
-
-  /** Parses typed text back to the column's kind (numbers stay numbers, empty is NULL). */
-  const parse = (text: string, old: unknown) => (text === "" || text === "NULL" ? null : typeof old === "number" && !Number.isNaN(Number(text)) ? Number(text) : text);
-
-  function edit(hit: (typeof ui.hits)[number], key: string, old: unknown, text: string) {
-    setAttribute(hit.fid, key, parse(text, old));
-    const a = hit.attributes.find(([k]) => k === key);
-    if (a) a[1] = parse(text, old);
-  }
 
   const fmt = (v: unknown) => (v === null || v === undefined ? "NULL" : typeof v === "number" ? v.toLocaleString() : String(v));
 </script>
@@ -34,20 +25,7 @@
           {#if hit.tip}
             <iframe class="tip-frame" title="Map tip" sandbox="" srcdoc={`<style>body{margin:8px 12px;font:13px system-ui}img{max-width:100%}</style>${hit.tip}`}></iframe>
           {/if}
-          <table class="attrs">
-            <tbody>
-              {#each hit.attributes as [k, v]}
-                <tr>
-                  <th>{k}</th>
-                  {#if ui.editing === hit.layerId && editSession() && k !== editSession()!.info.fid}
-                    <td><input value={v === null ? "" : String(v)} placeholder="NULL" onchange={(e) => edit(hit, k, v, e.currentTarget.value)} /></td>
-                  {:else}
-                    <td>{fmt(v)}</td>
-                  {/if}
-                </tr>
-              {/each}
-            </tbody>
-          </table>
+          <FeatureForm layerId={hit.layerId} fid={hit.fid} attributes={hit.attributes} />
           <button class="link" onclick={() => { ui.current = hit.layerId; ui.tableLayerId = hit.layerId; }}>Open attribute table</button>
         {/if}
       </div>

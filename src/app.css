@@ -362,3 +362,6 @@ textarea.code.small { min-height: 90px; }
 .rules input[type="color"] { width: 34px; height: 24px; flex: none; }
 .rules .scales input { width: 90px; padding: 2px 6px; }
 .rules .scales label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 2px; }
+.attrs select, .attrs textarea { width: 100%; font: inherit; }
+.req { color: var(--danger); margin-left: 2px; }
+.field-error { color: var(--danger); font-size: 11px; margin-top: 2px; }
