@@ -471,3 +471,22 @@ export function importQml(id: string, text: string) {
     else el.appendChild(imported);
   }
 }
+
+// ---- Popups (QGIS display name and map tip) -------------------------------------------------
+
+export function readPopup(id: string) {
+  const el = layerEl(id);
+  return { display: findChild(el, "previewExpression")?.textContent ?? "", mapTip: findChild(el, "mapTip")?.textContent ?? "" };
+}
+
+export function writePopup(id: string, p: { display: string; mapTip: string }) {
+  const el = layerEl(id);
+  child(el, "previewExpression").textContent = p.display;
+  const tip = child(el, "mapTip");
+  tip.setAttribute("enabled", "1");
+  tip.textContent = p.mapTip;
+}
+
+/** A starting map tip: every field as a small table, with QGIS [% %] placeholders. */
+export const defaultMapTip = (fields: string[]) =>
+  `<table>\n${fields.map((f) => `  <tr><th align="left">${f}</th><td>[% "${f.replaceAll('"', '""')}" %]</td></tr>`).join("\n")}\n</table>`;

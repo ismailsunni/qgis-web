@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { undo, redo } from "./lib/editing";
+  import { undoProject, redoProject } from "./lib/history";
   import { addData } from "./lib/adddata";
   import { boot } from "./lib/engine";
   import { ui, view, type Panel } from "./lib/state.svelte";
@@ -12,22 +13,25 @@
   import StylePanel from "./components/StylePanel.svelte";
   import ToolsPanel from "./components/ToolsPanel.svelte";
   import HubPanel from "./components/HubPanel.svelte";
+  import BookmarksPanel from "./components/BookmarksPanel.svelte";
   import AttributeTable from "./components/AttributeTable.svelte";
   import CommandPalette from "./components/CommandPalette.svelte";
   import Welcome from "./components/Welcome.svelte";
   import ShareDialog from "./components/ShareDialog.svelte";
   import ProjectDialog from "./components/ProjectDialog.svelte";
   import SettingsDialog from "./components/SettingsDialog.svelte";
+  import ExportDialog from "./components/ExportDialog.svelte";
 
-  const rail: { id: Panel | "table"; icon: "layers" | "add" | "style" | "table" | "tools" | "hub"; label: string; planned?: string }[] = [
+  const rail: { id: Panel | "table"; icon: "layers" | "add" | "style" | "table" | "tools" | "hub" | "bookmark"; label: string; planned?: string }[] = [
     { id: "layers", icon: "layers", label: "Layers" },
     { id: "add", icon: "add", label: "Add data" },
     { id: "style", icon: "style", label: "Style" },
     { id: "table", icon: "table", label: "Attribute table" },
     { id: "tools", icon: "tools", label: "Processing tools" },
+    { id: "bookmarks", icon: "bookmark", label: "Bookmarks" },
     { id: "hub", icon: "hub", label: "QGIS Hub" },
   ];
-  const titles: Record<Panel, string> = { layers: "Layers", add: "Add data", style: "Style", tools: "Processing", hub: "QGIS Hub" };
+  const titles: Record<Panel, string> = { layers: "Layers", add: "Add data", style: "Style", tools: "Processing", hub: "QGIS Hub", bookmarks: "Bookmarks" };
 
   let dragging = $state(false);
   let menuOpen = $state(false);
@@ -62,9 +66,12 @@
     if (mod && e.key.toLowerCase() === "k") {
       e.preventDefault();
       ui.palette = !ui.palette;
-    } else if (mod && ui.editing && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) && (e.key.toLowerCase() === "z" || e.key.toLowerCase() === "y")) {
+    } else if (mod && ui.phase === "ready" && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) && (e.key.toLowerCase() === "z" || e.key.toLowerCase() === "y")) {
       e.preventDefault();
-      e.shiftKey || e.key.toLowerCase() === "y" ? redo() : undo();
+      const again = e.shiftKey || e.key.toLowerCase() === "y";
+      // While editing, undo applies to feature edits; otherwise to project changes.
+      if (ui.editing) again ? redo() : undo();
+      else again ? redoProject() : undoProject();
     } else if (mod && e.key.toLowerCase() === "s") {
       e.preventDefault();
       saveInBrowser();
@@ -106,6 +113,8 @@
       <button class="palette-btn" onclick={() => (ui.palette = true)}>
         <Icon name="search" size={16} /> Search actions <kbd>Ctrl K</kbd>
       </button>
+      <button class="icon" title="Undo (Ctrl+Z)" aria-label="Undo" disabled={!ui.canUndoProject || !!ui.editing} onclick={undoProject}><Icon name="undo" size={18} /></button>
+      <button class="icon" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled={!ui.canRedoProject || !!ui.editing} onclick={redoProject}><Icon name="redo" size={18} /></button>
       <div class="menu-anchor">
         <button class="ghost" onclick={() => (saveMenu = !saveMenu)} disabled={ui.phase !== "ready"}><Icon name="save" size={18} /> Save</button>
         {#if saveMenu}
@@ -159,7 +168,8 @@
             {:else if ui.panel === "add"}<AddDataPanel />
             {:else if ui.panel === "style"}<StylePanel />
             {:else if ui.panel === "tools"}<ToolsPanel />
-            {:else if ui.panel === "hub"}<HubPanel />{/if}
+            {:else if ui.panel === "hub"}<HubPanel />
+            {:else if ui.panel === "bookmarks"}<BookmarksPanel />{/if}
           </div>
         </aside>
       {/if}
@@ -181,6 +191,7 @@
   {#if ui.dialog === "share"}<ShareDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "project"}<ProjectDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "settings"}<SettingsDialog onclose={() => (ui.dialog = null)} />{/if}
+  {#if ui.dialog === "export"}<ExportDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.toast}<div class="toast" role="status">{ui.toast}</div>{/if}
   {#if ui.embedBlocked}
     <div class="embed-blocked">

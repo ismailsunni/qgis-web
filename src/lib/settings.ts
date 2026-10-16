@@ -11,19 +11,35 @@ export type ProjectRef =
   /** Opened from local files and not saved in the browser: can't be reopened. */
   | { kind: "local"; name: string };
 
+export type Theme = "system" | "light" | "dark";
+
 interface Settings {
   startup: Startup;
   specific: ProjectRef | null;
+  theme: Theme;
 }
 
 const KEY = "qgisweb:settings";
 const LAST = "qgisweb:last-project";
 
 export function getSettings(): Settings {
-  return { startup: "welcome", specific: null, ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
+  return { startup: "welcome", specific: null, theme: "system", ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
 }
 
-export const saveSettings = (s: Settings) => localStorage.setItem(KEY, JSON.stringify(s));
+export function saveSettings(s: Partial<Settings>) {
+  localStorage.setItem(KEY, JSON.stringify({ ...getSettings(), ...s }));
+  applyTheme();
+}
+
+const darkQuery = matchMedia("(prefers-color-scheme: dark)");
+
+/** Sets the color theme on the document (following the system unless chosen). */
+export function applyTheme() {
+  const { theme } = getSettings();
+  const dark = theme === "dark" || (theme === "system" && darkQuery.matches);
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+}
+darkQuery.addEventListener("change", applyTheme);
 
 export const lastProject = (): ProjectRef | null => JSON.parse(localStorage.getItem(LAST) ?? "null");
 

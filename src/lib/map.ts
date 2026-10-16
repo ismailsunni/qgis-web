@@ -81,39 +81,65 @@ let jobs: QgisJobDataSource[] = [];
 hooks.beforeReload = () => jobs.forEach((j) => j.killPendingJobs());
 const remoteLayers = new globalThis.Map<string, BaseLayer>();
 
+export type StackPiece = { kind: "qgis"; layerIds: string[] } | { kind: "web"; layerId: string; spec: RemoteSpec; opacity: number };
+
+/**
+ * The map's layer stack, bottom to top: consecutive QGIS layers share one render (layer ids
+ * top-first, as QGIS expects), browser-drawn web layers sit in between. `only` limits it to
+ * some layers (compare view).
+ */
+export function layerStack(only?: Set<string>): StackPiece[] {
+  const stack: StackPiece[] = [];
+  let segment: string[] = [];
+  const flush = () => {
+    if (segment.length) stack.push({ kind: "qgis", layerIds: [...segment].reverse() });
+    segment = [];
+  };
+  for (const l of flatLayers(snapshotTree()).filter((n) => (only ? only.has(n.layerId!) : n.visible)).reverse()) {
+    const spec = l.remote ? remoteSpec(l.layerId!) : null;
+    if (spec && drawnByBrowser(spec)) {
+      flush();
+      stack.push({ kind: "web", layerId: l.layerId!, spec, opacity: l.opacity ?? 1 });
+    } else segment.push(l.layerId!);
+  }
+  flush();
+  return stack;
+}
+
+/** OpenLayers layers for a stack (QGIS segments render through the engine). */
+export function olLayers(stack: StackPiece[], cache = true): BaseLayer[] {
+  return stack.map((p) => {
+    if (p.kind === "qgis") {
+      const source = new QgisJobDataSource(engine(), { projection, layerIds: p.layerIds });
+      jobs.push(source);
+      return new ImageLayer({ source });
+    }
+    const layer = cache ? remoteLayer(p.layerId, p.spec) : createRemoteLayer(p.spec);
+    layer.setOpacity(p.opacity);
+    return layer;
+  });
+}
+
 /** Re-renders the map from the engine (after visibility, opacity, style or order changes). */
 export function redraw() {
   if (!map || !projection) return;
   jobs.forEach((j) => j.killPendingJobs());
   jobs = [];
-  const stack: BaseLayer[] = [];
-  let segment: string[] = [];
-  const flush = () => {
-    if (!segment.length) return;
-    const source = new QgisJobDataSource(engine(), { projection, layerIds: [...segment].reverse() });
-    jobs.push(source);
-    stack.push(new ImageLayer({ source }));
-    segment = [];
-  };
-  // Bottom to top: consecutive QGIS layers share one render, browser-drawn ones sit in between.
-  for (const l of flatLayers(snapshotTree()).filter((n) => n.visible).reverse()) {
-    const spec = l.remote ? remoteSpec(l.layerId!) : null;
-    if (spec && drawnByBrowser(spec)) {
-      flush();
-      const layer = remoteLayer(l.layerId!, spec);
-      layer.setOpacity(l.opacity ?? 1);
-      stack.push(layer);
-    } else segment.push(l.layerId!);
-  }
-  flush();
   map.getLayers().clear();
-  map.getLayers().extend([...stack, ...overlays, highlightLayer]);
+  map.getLayers().extend([...olLayers(layerStack()), ...overlays, highlightLayer]);
+  hooks.afterRedraw();
 }
 
 function remoteLayer(id: string, s: RemoteSpec): BaseLayer {
   const key = id + JSON.stringify(s);
   let layer = remoteLayers.get(key);
-  if (layer) return layer;
+  if (!layer) remoteLayers.set(key, (layer = createRemoteLayer(s)));
+  return layer;
+}
+
+/** A new OpenLayers layer drawing a remote source. */
+export function createRemoteLayer(s: RemoteSpec): BaseLayer {
+  let layer: BaseLayer;
   const crossOrigin = "anonymous";
   if (s.kind === "xyz") layer = new TileLayer({ source: new XYZ({ url: s.url, crossOrigin, minZoom: s.zmin, maxZoom: s.zmax }) });
   else if (s.kind === "wms")
@@ -129,13 +155,12 @@ function remoteLayer(id: string, s: RemoteSpec): BaseLayer {
         const opts = optionsFromCapabilities(caps, { layer: s.layer!, matrixSet: s.matrixSet, style: s.style });
         if (opts) tile.setSource(new WMTS({ ...opts, crossOrigin }));
       })
-      .catch(() => {});
+      .catch(() => layerError(s.name));
     layer = tile;
   }
   // A failing web layer gets a named error rather than a silently blank map.
   const source = (layer as TileLayer).getSource?.();
   source?.once?.("tileloaderror" as never, () => layerError(s.name));
-  remoteLayers.set(key, layer);
   return layer;
 }
 

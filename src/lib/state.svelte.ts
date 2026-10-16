@@ -12,7 +12,7 @@ export const view = {
   noPanels: params.get("panels") === "none",
 };
 
-export type Panel = "layers" | "add" | "style" | "tools" | "hub";
+export type Panel = "layers" | "add" | "style" | "tools" | "hub" | "bookmarks";
 
 export interface IdentifyHit {
   layerId: string;
@@ -20,6 +20,8 @@ export interface IdentifyHit {
   fid: number;
   title: string;
   attributes: [string, unknown][];
+  /** The layer's map tip (HTML) evaluated for this feature, if it has one. */
+  tip?: string;
 }
 
 export const ui = $state({
@@ -47,12 +49,22 @@ export const ui = $state({
   /** Layer in edit mode (one at a time, as a GeoPackage write session). */
   editing: null as string | null,
   editTool: null as "add" | "modify" | "delete" | null,
+  /** What a click on the map does. */
+  mapTool: "identify" as "identify" | "measure-line" | "measure-area" | "select" | "select-box",
+  /** Live measurement readout. */
+  measure: "",
+  /** Show the legend on the map; hover map tips. */
+  showLegend: new URLSearchParams(location.search).has("legend"),
+  mapTips: false,
   canUndo: false,
   canRedo: false,
+  /** Project-level undo/redo (styles, tree, layers). */
+  canUndoProject: false,
+  canRedoProject: false,
   /** Algorithm to open in the Tools panel (from the command palette). */
   pendingAlgorithm: null as string | null,
   /** Open modal dialog, if any. */
-  dialog: null as "project" | "share" | "settings" | null,
+  dialog: null as "project" | "share" | "settings" | "export" | null,
   /** OPFS slot of the open project, once saved in the browser. */
   storedId: null as string | null,
 });

@@ -31,6 +31,9 @@
           <strong>{hit.title}</strong><span class="muted">{hit.layerName}</span>
         </button>
         {#if open === i}
+          {#if hit.tip}
+            <iframe class="tip-frame" title="Map tip" sandbox="" srcdoc={`<style>body{margin:8px 12px;font:13px system-ui}img{max-width:100%}</style>${hit.tip}`}></iframe>
+          {/if}
           <table class="attrs">
             <tbody>
               {#each hit.attributes as [k, v]}

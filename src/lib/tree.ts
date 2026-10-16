@@ -2,6 +2,7 @@ import { LayerType, type QgsLayerTreeNode, type QgsLayerTreeLayer } from "qgis-j
 import { engine } from "./engine";
 import { child, mapLayerEl, removeLayerXml, treeChildren, treeEl, treeRootEl, project, isRemote, xmlOpacity } from "./doc";
 import { apply } from "./commit";
+import { snapshot } from "./history";
 import { redraw } from "./map";
 import { changed, ui, type IdentifyHit } from "./state.svelte";
 
@@ -54,6 +55,7 @@ const checked = (on: boolean) => (on ? "Qt::Checked" : "Qt::Unchecked");
 
 /** Visibility and expansion apply live in QGIS and are mirrored into the document (no reload). */
 export function setVisible(n: TreeNode, on: boolean) {
+  snapshot(`${on ? "show" : "hide"} ${n.name}`);
   n.node.itemVisibilityChecked = on;
   treeEl(n.key).setAttribute("checked", checked(on));
   ui.dirty = true;
@@ -68,6 +70,7 @@ export function setExpanded(n: TreeNode, on: boolean) {
 }
 
 export function setOpacity(n: TreeNode, value: number) {
+  snapshot(`opacity of ${n.name}`);
   const layer = (n.node as QgsLayerTreeLayer).layer();
   if (layer) layer.opacity = value;
   const el = mapLayerEl(n.layerId!)!;
@@ -83,7 +86,7 @@ export function rename(n: TreeNode, name: string) {
   apply(() => {
     treeEl(n.key).setAttribute("name", name);
     if (!n.isGroup) child(mapLayerEl(n.layerId!)!, "layername").textContent = name;
-  });
+  }, `rename ${n.name}`);
 }
 
 export function remove(n: TreeNode) {
@@ -91,7 +94,7 @@ export function remove(n: TreeNode) {
     const el = treeEl(n.key);
     for (const l of [el, ...el.querySelectorAll("layer-tree-layer")]) if (l.tagName === "layer-tree-layer") removeLayerXml(l.getAttribute("id")!);
     el.remove();
-  });
+  }, `remove ${n.name}`);
   if (ui.current === n.layerId) ui.current = null;
   if (ui.tableLayerId === n.layerId) ui.tableLayerId = null;
   ui.hits = ui.hits.filter((h: IdentifyHit) => h.layerId !== n.layerId);
@@ -106,7 +109,7 @@ export function addGroup(name = "New group") {
     g.setAttribute("expanded", "1");
     const root = treeRootEl();
     root.insertBefore(g, treeChildren(root)[0] ?? root.firstChild);
-  });
+  }, "add group");
 }
 
 /** Moves a node before/after another node, or into a group. */
@@ -123,6 +126,6 @@ export function move(fromKey: string, toKey: string, where: "before" | "after" |
       const ids = [...treeRootEl().querySelectorAll("layer-tree-layer")].map((e) => e.getAttribute("id")!);
       order.replaceChildren(...ids.map((id) => Object.assign(project().xml.createElement("item"), { textContent: id })));
     }
-  });
+  }, "move layer");
 }
 

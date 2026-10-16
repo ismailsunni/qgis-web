@@ -12,6 +12,7 @@
   import Icon from "./Icon.svelte";
   import Self from "./LayerNode.svelte";
   import { canEdit, startEditing, stopEditing, convertToGpkg } from "../lib/editing";
+  import { copyStyle, pasteStyle, hasCopiedStyle } from "../lib/clipboard";
 
   let { node }: { node: TreeNode } = $props();
   let showLegend = $state(false);
@@ -110,6 +111,8 @@
         {/if}
         {#if !node.isGroup}
           <button role="menuitem" onclick={run(() => { ui.current = node.layerId!; ui.panel = "style"; })}>Style…</button>
+          <button role="menuitem" onclick={run(() => copyStyle(node.layerId!))}>Copy style</button>
+          {#if hasCopiedStyle()}<button role="menuitem" onclick={run(() => pasteStyle(node.layerId!))}>Paste style</button>{/if}
         {/if}
         {#if !node.isGroup && node.layerType === LayerType.Vector && node.valid}
           {#if node.editing}

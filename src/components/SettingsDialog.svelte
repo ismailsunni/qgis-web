@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getSettings, saveSettings, lastProject, type ProjectRef, type Startup } from "../lib/settings";
+  import { getSettings, saveSettings, lastProject, type ProjectRef, type Startup, type Theme } from "../lib/settings";
   import { listProjects, type StoredProject } from "../lib/storage";
   import { DEMO_URL } from "../lib/actions";
   import { ui, toast } from "../lib/state.svelte";
@@ -10,6 +10,7 @@
   const initial = getSettings();
   let startup = $state<Startup>(initial.startup);
   let specific = $state<ProjectRef | null>(initial.specific);
+  let theme = $state<Theme>(initial.theme);
   let stored = $state<StoredProject[]>([]);
   let url = $state(initial.specific?.kind === "url" ? initial.specific.url : "");
   listProjects().then((p) => (stored = p));
@@ -32,7 +33,7 @@
 
   function save() {
     if (startup === "specific" && !specific) return toast("Choose the project to open on launch.");
-    saveSettings({ startup, specific });
+    saveSettings({ startup, specific, theme });
     toast("Settings saved");
     onclose();
   }
@@ -76,6 +77,13 @@
       {/if}
     </fieldset>
     <p class="hint">A link with <code>?url=</code> or <code>?gist=</code> always opens that project instead.</p>
+    <label class="field">Theme
+      <select bind:value={theme} onchange={() => saveSettings({ theme })}>
+        <option value="system">Follow the system</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </label>
     <footer>
       <button onclick={onclose}>Cancel</button>
       <button class="primary" onclick={save}>Save</button>

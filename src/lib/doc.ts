@@ -21,8 +21,8 @@ interface ProjectDoc {
 
 let doc: ProjectDoc | null = null;
 
-/** Called before QGIS reloads the project (the map cancels render jobs on the old project). */
-export const hooks = { beforeReload: () => {} };
+/** Called before QGIS reloads the project (the map cancels render jobs) and after each redraw. */
+export const hooks = { beforeReload: () => {}, afterRedraw: () => {} };
 export const project = () => doc!;
 export const hasProject = () => !!doc;
 
@@ -50,6 +50,11 @@ export function openDoc(path: string, root: string) {
 export function newDoc(root: string, xmlText: string, file = "untitled.qgz") {
   doc = { xml: parse(xmlText), root, dir: root, file, extra: {}, innerName: file.replace(/\.qgz$/, ".qgs"), local: {} };
   reload();
+}
+
+/** Replaces the whole document (undo/redo). */
+export function setXml(text: string) {
+  doc!.xml = parse(text);
 }
 
 /** The project as QGIS should write it. */

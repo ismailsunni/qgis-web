@@ -8,13 +8,16 @@ import { saveProject, loadProjectFiles, type StoredProject } from "./storage";
 import { addData, embeddedProjects, DATA_EXT } from "./adddata";
 import { hydrateAll } from "./remote";
 import { ALGORITHMS } from "./processing";
+import { resetHistory, undoProject, redoProject } from "./history";
+import { readBookmarks, zoomToBookmark } from "./bookmarks";
 import { getSettings, lastProject, rememberLast, type ProjectRef } from "./settings";
 import { listProjects } from "./storage";
-import { showProject, hitBox, srid, setHighlight, zoomToFull } from "./map";
+import { showProject, hitBox, srid, setHighlight, zoomToFull, olMap as olMapRef } from "./map";
 import { setVisible, snapshotTree, flatLayers } from "./tree";
 import { ui, changed, toast, featureAttributes, type IdentifyHit } from "./state.svelte";
 
 function opened(name: string, storedId: string | null) {
+  resetHistory();
   ui.storedId = storedId;
   ui.dirty = false;
   ui.editing = null;
@@ -215,14 +218,20 @@ export function identifyAt(coord: Coordinate) {
   for (const r of results) {
     const vl = r.layer.type() === LayerType.Vector ? (r.layer as QgsVectorLayer) : null;
     const expr = vl?.displayExpression() ? new api.QgsExpression(vl.displayExpression()) : null;
-    const ctx = expr ? vl!.createExpressionContext() : null;
+    const ctx = vl ? vl.createExpressionContext() : null;
     for (const f of r.features) {
       let title = `#${f.id()}`;
       if (expr && ctx) {
         ctx.setFeature(f);
         title = String(expr.evaluate(ctx) ?? title);
       }
-      hits.push({ layerId: r.layer.id(), layerName: r.layer.name, fid: f.id(), title, attributes: featureAttributes(f) });
+      const template = vl?.mapTipTemplate();
+      let tip: string | undefined;
+      if (template && ctx) {
+        ctx.setFeature(f);
+        tip = api.QgsExpression.replaceExpressionText(template, ctx);
+      }
+      hits.push({ layerId: r.layer.id(), layerName: r.layer.name, fid: f.id(), title, attributes: featureAttributes(f), tip });
       geoms.push(f.geometry());
       free(f);
     }
@@ -277,6 +286,7 @@ export function commands(): Command[] {
     { id: "panel-style", label: "Show Style panel", run: () => (ui.panel = "style") },
     { id: "panel-tools", label: "Show Processing tools", run: () => (ui.panel = "tools") },
     { id: "panel-hub", label: "Browse the QGIS Hub", run: () => (ui.panel = "hub") },
+    { id: "panel-bookmarks", label: "Show Bookmarks", run: () => (ui.panel = "bookmarks") },
     { id: "panel-close", label: "Close side panel", run: () => (ui.panel = null) },
   ];
   if (ui.phase !== "ready") return base;
@@ -284,6 +294,8 @@ export function commands(): Command[] {
   return [
     ...base,
     { id: "full", label: "Zoom to full extent", run: zoomToFull },
+    { id: "undo", label: "Undo", hint: "Ctrl+Z", run: () => (ui.editing ? import("./editing").then((m) => m.undo()) : undoProject()) },
+    { id: "redo", label: "Redo", hint: "Ctrl+Shift+Z", run: () => (ui.editing ? import("./editing").then((m) => m.redo()) : redoProject()) },
     { id: "project", label: "Project properties (title, CRS)…", run: () => (ui.dialog = "project") },
     { id: "save", label: "Save in this browser", hint: "Ctrl+S", run: saveInBrowser },
     { id: "download", label: "Download project file (.qgz)", run: downloadProject },
@@ -293,6 +305,11 @@ export function commands(): Command[] {
     { id: "add-data", label: "Add data files…", run: () => document.getElementById("pick-data")?.click() },
     { id: "add-osm", label: "Add OpenStreetMap basemap", run: () => import("./remote").then((r) => r.addRemote(r.PRESETS[0])) },
     { id: "share", label: "Share / publish…", run: () => (ui.dialog = "share") },
+    { id: "export-image", label: "Export map image (PNG)…", run: () => (ui.dialog = "export") },
+    { id: "measure-line", label: "Measure distance", run: () => import("./maptools").then((m) => m.startMeasure("line")) },
+    { id: "measure-area", label: "Measure area", run: () => import("./maptools").then((m) => m.startMeasure("area")) },
+    { id: "legend", label: "Show/hide legend on map", run: () => (ui.showLegend = !ui.showLegend) },
+    { id: "maptips", label: "Toggle map tips", run: () => (ui.mapTips = !ui.mapTips) },
     ...(ui.editing
       ? [
           { id: "edit-stop", label: "Stop editing (saves)", run: () => import("./editing").then((m) => m.stopEditing()) },
@@ -304,8 +321,10 @@ export function commands(): Command[] {
     ...ALGORITHMS.map((a) => ({ id: `alg-${a.id}`, label: `Processing: ${a.name}`, hint: a.id, run: () => ((ui.panel = "tools"), (ui.pendingAlgorithm = a.id)) })),
     { id: "clear", label: "Clear identify results", run: clearIdentify },
     { id: "close-table", label: "Close attribute table", run: () => (ui.tableLayerId = null) },
+    ...readBookmarks().map((b) => ({ id: `bm-${b.id}`, label: `Go to bookmark: ${b.name}`, run: () => zoomToBookmark(b) })),
     ...layers.flatMap((l) => [
       { id: `toggle-${l.layerId}`, label: `Toggle visibility: ${l.name}`, run: () => setVisible(l, !l.checked) },
+      { id: `zoom-${l.layerId}`, label: `Zoom to layer: ${l.name}`, run: () => { const e = engine().fullExtent([l.layerId!]); olMapRef().getView().fit([e.xMinimum, e.yMinimum, e.xMaximum, e.yMaximum], { padding: [40, 40, 40, 40] }); } },
       { id: `style-${l.layerId}`, label: `Style: ${l.name}`, run: () => ((ui.current = l.layerId!), (ui.panel = "style")) },
       ...(l.layerType === LayerType.Vector && l.valid
         ? [

@@ -179,7 +179,7 @@ export async function addData(files: { path: string; data: Blob | Uint8Array }[]
   const ids: string[] = [];
   apply(() => {
     for (const s of sources.reverse()) ids.push(insertLayerXml(mapLayerXml(s), s.name));
-  });
+  }, "add data");
   const unknown = sources.filter((s) => !s.crs);
   if (unknown.length) toast(`No CRS found for ${unknown.map((s) => s.name).join(", ")}; QGIS will use the project CRS.`);
   ui.current = ids.at(-1) ?? ui.current;

@@ -15,8 +15,31 @@
   font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color: var(--text);
 }
+/* Dark theme: same variables, darker surfaces. The map keeps the project's own background. */
+:root[data-theme="dark"] {
+  --green: #6aab45;
+  --green-dark: #8cc96a;
+  --bg: #1d201e;
+  --bg-2: #272b28;
+  --line: #3a3f3b;
+  --text: #e6e9e6;
+  --muted: #9ba39d;
+  --accent-bg: #2c3d24;
+  --danger: #f28b82;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+:root[data-theme="dark"] .statusbar { background: rgba(29, 32, 30, 0.85); }
+:root[data-theme="dark"] .overlay { background: rgba(20, 22, 21, 0.8); }
+:root[data-theme="dark"] .overlay.modal { background: rgba(0, 0, 0, 0.5); }
+:root[data-theme="dark"] .check.error { background: #3a2422; border-color: #6b3531; }
+:root[data-theme="dark"] .check.warn { background: #3a3320; border-color: #6b5c31; }
+:root[data-theme="dark"] .badge, :root[data-theme="dark"] .table-scroll tr.selected td { background: #4a4220; border-color: #7a6a2a; color: var(--text); }
+:root[data-theme="dark"] .drop-hint { background: rgba(44, 61, 36, 0.85); }
+:root[data-theme="dark"] button.primary, :root[data-theme="dark"] .primary-like { color: #10140f; }
+:root[data-theme="dark"] .toast { background: #e6e9e6; color: #1d201e; }
 * { box-sizing: border-box; }
-html, body, #app { margin: 0; height: 100%; overflow: hidden; }
+html, body, #app { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); }
 h1, h2, h3 { margin: 0; font-weight: 600; }
 h2 { font-size: 15px; }
 h3 { font-size: 13px; }
@@ -79,6 +102,9 @@ input[type="checkbox"], input[type="range"] { accent-color: var(--green); }
 
 /* Map chrome */
 .ol-zoom { top: 10px; right: 10px; left: auto; }
+.ol-control { background: transparent; }
+.ol-control button { background: var(--bg); color: var(--text); border: 1px solid var(--line); }
+.ol-control button:hover, .ol-control button:focus { background: var(--bg-2); outline: none; }
 .ol-scale-bar { left: 10px; bottom: 34px; }
 .maponly .ol-scale-bar { bottom: 10px; }
 .statusbar { position: absolute; left: 0; right: 0; bottom: 0; height: 26px; display: flex; gap: 18px; justify-content: flex-end; align-items: center; padding: 0 12px;
@@ -294,3 +320,26 @@ textarea.code { font: 12px/1.45 ui-monospace, monospace; width: 100%; min-height
 .radio .muted { font-size: 12px; }
 .specific { display: flex; flex-direction: column; gap: 8px; margin: 4px 0 0 22px; }
 .specific > button:not(.link) { align-self: flex-start; }
+
+/* Map tools */
+.map-toolbar { position: absolute; top: 72px; right: 10px; display: flex; flex-direction: column; gap: 2px; z-index: 4; }
+.map-toolbar button { width: 26px; height: 26px; padding: 0; justify-content: center; border-radius: 4px; background: var(--bg); color: var(--text); }
+.map-toolbar button.active { background: var(--accent-bg); color: var(--green-dark); border-color: var(--green); }
+.measure-readout { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: var(--bg); border: 1px solid var(--line); border-radius: 16px; padding: 4px 6px 4px 12px; display: flex; gap: 6px; align-items: center; font-size: 13px; z-index: 6; box-shadow: var(--shadow); }
+.map-legend { position: absolute; right: 44px; bottom: 36px; max-height: 60%; overflow: auto; padding: 6px; z-index: 4; background: #fff; }
+.map-legend img { display: block; }
+.map-search { position: absolute; top: 10px; left: 10px; width: min(340px, calc(100% - 120px)); display: flex; align-items: center; gap: 6px; padding: 0 10px; z-index: 5; color: var(--muted); }
+.map-search input { border: none; background: transparent; padding: 8px 0; flex: 1; outline: none; color: var(--text); }
+.search-results { position: absolute; top: 100%; left: 0; right: 0; margin: 4px 0 0; padding: 4px; list-style: none; background: var(--bg); border-radius: var(--radius); box-shadow: var(--shadow); max-height: 50vh; overflow: auto; }
+.search-results button { border: none; width: 100%; justify-content: flex-start; text-align: left; font-size: 13px; padding: 6px 8px; color: var(--text); }
+.search-results .hint { padding: 4px 8px; }
+.spinner.small { width: 14px; height: 14px; border-width: 2px; }
+.map-tip { position: absolute; z-index: 7; width: 280px; height: 120px; border: 1px solid var(--line); border-radius: 6px; background: #fff; box-shadow: var(--shadow); pointer-events: none; }
+.maponly .map-toolbar { top: 72px; }
+@media (max-width: 700px) { .map-search { width: calc(100% - 60px); } }
+.bookmarks { list-style: none; margin: 0; padding: 0; }
+.bookmarks li { display: flex; align-items: center; gap: 4px; }
+.bookmarks .bm-name { flex: 1; border: none; justify-content: flex-start; padding: 6px 4px; text-align: left; color: var(--text); }
+.bookmarks input { flex: 1; }
+textarea.code.small { min-height: 90px; }
+.tip-frame { width: calc(100% - 16px); margin: 0 8px; height: 140px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }

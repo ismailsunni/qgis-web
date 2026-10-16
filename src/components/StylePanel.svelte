@@ -84,7 +84,7 @@
 
   function applyQml(text: string) {
     const id = info!.id;
-    apply(() => S.importQml(id, text));
+    apply(() => S.importQml(id, text), "apply QML");
     qml = S.exportQml(id);
   }
 
@@ -222,6 +222,21 @@
         <datalist id="fonts">{#each FONTS as f}<option value={f}></option>{/each}</datalist>
         <p class="hint">The font is saved for QGIS Desktop; the browser preview uses the engine's built-in font.</p>
       {/if}
+    </section>
+  {/if}
+
+  {#if info.vector}
+    {@const popup = S.readPopup(info.id)}
+    <section class="stack">
+      <h3>Popup</h3>
+      <label class="field">Display name
+        <ExpressionInput layerId={info.id} value={popup.display} fields={info.fields} placeholder="Field or expression used as the title" onchange={(v) => apply(() => S.writePopup(info.id, { ...popup, display: v }), "popup title")} />
+      </label>
+      <label class="field">Map tip (HTML with [% expression %])
+        <textarea class="code small" value={popup.mapTip} placeholder="Shown in Identify and on hover when map tips are on" onchange={(e) => apply(() => S.writePopup(info.id, { ...popup, mapTip: e.currentTarget.value }), "map tip")}></textarea>
+      </label>
+      {#if !popup.mapTip}<button class="link" onclick={() => apply(() => S.writePopup(info.id, { ...popup, mapTip: S.defaultMapTip(info.fields) }), "map tip")}>Start from all fields</button>{/if}
+      <p class="hint">Saved in the project like QGIS's Display properties.</p>
     </section>
   {/if}
 
