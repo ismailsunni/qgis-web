@@ -8,6 +8,7 @@
   import ExpressionInput from "./ExpressionInput.svelte";
   import RasterStyle from "./RasterStyle.svelte";
   import { scaleDenominator } from "../lib/map";
+  import { readTemporal, writeTemporal } from "../lib/temporal";
 
   const FONTS = ["Open Sans", "Noto Sans", "DejaVu Sans", "Arial", "Helvetica", "Roboto", "Liberation Sans", "Times New Roman", "Georgia"];
 
@@ -33,6 +34,9 @@
       labels: vector ? S.readLabels(id) : null,
       legend: [] as { label: string; icon: string }[],
       scales: S.readScaleRange(id),
+      temporal: vector ? readTemporal(id) : null,
+      // QMetaType ids of date/time and text fields (text may hold ISO dates).
+      timeFields: [...fields.filter((f) => [14, 15, 16].includes(f.type())), ...fields.filter((f) => f.type() === 10)].map((f) => f.name()),
     };
   });
 
@@ -133,6 +137,25 @@
       </div>
     {/if}
   </section>
+
+  {#if info.temporal && info.timeFields.length}
+    {@const t = info.temporal}
+    {@const setT = (p: Partial<typeof t>) => apply(() => writeTemporal(info.id, { ...t, start: t.start || info.timeFields[0], ...p }), "temporal settings")}
+    <section class="stack">
+      <label class="row"><input type="checkbox" checked={t.enabled} onchange={(e) => setT({ enabled: e.currentTarget.checked })} /> <h3>Time (temporal controller)</h3></label>
+      {#if t.enabled}
+        <label class="field">Features have
+          <select value={t.mode} onchange={(e) => setT({ mode: +e.currentTarget.value as 1 | 2, end: t.end || info.timeFields[0] })}><option value={1}>A date/time (one field)</option><option value={2}>Start and end fields</option></select>
+        </label>
+        <div class="grid2">
+          <label class="field">{t.mode === 2 ? "Start" : "Date/time"}<select value={t.start} onchange={(e) => setT({ start: e.currentTarget.value })}>{#each info.timeFields as f}<option>{f}</option>{/each}</select></label>
+          {#if t.mode === 2}<label class="field">End<select value={t.end} onchange={(e) => setT({ end: e.currentTarget.value })}>{#each info.timeFields as f}<option>{f}</option>{/each}</select></label>{/if}
+        </div>
+        {#if t.mode === 1}<label class="row"><input type="checkbox" checked={t.accumulate} onchange={(e) => setT({ accumulate: e.currentTarget.checked })} /> Accumulate features over time</label>{/if}
+        <p class="hint">Use the clock button on the map to play through time.</p>
+      {/if}
+    </section>
+  {/if}
 
   {#if info.type === "Raster"}
     {#key info.id}<RasterStyle layerId={info.id} />{/key}

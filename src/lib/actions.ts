@@ -30,6 +30,7 @@ function opened(name: string, storedId: string | null) {
   ui.tableLayerId = null;
   ui.current = flatLayers(snapshotTree()).find((l) => l.valid)?.layerId ?? null;
   ui.hits = [];
+  ui.time.active = false;
   ui.phase = "ready";
   changed();
   showProject();
@@ -336,6 +337,7 @@ export function commands(): Command[] {
     { id: "view-back", label: "Previous map view", hint: "Alt+←", run: previousView },
     { id: "view-next", label: "Next map view", hint: "Alt+→", run: nextView },
     { id: "grid", label: "Show/hide coordinate grid", run: () => toggleGrid() },
+    { id: "time", label: "Show/hide time slider (temporal layers)", run: () => (ui.time.active = !ui.time.active) },
     { id: "shortcuts", label: "Keyboard shortcuts", hint: "?", run: () => (ui.shortcuts = true) },
     { id: "undo", label: "Undo", hint: "Ctrl+Z", run: () => (ui.editing ? import("./editing").then((m) => m.undo()) : undoProject()) },
     { id: "redo", label: "Redo", hint: "Ctrl+Shift+Z", run: () => (ui.editing ? import("./editing").then((m) => m.redo()) : redoProject()) },

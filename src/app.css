@@ -430,3 +430,7 @@ textarea.code.small { min-height: 90px; }
 .histogram .range { stroke: #e8590c; stroke-width: 0.4; }
 .histogram-axis { display: flex; justify-content: space-between; margin-top: -4px; }
 .pixel { font-size: 13px; margin: 4px 12px 8px; } .pixel th { text-align: left; font-weight: 500; padding-right: 16px; color: var(--muted); }
+.time-slider { position: absolute; left: 50%; transform: translateX(-50%); bottom: 34px; z-index: 5; display: flex; align-items: center; gap: 6px; padding: 6px 10px; width: min(720px, calc(100% - 140px)); }
+.time-slider input[type="range"] { flex: 1; min-width: 80px; }
+.time-slider .time-label { font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.time-slider .step { width: 52px; }

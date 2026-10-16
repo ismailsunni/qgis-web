@@ -17,6 +17,7 @@
   import { getSettings, saveSettings } from "../lib/settings";
   import { recordView } from "../lib/navigation";
   import MapContextMenu from "./MapContextMenu.svelte";
+  import TimeSlider from "./TimeSlider.svelte";
 
   let target: HTMLDivElement;
   let coord = $state("");
@@ -123,6 +124,8 @@
   <!-- Map tips are project HTML: shown in a sandboxed frame, so scripts never run. -->
   <iframe class="map-tip" title="Map tip" sandbox="" srcdoc={`<style>body{margin:6px;font:12px system-ui}</style>${tip.html}`} style:left="{tip.x + 14}px" style:top="{tip.y + 14}px"></iframe>
 {/if}
+
+{#if ui.time.active && ui.phase === "ready"}<TimeSlider />{/if}
 
 {#if menu}<MapContextMenu at={menu} onclose={() => (menu = null)} />{/if}
 

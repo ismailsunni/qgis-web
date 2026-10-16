@@ -79,6 +79,8 @@ export const ui = $state({
   viewHistory: [0, 0] as [number, number],
   /** Features on the app's clipboard (Ctrl+C), ready to paste into the edit layer. */
   copiedFeatures: 0,
+  /** Temporal controller: the time range shown, when active. */
+  time: { active: false, range: null as [number, number] | null },
   /** Coordinate grid shown on the map. */
   grid: false,
   /** Keyboard shortcut sheet. */

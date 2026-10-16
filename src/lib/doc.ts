@@ -22,7 +22,7 @@ interface ProjectDoc {
 let doc: ProjectDoc | null = null;
 
 /** Called before QGIS reloads the project (the map cancels render jobs), after each redraw, and before saving. */
-export const hooks = { beforeReload: () => {}, afterRedraw: () => {}, beforeSave: () => {} };
+export const hooks = { beforeReload: () => {}, afterReload: (): unknown => 0, afterRedraw: () => {}, beforeSave: () => {} };
 export const project = () => doc!;
 export const hasProject = () => !!doc;
 
@@ -82,6 +82,7 @@ export function reload() {
   writeFile(enginePath(), serialize(xml));
   hooks.beforeReload();
   if (!engine().loadProject(enginePath())) throw new Error("QGIS could not read the project");
+  hooks.afterReload();
 }
 
 export function projectBytes(): Uint8Array {

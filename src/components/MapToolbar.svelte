@@ -3,6 +3,7 @@
   import { selectInExtent, selectInPolygon, modeFrom, clearSelection } from "../lib/selection";
   import { startProfile } from "../lib/profile";
   import { previousView, nextView, toggleGrid } from "../lib/navigation";
+  import { temporalLayers } from "../lib/temporal";
 
   let selectMenu = $state(false);
   const SELECT_TOOLS = [
@@ -49,6 +50,9 @@
   <button class:active={ui.mapTool === "measure-line"} title="Measure distance" aria-label="Measure distance" onclick={() => toggle("measure-line")}><Icon name="ruler" size={17} /></button>
   <button class:active={ui.mapTool === "measure-area"} title="Measure area" aria-label="Measure area" onclick={() => toggle("measure-area")}><Icon name="area" size={17} /></button>
   <button class:active={ui.mapTool === "profile"} title="Elevation profile (needs an elevation raster)" aria-label="Elevation profile" onclick={() => (ui.mapTool === "profile" ? stopTool() : startProfile())}><Icon name="profile" size={17} /></button>
+  {#if (ui.version, temporalLayers().length)}
+    <button class:active={ui.time.active} title="Time slider (temporal controller)" aria-label="Time slider" onclick={() => (ui.time.active = !ui.time.active)}><Icon name="clock" size={17} /></button>
+  {/if}
   <button class:active={ui.grid} title="Coordinate grid" aria-label="Coordinate grid" onclick={() => toggleGrid()}><Icon name="grid" size={17} /></button>
   <button class:active={ui.showLegend} title="Legend" aria-label="Legend" onclick={() => (ui.showLegend = !ui.showLegend)}><Icon name="legend" size={17} /></button>
   <button class:active={ui.mapTips} title="Map tips on hover" aria-label="Map tips" onclick={() => (ui.mapTips = !ui.mapTips)}><Icon name="tip" size={17} /></button>
