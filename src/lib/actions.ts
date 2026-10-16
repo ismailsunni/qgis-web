@@ -354,6 +354,7 @@ export function commands(): Command[] {
     { id: "measure-area", label: "Measure area", run: () => import("./maptools").then((m) => m.startMeasure("area")) },
     { id: "legend", label: "Show/hide legend on map", run: () => (ui.showLegend = !ui.showLegend) },
     { id: "select-tool", label: "Select features (click)", run: () => (ui.mapTool = "select") },
+    ...(ui.current && ui.selection[ui.current]?.length ? [{ id: "copy-features", label: "Copy selected features", hint: "Ctrl+C", run: () => import("./clipboard").then((m) => m.copyFeatures(ui.current!, ui.selection[ui.current!])) }] : []),
     { id: "clear-selection", label: "Clear all selections", run: () => import("./selection").then((m) => m.clearSelection()) },
     { id: "zoom-selection", label: "Zoom to selection", run: () => import("./selection").then((m) => m.zoomToSelection()) },
     { id: "maptips", label: "Toggle map tips", run: () => (ui.mapTips = !ui.mapTips) },
@@ -361,9 +362,11 @@ export function commands(): Command[] {
     ...(ui.editing
       ? [
           { id: "edit-stop", label: "Stop editing (saves)", run: () => import("./editing").then((m) => m.stopEditing()) },
+          { id: "edit-paste", label: "Paste features", hint: "Ctrl+V", run: () => import("./clipboard").then((m) => m.pasteFeatures()) },
+          { id: "edit-explode", label: "Explode selected multipart features", run: () => import("./editops").then((m) => m.explodeSelected()) },
           { id: "edit-undo", label: "Undo edit", hint: "Ctrl+Z", run: () => import("./editing").then((m) => m.undo()) },
           { id: "edit-redo", label: "Redo edit", hint: "Ctrl+Shift+Z", run: () => import("./editing").then((m) => m.redo()) },
-          ...(["add", "modify", "delete"] as const).map((t) => ({ id: `edit-${t}`, label: `Edit tool: ${{ add: "add feature", modify: "edit vertices", delete: "delete feature" }[t]}`, run: () => import("./editmap").then((m) => m.setTool(t)) })),
+          ...(["add", "modify", "delete", "move", "rotate"] as const).map((t) => ({ id: `edit-${t}`, label: `Edit tool: ${{ add: "add feature", modify: "edit vertices", delete: "delete feature", move: "move features", rotate: "rotate features" }[t]}`, run: () => import("./editmap").then((m) => m.setTool(t)) })),
         ]
       : []),
     ...ALGORITHMS.map((a) => ({ id: `alg-${a.id}`, label: `Processing: ${a.name}`, hint: a.id, run: () => ((ui.panel = "tools"), (ui.pendingAlgorithm = a.id)) })),

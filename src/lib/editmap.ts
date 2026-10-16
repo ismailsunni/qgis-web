@@ -1,11 +1,16 @@
 import Draw from "ol/interaction/Draw";
 import Modify from "ol/interaction/Modify";
 import Snap from "ol/interaction/Snap";
+import Translate from "ol/interaction/Translate";
+import PointerInteraction from "ol/interaction/Pointer";
+import Collection from "ol/Collection";
+import { getCenter } from "ol/extent";
 import VectorLayer from "ol/layer/Vector";
 import VectorSource from "ol/source/Vector";
 import Feature from "ol/Feature";
 import GeoJSON from "ol/format/GeoJSON";
 import type { Coordinate } from "ol/coordinate";
+import type Geometry from "ol/geom/Geometry";
 import type { Interaction } from "ol/interaction";
 import { Style, Stroke, Fill, Circle } from "ol/style";
 import { IdentifyMode, LayerType, type QgsVectorLayer } from "qgis-js";
@@ -15,7 +20,8 @@ import { splitWith } from "./editops";
 import { engine, free } from "./engine";
 import { olMap, overlays, hitBox, srid } from "./map";
 import { symbolKind } from "./style";
-import { addFeature, deleteFeature, featureGeometry, setGeometry, setAttributes } from "./editing";
+import { addFeature, deleteFeature, featureGeometry, setGeometry, setAttributes, updateGeometries } from "./editing";
+import { selectFids } from "./selection";
 import { defaultValues } from "./forms";
 import { ui, toast } from "./state.svelte";
 
@@ -106,6 +112,8 @@ export function setTool(tool: typeof ui.editTool) {
       showFeatureForm(fid);
     });
     use(draw);
+  } else if (tool === "move" || tool === "rotate") {
+    transformTool(tool);
   } else if (tool === "split") {
     const draw = new Draw({ source, type: "LineString" });
     draw.on("drawend", (e) => {
@@ -114,6 +122,49 @@ export function setTool(tool: typeof ui.editTool) {
     });
     use(draw);
   }
+}
+
+/** Move and rotate act on the selected features of the edit layer, shown as an editable sketch. */
+function transformTool(tool: "move" | "rotate") {
+  const feats = (ui.selection[ui.editing!] ?? []).flatMap((fid) => {
+    const json = featureGeometry(fid);
+    return json ? [Object.assign(new Feature(geojson.readGeometry(json)!), { fid })] : [];
+  });
+  if (!feats.length) return;
+  source.addFeatures(feats);
+  const save = (label: string) => updateGeometries(label, feats.map((f) => [f.fid, f.getGeometry()!])).catch((e) => toast(e.message));
+  if (tool === "move") {
+    const t = new Translate({ features: new Collection(feats), hitTolerance: 4 });
+    t.on("translateend", () => save(`move ${feats.length} feature${feats.length === 1 ? "" : "s"}`));
+    return use(t);
+  }
+  // Rotate: drag anywhere; the features turn around the centre of their extent.
+  let anchor: number[], start = 0, originals: Geometry[] = [];
+  const angle = (c: number[]) => Math.atan2(c[1] - anchor[1], c[0] - anchor[0]);
+  use(
+    new PointerInteraction({
+      handleDownEvent: (e) => {
+        anchor = getCenter(source.getExtent()!);
+        start = angle(e.coordinate);
+        originals = feats.map((f) => f.getGeometry()!.clone());
+        return true;
+      },
+      handleDragEvent: (e) => {
+        const a = angle(e.coordinate) - start;
+        feats.forEach((f, i) => {
+          const g = originals[i].clone();
+          g.rotate(a, anchor);
+          f.setGeometry(g);
+        });
+        ui.measure = `Rotation ${(((-a * 180) / Math.PI + 540) % 360 - 180).toFixed(1)}°`;
+      },
+      handleUpEvent: () => {
+        ui.measure = "";
+        save(`rotate ${feats.length} feature${feats.length === 1 ? "" : "s"}`);
+        return false;
+      },
+    }),
+  );
 }
 
 /** Re-applies the current tool (e.g. after snapping was switched). */
@@ -141,11 +192,19 @@ export function editClick(coord: Coordinate) {
   if (!ui.editing || !ui.editTool || ui.editTool === "add" || ui.editTool === "split") return ui.editTool === "add" || ui.editTool === "split";
   const fid = editLayerHit(coord);
   if (fid === null) {
-    clear();
+    if (ui.editTool !== "move" && ui.editTool !== "rotate") clear();
     return true;
   }
   if (ui.editTool === "delete") {
     deleteFeature(fid);
+    return true;
+  }
+  if (ui.editTool === "move" || ui.editTool === "rotate") {
+    // A click on another feature makes it the one to transform.
+    if (!(ui.selection[ui.editing] ?? []).includes(fid)) {
+      selectFids(ui.editing, [fid], "new");
+      setTool(ui.editTool);
+    }
     return true;
   }
   // Modify: show the feature's vertices.

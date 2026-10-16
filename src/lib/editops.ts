@@ -22,6 +22,28 @@ export async function mergeSelected() {
   ui.selection = { ...ui.selection, [s!.layerId]: [fids[0]] };
 }
 
+/** Splits the selected multipart features into one feature per part (copying the attributes). */
+export async function explodeSelected() {
+  const s = editSession();
+  const fids = s ? (ui.selection[s.layerId] ?? []) : [];
+  if (!fids.length) return toast("Select multipart features of the layer being edited.");
+  const g = await geosOps();
+  const update: [number, Uint8Array][] = [];
+  const insert: [number, Uint8Array][] = [];
+  for (const [fid, wkb] of geometries(fids)) {
+    const geom = g.read(wkb);
+    const parts = g.parts(geom);
+    g.geos.GEOSGeom_destroy(geom);
+    if (parts.length < 2) continue;
+    const fit = (p: Uint8Array) => (isMultiLayer() ? toMulti(p)! : p);
+    update.push([fid, fit(parts[0])]);
+    for (const p of parts.slice(1)) insert.push([fid, fit(p)]);
+  }
+  if (!update.length) return toast("The selected features have a single part.");
+  replaceFeatures(`explode ${update.length} feature${update.length === 1 ? "" : "s"}`, { update, insert });
+  toast(`Exploded into ${update.length + insert.length} features`);
+}
+
 /** Splits polygons and lines of the edit layer crossed by a line drawn on the map. */
 export async function splitWith(line: Geometry) {
   const s = editSession();

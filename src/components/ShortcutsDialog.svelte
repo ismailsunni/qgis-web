@@ -8,6 +8,8 @@
     ["Ctrl/⌘ S", "Save in this browser"],
     ["Ctrl/⌘ Z", "Undo (feature edits while editing)"],
     ["Ctrl/⌘ Shift Z, Ctrl/⌘ Y", "Redo"],
+    ["Ctrl/⌘ C", "Copy the selected features"],
+    ["Ctrl/⌘ V", "Paste features into the layer being edited"],
     ["Alt ←", "Previous map view"],
     ["Alt →", "Next map view"],
     ["?", "This list"],

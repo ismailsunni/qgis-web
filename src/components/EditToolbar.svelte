@@ -2,7 +2,8 @@
   import { findMapLayer } from "../lib/engine";
   import { undo, redo, stopEditing } from "../lib/editing";
   import { setTool, resetTool } from "../lib/editmap";
-  import { mergeSelected } from "../lib/editops";
+  import { mergeSelected, explodeSelected } from "../lib/editops";
+  import { pasteFeatures } from "../lib/clipboard";
   import { deleteFeatures } from "../lib/editing";
   import { clearSelection } from "../lib/selection";
   import { ui } from "../lib/state.svelte";
@@ -14,6 +15,8 @@
     ["modify", "Edit vertices", "edit"],
     ["delete", "Delete feature", "trash"],
     ["split", "Split features with a line", "split"],
+    ["move", "Move features", "move"],
+    ["rotate", "Rotate features", "rotate"],
   ] as const;
   const selectedCount = $derived(ui.editing ? (ui.selection[ui.editing]?.length ?? 0) : 0);
 </script>
@@ -24,6 +27,8 @@
     <button class="icon" class:active={ui.editTool === tool} title={label} aria-label={label} onclick={() => setTool(ui.editTool === tool ? null : tool)}><Icon name={icon} size={18} /></button>
   {/each}
   <button class="icon" title="Merge selected features" aria-label="Merge selected features" disabled={selectedCount < 2} onclick={() => mergeSelected()}><Icon name="merge" size={18} /></button>
+  <button class="icon" title="Explode selected multipart features into single parts" aria-label="Explode multipart features" disabled={!selectedCount} onclick={() => explodeSelected()}><Icon name="explode" size={18} /></button>
+  <button class="icon" title="Paste features (Ctrl+V)" aria-label="Paste features" disabled={!ui.copiedFeatures} onclick={() => pasteFeatures()}><Icon name="paste" size={18} /></button>
   <button class="icon" title="Delete selected features" aria-label="Delete selected features" disabled={!selectedCount} onclick={() => { if (confirm(`Delete ${selectedCount} selected features?`)) { deleteFeatures(ui.selection[ui.editing!]); clearSelection(ui.editing!); } }}><Icon name="trash" size={18} /><small>{selectedCount || ""}</small></button>
   <button class="icon" class:active={ui.snapping} title="Snapping to visible layers" aria-label="Snapping" onclick={() => { ui.snapping = !ui.snapping; resetTool(); }}><Icon name="magnet" size={18} /></button>
   <span class="sep"></span>
@@ -36,6 +41,7 @@
   {#if ui.editTool === "add"}Click on the map to draw; double-click to finish.
   {:else if ui.editTool === "modify"}Click a feature, then drag its vertices.
   {:else if ui.editTool === "delete"}Click a feature to delete it.
+  {:else if ui.editTool === "move" || ui.editTool === "rotate"}{selectedCount ? `Drag to ${ui.editTool} the ${selectedCount} selected feature${selectedCount === 1 ? "" : "s"}; click another feature to switch.` : `Click a feature to ${ui.editTool} it, or select features first.`}
   {:else if ui.editTool === "split"}Draw a line across the features to split (the selected ones, or all it crosses); double-click to finish.
   {:else}Click a feature to edit its attributes.{/if}
 </p>

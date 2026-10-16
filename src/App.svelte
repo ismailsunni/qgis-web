@@ -31,6 +31,7 @@
   import LayerPicker from "./components/LayerPicker.svelte";
   import ShortcutsDialog from "./components/ShortcutsDialog.svelte";
   import { previousView, nextView } from "./lib/navigation";
+  import { copyFeatures, pasteFeatures } from "./lib/clipboard";
   import { selectByExpression } from "./lib/selection";
 
   const rail: { id: Panel | "table"; icon: "layers" | "add" | "style" | "table" | "tools" | "hub" | "bookmark"; label: string; planned?: string }[] = [
@@ -95,6 +96,11 @@
       // While editing, undo applies to feature edits; otherwise to project changes.
       if (ui.editing) again ? redo() : undo();
       else again ? redoProject() : undoProject();
+    } else if (mod && !typing && ui.phase === "ready" && e.key.toLowerCase() === "c" && ui.current && ui.selection[ui.current]?.length && !getSelection()?.toString()) {
+      copyFeatures(ui.current, ui.selection[ui.current]);
+    } else if (mod && !typing && ui.editing && e.key.toLowerCase() === "v") {
+      e.preventDefault();
+      pasteFeatures();
     } else if (mod && e.key.toLowerCase() === "s") {
       e.preventDefault();
       saveInBrowser();

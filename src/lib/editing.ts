@@ -256,12 +256,19 @@ export async function toLayerWkb(g: Geometry) {
   const s = session!;
   const geom = g.clone();
   const t = await layerTransform();
+  let outside = false;
   if (t) geom.applyTransform((input, output, stride = 2) => {
     const out = output ?? input;
-    for (let i = 0; i < input.length; i += stride) [out[i], out[i + 1]] = t.forward([input[i], input[i + 1]]);
+    for (let i = 0; i < input.length; i += stride) {
+      const p = [input[i], input[i + 1]];
+      [out[i], out[i + 1]] = t.forward(p);
+      // Positions outside the layer CRS's area don't come back (e.g. latitudes beyond 90°).
+      const back = t.inverse([out[i], out[i + 1]]);
+      outside ||= !(Math.hypot(back[0] - p[0], back[1] - p[1]) <= 1e-6 * Math.max(1, Math.abs(p[0]), Math.abs(p[1])));
+    }
     return out;
   });
-  if ((geom as never as { getFlatCoordinates(): number[] }).getFlatCoordinates().some((c) => !Number.isFinite(c))) {
+  if (outside || (geom as never as { getFlatCoordinates(): number[] }).getFlatCoordinates().some((c) => !Number.isFinite(c))) {
     throw new Error("The geometry is outside the area of the layer's coordinate system");
   }
   let olGeom = geom;
@@ -317,6 +324,29 @@ export function replaceFeatures(label: string, op: { update?: [number, Uint8Arra
   }
   // Undo runs inserts back before restoring geometries.
   commit({ label, doSql, undoSql: undoSql.reverse() });
+}
+
+/** Moves or rotates features: new geometries (map CRS) for existing features, as one undo step. */
+export async function updateGeometries(label: string, items: [number, Geometry][]) {
+  replaceFeatures(label, { update: await Promise.all(items.map(async ([fid, g]) => [fid, await toLayerWkb(g)] as [number, Uint8Array])) });
+}
+
+/** Inserts features (map CRS geometries) with the attributes whose names match the layer's fields. */
+export async function insertFeatures(label: string, items: { geometry: Geometry; attributes: Record<string, unknown> }[]) {
+  const s = session!;
+  const columns = new Set(rows<{ name: string }>(s.db, `pragma table_info(${q(s.table)})`).map((c) => c.name));
+  let [{ next }] = rows<{ next: number }>(s.db, `select coalesce(max(${q(s.info.fid)}), 0) + 1 as next from ${q(s.table)}`);
+  const doSql: Stmt[] = [];
+  const undoSql: Stmt[] = [];
+  for (const { geometry, attributes } of items) {
+    const values = Object.fromEntries(Object.entries(attributes).filter(([k]) => columns.has(k) && k !== s.info.fid && k !== s.info.geom));
+    const r = { ...values, [s.info.fid]: next, [s.info.geom!]: await toBlob(geometry) };
+    const cols = Object.keys(r);
+    doSql.push([`insert into ${q(s.table)} (${cols.map(q).join(",")}) values (${cols.map(() => "?").join(",")})`, cols.map((c) => r[c])]);
+    undoSql.push([`delete from ${q(s.table)} where ${q(s.info.fid)} = ?`, [next++]]);
+  }
+  commit({ label, doSql, undoSql });
+  return items.length;
 }
 
 export async function addFeature(g: Geometry) {

@@ -52,7 +52,7 @@ export const ui = $state({
   dirty: false,
   /** Layer in edit mode (one at a time, as a GeoPackage write session). */
   editing: null as string | null,
-  editTool: null as "add" | "modify" | "delete" | "split" | null,
+  editTool: null as "add" | "modify" | "delete" | "split" | "move" | "rotate" | null,
   /** Snap to vertices and edges of visible layers while editing. */
   snapping: true,
   /** What a click on the map does. */
@@ -77,6 +77,8 @@ export const ui = $state({
   canRedoProject: false,
   /** Previous/next map views available. */
   viewHistory: [0, 0] as [number, number],
+  /** Features on the app's clipboard (Ctrl+C), ready to paste into the edit layer. */
+  copiedFeatures: 0,
   /** Coordinate grid shown on the map. */
   grid: false,
   /** Keyboard shortcut sheet. */
