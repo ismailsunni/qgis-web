@@ -8,15 +8,15 @@ import { ui, toast } from "./state.svelte";
 import { previewCsv, delimitedTextUri, toCsv, type CsvOptions, type CsvPreview } from "./csv";
 
 /** Formats QGIS (GDAL/OGR) reads in the browser engine. */
-export const DATA_EXT = /\.(gpkg|geojson|json|fgb|shp|zip|tif|tiff|kml|gpx|gml|parquet|geoparquet|csv|tsv|txt|xlsx)$/i;
+export const DATA_EXT = /\.(gpkg|geojson|json|fgb|shp|zip|tif|tiff|kml|gpx|gml|parquet|geoparquet|csv|tsv|txt|xlsx|mbtiles)$/i;
 const SIDECAR_EXT = /\.(shx|dbf|prj|cpg|qix|sbn|sbx|qmd|aux\.xml)$/i;
 
 interface Source {
   name: string;
   /** Path relative to the project folder, as stored in the project. */
   datasource: string;
-  type: "vector" | "raster";
-  provider: "ogr" | "gdal" | "delimitedtext";
+  type: "vector" | "raster" | "vector-tile";
+  provider: "ogr" | "gdal" | "delimitedtext" | "vectortile";
   crs: CrsDef | null;
 }
 
@@ -181,6 +181,15 @@ async function prepare(files: DataFile[]): Promise<Source[]> {
       } finally {
         db.close();
       }
+      continue;
+    }
+    if (ext === "mbtiles") {
+      // Raster MBTiles open through GDAL, vector ones (pbf tiles) as a QGIS vector tile layer.
+      const db = await openDb(f.data);
+      const format = rows<{ value: string }>(db, "select value from metadata where name = 'format'")[0]?.value;
+      db.close();
+      const crs = await authCrs("EPSG:3857");
+      out.push(format === "pbf" ? { name: baseName(name), datasource: `type=mbtiles&url=${rel(target)}`, type: "vector-tile", provider: "vectortile", crs } : { name: baseName(name), datasource: rel(target), type: "raster", provider: "gdal", crs });
       continue;
     }
     if (ext === "tif" || ext === "tiff") {

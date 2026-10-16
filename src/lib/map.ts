@@ -29,8 +29,9 @@ import { QgisJobDataSource } from "@qgis-js/ol";
 import type { QgsGeometry } from "qgis-js";
 import { engine, projectUnits } from "./engine";
 import { flatLayers, snapshotTree } from "./tree";
-import { drawnByBrowser, remoteSpec, attributionFor, type RemoteSpec } from "./remote";
+import { drawnByBrowser, remoteSpec, attributionFor, arcgisTiles, type RemoteSpec } from "./remote";
 import { hooks } from "./doc";
+import { mbtilesLayer } from "./mbtiles";
 import { toast } from "./state.svelte";
 
 let map: Map;
@@ -149,7 +150,7 @@ export function createRemoteLayer(s: RemoteSpec): BaseLayer {
   else if (s.kind === "wms")
     layer = new TileLayer({ source: new TileWMS({ url: s.url, crossOrigin, projection: "EPSG:3857", params: { LAYERS: s.layer, STYLES: s.style ?? "", FORMAT: s.format ?? "image/png", TRANSPARENT: true } }) });
   else if (s.kind === "cog") layer = new TileLayer({ source: new GeoTIFF({ sources: [{ url: s.url }], convertToRGB: "auto" }) as never });
-  else if (s.kind === "vectortile") layer = new VectorTileLayer({ source: new VectorTileSource({ format: new MVT(), url: s.url, minZoom: s.zmin, maxZoom: s.zmax }) });
+  else if (s.kind === "vectortile") layer = new VectorTileLayer({ source: new VectorTileSource({ format: new MVT(), url: arcgisTiles(s.url) ? `${s.url.replace(/\/$/, "")}/tile/{z}/{y}/{x}.pbf` : s.url, minZoom: s.zmin, maxZoom: s.zmax }) });
   else if (s.kind === "pmtiles") {
     if (s.raster) layer = new TileLayer({ source: new PMTilesRasterSource({ url: s.url, attributions: [] }) as never });
     else {
@@ -159,6 +160,7 @@ export function createRemoteLayer(s: RemoteSpec): BaseLayer {
       layer = new VectorTileLayer({ source, style: (f, r) => (f.get("layer") === s.layer ? createDefaultStyle(f, r) : undefined) });
     }
   }
+  else if (s.kind === "mbtiles") layer = mbtilesLayer(s.url, !!s.raster);
   else if (s.kind === "arcgismap") layer = new TileLayer({ source: new TileArcGISRest({ url: s.url, crossOrigin, attributions, params: s.layer ? { LAYERS: `show:${s.layer}`, FORMAT: s.format ?? "png32", TRANSPARENT: true } : { FORMAT: s.format ?? "png32", TRANSPARENT: true } }) });
   else {
     const tile = new TileLayer();

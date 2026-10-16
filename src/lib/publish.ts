@@ -20,7 +20,7 @@ export function localLayers(): LayerCheck[] {
   const out: LayerCheck[] = [];
   for (const el of project().xml.querySelectorAll("projectlayers > maplayer")) {
     const id = findChild(el, "id")!.textContent!;
-    if (remoteSpec(id)) continue;
+    if (remoteSpec(id) && remoteSpec(id)!.kind !== "mbtiles") continue;
     const { provider, datasource } = layerSource(id);
     const what = provider === "memory" ? "a temporary (memory) layer" : /\.gpkg/i.test(datasource) ? "a local GeoPackage" : `a local file (${datasource.split("|")[0]})`;
     out.push({ id, name: layerName(el), problem: "local", detail: `uses ${what}` });
@@ -55,7 +55,7 @@ export async function remoteProblems(): Promise<LayerCheck[]> {
     els.map(async (el): Promise<LayerCheck | null> => {
       const id = findChild(el, "id")!.textContent!;
       const spec = remoteSpec(id);
-      if (!spec) return null;
+      if (!spec || spec.kind === "mbtiles") return null;
       const name = layerName(el);
       const ds = layerSource(id).datasource;
       if (cleanDatasource(ds) !== ds) return { id, name, problem: "credentials", detail: "needs credentials, which are removed when publishing" };

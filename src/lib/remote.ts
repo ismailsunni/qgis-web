@@ -10,7 +10,7 @@ import { ui, toast } from "./state.svelte";
  * tiles and images are drawn by OpenLayers, remote vector files and WFS are downloaded and drawn by
  * QGIS. The engine has no network access yet (QEP #294).
  */
-export type RemoteKind = "xyz" | "wms" | "wmts" | "cog" | "file" | "wfs" | "vectortile" | "pmtiles" | "oapif" | "arcgisfeature" | "arcgismap";
+export type RemoteKind = "xyz" | "wms" | "wmts" | "cog" | "file" | "wfs" | "vectortile" | "pmtiles" | "oapif" | "arcgisfeature" | "arcgismap" | "mbtiles";
 
 export interface RemoteSpec {
   kind: RemoteKind;
@@ -56,7 +56,7 @@ export function datasourceFor(s: RemoteSpec) {
     case "wmts":
       return { type: "raster", provider: "wms", ds: `contextualWMSLegend=0&crs=EPSG:3857&dpiMode=7&featureCount=10&format=${s.format ?? "image/png"}&layers=${uriValue(s.layer ?? "")}&styles=${uriValue(s.style ?? "default")}&tileMatrixSet=${uriValue(s.matrixSet ?? "")}&url=${uriValue(s.url)}` };
     case "vectortile":
-      return { type: "vector-tile", provider: "vectortile", ds: `type=xyz&url=${uriValue(s.url)}&zmax=${s.zmax ?? 14}&zmin=${s.zmin ?? 0}` };
+      return { type: "vector-tile", provider: "vectortile", ds: `${arcgisTiles(s.url) ? "serviceType=arcgis&" : ""}type=xyz&url=${uriValue(s.url)}&zmax=${s.zmax ?? 14}&zmin=${s.zmin ?? 0}` };
     case "cog":
       return { type: "raster", provider: "gdal", ds: `/vsicurl/${s.url}` };
     case "file":
@@ -69,10 +69,34 @@ export function datasourceFor(s: RemoteSpec) {
       return { type: "vector", provider: "arcgisfeatureserver", ds: `url='${s.url}'` };
     case "arcgismap":
       return { type: "raster", provider: "arcgismapserver", ds: `format='${s.format ?? "png32"}' layer='${s.layer ?? "0"}' url='${s.url}'` };
+    case "mbtiles":
+      return s.raster ? { type: "raster", provider: "gdal", ds: s.url } : { type: "vector-tile", provider: "vectortile", ds: `type=mbtiles&url=${s.url}` };
     case "pmtiles":
       // As QGIS Desktop opens PMTiles: through GDAL, a raster, or one vector layer per source layer.
       return s.raster ? { type: "raster", provider: "gdal", ds: `/vsicurl/${s.url}` } : { type: "vector", provider: "ogr", ds: `/vsicurl/${s.url}|layername=${s.layer}` };
   }
+}
+
+/** ArcGIS VectorTileServer URLs (QGIS's "arcgis" vector tile service type). */
+export const arcgisTiles = (url: string) => /\/VectorTileServer\/?$/i.test(url);
+
+/** Tile templates offered by an OGC API Tiles tileset (or a collection's WebMercatorQuad tilesets). */
+export async function ogcTilesets(url: string) {
+  const base = url.replace(/\?.*$/, "").replace(/\/$/, "");
+  const candidates = /\/tiles\/[^/]+$/.test(base) ? [base] : [`${base}/map/tiles/WebMercatorQuad`, `${base}/tiles/WebMercatorQuad`];
+  const out: { name: string; title: string }[] = [];
+  for (const c of candidates) {
+    const r = await fetch(`${c}?f=json`, { headers: { Accept: "application/json" } }).catch(() => null);
+    if (!r?.ok) continue;
+    for (const l of (await r.json()).links ?? []) {
+      const kind = /^image\/(png|jpeg)/.test(l.type) ? "Map tiles" : l.type === "application/vnd.mapbox-vector-tile" ? "Vector tiles" : null;
+      if (l.rel === "item" && kind) {
+        const template = new URL(l.href, r.url).href.replace(/%7B/gi, "{").replace(/%7D/gi, "}");
+        out.push({ name: template.replace("{tileMatrix}", "{z}").replace("{tileRow}", "{y}").replace("{tileCol}", "{x}"), title: `${kind} (${l.type})` });
+      }
+    }
+  }
+  return out;
 }
 
 /** Reads a remote layer's spec back from its QGIS data source. */
@@ -86,6 +110,8 @@ export function remoteSpec(id: string): RemoteSpec | null {
     if (q.tileMatrixSet) return { kind: "wmts", name, url: q.url, layer: q.layers, style: q.styles, format: q.format, matrixSet: q.tileMatrixSet };
     return { kind: "wms", name, url: q.url, layer: q.layers, style: q.styles, format: q.format };
   }
+  if (p === "vectortile" && datasource.includes("type=mbtiles")) return { kind: "mbtiles", name, url: params(datasource).url };
+  if (p === "gdal" && /\.mbtiles$/i.test(datasource)) return { kind: "mbtiles", name, url: datasource, raster: true };
   if (p === "vectortile") {
     const q = datasource.includes("url=") && !datasource.includes("'") ? params(datasource) : quoted(datasource);
     return { kind: "vectortile", name, url: q.url, zmin: +q.zmin || 0, zmax: +q.zmax || 14 };
@@ -112,7 +138,7 @@ export function remoteSpec(id: string): RemoteSpec | null {
 }
 
 /** Kinds OpenLayers draws; the rest go through QGIS from a downloaded copy. */
-export const drawnByBrowser = (s: RemoteSpec | null) => !!s && ["xyz", "wms", "wmts", "cog", "vectortile", "pmtiles", "arcgismap"].includes(s.kind);
+export const drawnByBrowser = (s: RemoteSpec | null) => !!s && ["xyz", "wms", "wmts", "cog", "vectortile", "pmtiles", "arcgismap", "mbtiles"].includes(s.kind);
 
 /** Kinds whose features are downloaded for QGIS to draw. */
 const downloaded = (s: RemoteSpec | null) => !!s && ["file", "wfs", "oapif", "arcgisfeature"].includes(s.kind);
@@ -260,9 +286,10 @@ async function addPmtilesGroup(s: RemoteSpec, archive: import("pmtiles").PMTiles
 /** Basemaps that allow cross-origin use (needed to draw and export them). */
 export const PRESETS: RemoteSpec[] = [
   { kind: "xyz", name: "OpenStreetMap", url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", zmax: 19 },
-  { kind: "xyz", name: "CARTO Positron", url: "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png", zmax: 20 },
-  { kind: "xyz", name: "CARTO Voyager", url: "https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png", zmax: 20 },
-  { kind: "xyz", name: "CARTO Dark Matter", url: "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png", zmax: 20 },
+  { kind: "xyz", name: "OSM Humanitarian", url: "https://a.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", zmax: 19 },
+  { kind: "xyz", name: "CyclOSM", url: "https://a.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png", zmax: 19 },
+  { kind: "xyz", name: "Esri Street Map", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}", zmax: 19 },
+  { kind: "xyz", name: "Esri Dark Gray", url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}", zmax: 16 },
   { kind: "xyz", name: "OpenTopoMap", url: "https://tile.opentopomap.org/{z}/{x}/{y}.png", zmax: 17 },
   { kind: "xyz", name: "Esri World Imagery", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", zmax: 19 },
   { kind: "xyz", name: "Esri World Topo", url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}", zmax: 19 },
@@ -279,7 +306,8 @@ export function attributionFor(url: string) {
     }
   })();
   if (host.endsWith("openstreetmap.org")) return "© OpenStreetMap contributors";
-  if (host.endsWith("cartocdn.com")) return "© OpenStreetMap contributors © CARTO";
+  if (host.endsWith("tile.openstreetmap.fr")) return "© OpenStreetMap contributors, tiles OSM France";
+  if (host.endsWith("tile-cyclosm.openstreetmap.fr")) return "© OpenStreetMap contributors, CyclOSM, tiles OSM France";
   if (host.endsWith("opentopomap.org")) return "© OpenStreetMap contributors, SRTM | © OpenTopoMap (CC-BY-SA)";
   if (host.endsWith("arcgisonline.com") || host.endsWith("arcgis.com")) return "Powered by Esri";
   return "";

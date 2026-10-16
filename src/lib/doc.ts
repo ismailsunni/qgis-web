@@ -177,10 +177,10 @@ export function layerSource(id: string) {
 
 const REMOTE_PROVIDERS = ["wms", "vectortile", "wfs", "arcgismapserver", "arcgisfeatureserver"];
 
-/** Layers whose data the browser reads from the network instead of QGIS. */
+/** Layers the browser reads instead of QGIS (network sources, MBTiles). */
 export function isRemote(id: string) {
   const { provider, datasource } = layerSource(id);
-  return REMOTE_PROVIDERS.includes(provider.toLowerCase()) || datasource.startsWith("/vsicurl/") || id in doc!.local;
+  return REMOTE_PROVIDERS.includes(provider.toLowerCase()) || datasource.startsWith("/vsicurl/") || /\.mbtiles$/i.test(datasource) || id in doc!.local;
 }
 
 /** Layer opacity as stored in the project (also for layers the engine doesn't load). */

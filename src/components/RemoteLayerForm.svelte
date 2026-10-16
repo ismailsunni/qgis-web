@@ -1,24 +1,29 @@
 <script lang="ts">
   import WMSCapabilities from "ol/format/WMSCapabilities";
   import WMTSCapabilities from "ol/format/WMTSCapabilities";
-  import { addRemote, type RemoteKind } from "../lib/remote";
+  import { addRemote, ogcTilesets, type RemoteKind } from "../lib/remote";
+
+  /** Form choices: the layer kinds, plus services stored as one of them. */
+  type Choice = RemoteKind | "ogctiles" | "arcgisvt";
   import { toast } from "../lib/state.svelte";
 
-  const KINDS: [RemoteKind, string, string][] = [
+  const KINDS: [Choice, string, string][] = [
     ["xyz", "XYZ tiles", "https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
     ["wms", "WMS", "https://ows.terrestris.de/osm/service"],
     ["wmts", "WMTS", "https://…/WMTSCapabilities.xml"],
     ["wfs", "WFS", "https://…/wfs"],
     ["vectortile", "Vector tiles (MVT)", "https://…/{z}/{x}/{y}.pbf"],
     ["pmtiles", "PMTiles archive", "https://…/tiles.pmtiles"],
+    ["ogctiles", "OGC API Tiles", "https://…/collections/<id> or …/tiles/WebMercatorQuad"],
     ["oapif", "OGC API Features", "https://…/ogcapi (landing page)"],
     ["arcgisfeature", "ArcGIS FeatureServer", "https://…/FeatureServer/0"],
-    ["arcgismap", "ArcGIS MapServer", "https://…/MapServer"],
+    ["arcgismap", "ArcGIS MapServer / ImageServer", "https://…/MapServer or …/ImageServer"],
+    ["arcgisvt", "ArcGIS VectorTileServer", "https://…/VectorTileServer"],
     ["cog", "Cloud Optimized GeoTIFF", "https://…/image.tif"],
     ["file", "Vector file by URL", "https://…/data.fgb (FlatGeobuf, GeoJSON, GeoPackage)"],
   ];
 
-  let kind = $state<RemoteKind>("xyz");
+  let kind = $state<Choice>("xyz");
   let url = $state("");
   let name = $state("");
   let layers = $state<{ name: string; title: string; sets?: string[] }[]>([]);
@@ -26,13 +31,20 @@
   let matrixSet = $state("");
   let loading = $state(false);
 
-  const needsCaps = $derived(["wms", "wmts", "wfs", "oapif", "arcgismap"].includes(kind) || (kind === "arcgisfeature" && !/\/\d+\/?$/.test(url)));
+  const needsCaps = $derived(["wms", "wmts", "wfs", "oapif", "ogctiles"].includes(kind) || (kind === "arcgismap" && !/ImageServer\/?$/i.test(url)) || (kind === "arcgisfeature" && !/\/\d+\/?$/.test(url)));
 
   async function loadCaps() {
     loading = true;
     layers = [];
     try {
       const u = new URL(url);
+      if (kind === "ogctiles") {
+        layers = await ogcTilesets(url);
+        layer = layers[0]?.name ?? "";
+        if (!layers.length) toast("No map or vector tiles found at this address.");
+        loading = false;
+        return;
+      }
       if (kind === "oapif") {
         const r = await (await fetch(`${url.replace(/\/$/, "")}/collections?f=json`, { headers: { Accept: "application/json" } })).json();
         layers = (r.collections ?? []).map((c: any) => ({ name: c.id, title: c.title || c.id }));
@@ -84,8 +96,10 @@
     const title = name || layers.find((l) => l.name === layer)?.title || new URL(url).hostname;
     // A FeatureServer layer is addressed by its URL (…/FeatureServer/<id>).
     const full = kind === "arcgisfeature" && layer && !/\/\d+\/?$/.test(url) ? `${url.replace(/\/$/, "")}/${layer}` : url;
-    await addRemote({ kind, name: title, url: full, layer: kind === "arcgisfeature" ? undefined : layer, matrixSet });
-    url = name = "";
+    if (kind === "ogctiles") await addRemote({ kind: layer.includes(".mvt") || /vector/i.test(layers.find((l) => l.name === layer)?.title ?? "") ? "vectortile" : "xyz", name: name || new URL(url).pathname.split("/").filter((p) => !/^(tiles|map|WebMercatorQuad)$/.test(p)).pop() || "OGC tiles", url: layer });
+    else if (kind === "arcgisvt") await addRemote({ kind: "vectortile", name: name || url.split("/").at(-2) || "Vector tiles", url: url.replace(/\/$/, "") });
+    else await addRemote({ kind, name: title, url: full, layer: kind === "arcgisfeature" ? undefined : needsCaps ? layer : "", matrixSet });
+    url = name = layer = "";
     layers = [];
   }
 </script>
