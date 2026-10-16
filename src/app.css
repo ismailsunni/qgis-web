@@ -436,3 +436,10 @@ textarea.code.small { min-height: 90px; }
 .time-slider .step { width: 52px; }
 .welcome-links { display: flex; justify-content: center; align-items: baseline; gap: 6px; margin: 0; }
 a.link { color: var(--green-dark); }
+.dialog.layer-props { width: min(640px, calc(100vw - 32px)); }
+.layer-props .props-body { min-height: 260px; max-height: 60vh; overflow: auto; display: flex; flex-direction: column; gap: 10px; padding-top: 10px; }
+.layer-props .source { word-break: break-all; font-size: 12px; }
+.layer-props textarea { font-family: var(--mono, monospace); }
+.fields-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.fields-table th, .fields-table td { text-align: left; padding: 3px 6px; border-bottom: 1px solid var(--line); }
+.fields-table input { width: 100%; }

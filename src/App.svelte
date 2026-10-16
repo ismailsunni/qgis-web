@@ -30,6 +30,8 @@
   import CsvDialog from "./components/CsvDialog.svelte";
   import ProfilePanel from "./components/ProfilePanel.svelte";
   import LayerPicker from "./components/LayerPicker.svelte";
+  import { dismiss } from "./lib/dismiss";
+  import LayerProperties from "./components/LayerProperties.svelte";
   import ShortcutsDialog from "./components/ShortcutsDialog.svelte";
   import { previousView, nextView } from "./lib/navigation";
   import { copyFeatures, pasteFeatures } from "./lib/clipboard";
@@ -50,6 +52,8 @@
   let dragging = $state(false);
   let menuOpen = $state(false);
   let saveMenu = $state(false);
+  let saveButton = $state<HTMLElement>();
+  let menuButton = $state<HTMLElement>();
 
   // Autosave a few seconds after each change (project or data).
   $effect(() => {
@@ -153,9 +157,9 @@
       <button class="icon" title={t("Undo (Ctrl+Z)")} aria-label={t("Undo")} disabled={!ui.canUndoProject || !!ui.editing} onclick={undoProject}><Icon name="undo" size={18} /></button>
       <button class="icon" title={t("Redo (Ctrl+Shift+Z)")} aria-label={t("Redo")} disabled={!ui.canRedoProject || !!ui.editing} onclick={redoProject}><Icon name="redo" size={18} /></button>
       <div class="menu-anchor">
-        <button class="ghost" onclick={() => (saveMenu = !saveMenu)} disabled={ui.phase !== "ready"}><Icon name="save" size={18} /> {t("Save")}</button>
+        <button class="ghost" bind:this={saveButton} onclick={() => (saveMenu = !saveMenu)} disabled={ui.phase !== "ready"}><Icon name="save" size={18} /> {t("Save")}</button>
         {#if saveMenu}
-          <div class="menu card right" role="menu">
+          <div class="menu card right" role="menu" use:dismiss={{ close: () => (saveMenu = false), keep: saveButton }}>
             {#if ui.local}<button role="menuitem" onclick={() => { saveMenu = false; save(); }}>{t("Save to {name}", { name: ui.local })} <kbd>Ctrl S</kbd></button>{/if}
             <button role="menuitem" onclick={() => { saveMenu = false; saveInBrowser(); }}>{ui.local ? t("Save a copy in this browser") : t("Save in this browser")} {#if !ui.local}<kbd>Ctrl S</kbd>{/if}</button>
             <button role="menuitem" onclick={() => { saveMenu = false; downloadProject(); }}>{t("Download project file (.qgz)")}</button>
@@ -172,9 +176,9 @@
     {#if !view.mapOnly}
       <nav class="rail" aria-label={t("Panels")}>
         {#if view.compact}
-          <button class="rail-btn" title={t("Menu")} onclick={() => (menuOpen = !menuOpen)}><Icon name="menu" /></button>
+          <button class="rail-btn" title={t("Menu")} bind:this={menuButton} onclick={() => (menuOpen = !menuOpen)}><Icon name="menu" /></button>
           {#if menuOpen}
-            <div class="compact-menu">
+            <div class="compact-menu" use:dismiss={{ close: () => (menuOpen = false), keep: menuButton }}>
               <button onclick={() => { ui.palette = true; menuOpen = false; }}>{t("Search actions…")}</button>
               <button onclick={() => { ui.dialog = "share"; menuOpen = false; }} disabled={ui.phase !== "ready"}>{t("Share…")}</button>
               <button onclick={() => { ui.dialog = "settings"; menuOpen = false; }}>{t("Settings…")}</button>
@@ -229,6 +233,7 @@
   {#if ui.palette}<CommandPalette />{/if}
   {#if ui.dialog === "share"}<ShareDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "project"}<ProjectDialog onclose={() => (ui.dialog = null)} />{/if}
+  {#if ui.dialog === "layer-properties" && ui.current}{#key ui.current}<LayerProperties layerId={ui.current} onclose={() => (ui.dialog = null)} />{/key}{/if}
   {#if ui.shortcuts}<ShortcutsDialog />{/if}
   {#if ui.dialog === "settings"}<SettingsDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "export"}<ExportDialog onclose={() => (ui.dialog = null)} />{/if}

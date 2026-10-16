@@ -34,6 +34,18 @@ Label with a field or an expression; choose font, size, color, a buffer (halo) a
 
 Pseudocolor (one band with a color ramp), grayscale, hillshade (azimuth, altitude, z-factor, multidirectional) and RGB. For GeoTIFFs, the panel shows a histogram of the band with the min/max markers, and can reset to the band's range.
 
+## Layer properties
+
+Right-click a layer (or use its ⋯ menu) and choose **Properties…**, as in QGIS:
+
+- **Information**: type, provider, source, CRS, extent, feature count, fields, bands.
+- **Source**: rename the layer, and set a **provider feature filter** (an SQL `WHERE` clause, like QGIS's Query Builder) with **Test** to count the matching features first.
+- **Fields**: names, types and lengths; edit the **aliases** shown in the table and forms.
+- **Rendering**: opacity and scale-dependent visibility.
+- **Metadata**: the layer's title and abstract.
+
+Everything is saved in the project, so Desktop shows the same.
+
 ## QML and copy/paste
 
 - **Load QML… / Save QML**: QGIS layer style files, applied exactly as Desktop would.

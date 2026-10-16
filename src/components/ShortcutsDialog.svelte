@@ -18,6 +18,7 @@
     [N_("Shift + select"), N_("Add to the selection")],
     [N_("Ctrl/⌘ + select"), N_("Remove from the selection")],
     [N_("Right-click on the map"), N_("Copy coordinates, identify, bookmark")],
+    [N_("Right-click on a layer"), N_("Layer menu, including Properties")],
     [N_("Double-click"), N_("Finish a line or polygon (measure, profile, digitizing)")],
   ];
   const close = () => (ui.shortcuts = false);

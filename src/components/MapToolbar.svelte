@@ -3,10 +3,12 @@
   import { selectInExtent, selectInPolygon, modeFrom, clearSelection } from "../lib/selection";
   import { startProfile } from "../lib/profile";
   import { previousView, nextView, toggleGrid } from "../lib/navigation";
+  import { dismiss } from "../lib/dismiss";
   import { temporalLayers } from "../lib/temporal";
   import { t, N_ } from "../lib/i18n";
 
   let selectMenu = $state(false);
+  let selectMenuButton = $state<HTMLElement>();
   const SELECT_TOOLS = [
     ["select", N_("Select by click"), "select"],
     ["select-box", N_("Select by rectangle"), "selectbox"],
@@ -36,9 +38,9 @@
   </div>
   <div class="tool-group">
     <button class:active={!!activeSelect} title={t("Select features (Shift adds, Ctrl removes)")} aria-label={t("Select features")} onclick={() => (activeSelect ? stopTool() : startSelect("select"))}><Icon name={activeSelect?.[2] ?? "select"} size={17} /></button>
-    <button class="more" title={t("Selection tools")} aria-label={t("Selection tools")} onclick={() => (selectMenu = !selectMenu)}>▾</button>
+    <button class="more" bind:this={selectMenuButton} title={t("Selection tools")} aria-label={t("Selection tools")} onclick={() => (selectMenu = !selectMenu)}>▾</button>
     {#if selectMenu}
-      <div class="menu card tool-menu" role="menu">
+      <div class="menu card tool-menu" role="menu" use:dismiss={{ close: () => (selectMenu = false), keep: selectMenuButton }}>
         {#each SELECT_TOOLS as [tool, label, icon]}
           <button role="menuitem" class:active={ui.mapTool === tool} onclick={() => startSelect(tool)}><Icon name={icon} size={15} /> {t(label)}</button>
         {/each}

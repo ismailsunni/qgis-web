@@ -324,3 +324,20 @@ test("local project stays linked: save writes back to the folder", async ({ page
   await expect(page.locator(".toast")).toContainText("Saved to linked");
   expect(await stamp()).not.toBe(before);
 });
+
+test("layer menu on right-click, closed by clicking elsewhere; layer properties filter", async ({ page }) => {
+  await demo(page);
+  const row = page.locator(".node", { hasText: "Countries" });
+  await row.click({ button: "right" });
+  await expect(page.locator(".node .menu")).toBeVisible();
+  await page.locator(".map").click({ position: { x: 300, y: 300 } });
+  await expect(page.locator(".node .menu")).toHaveCount(0);
+  await row.click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Properties…" }).click();
+  const dialog = page.locator(".layer-props");
+  await expect(dialog).toContainText("177");
+  await dialog.getByRole("tab", { name: "Source" }).click();
+  await dialog.locator("textarea").fill(`"CONTINENT" = 'Africa'`);
+  await dialog.getByRole("button", { name: "Apply filter" }).click();
+  await expect.poll(() => page.evaluate(() => { const A = (globalThis as any).quarkgisApp; return A.engine.findMapLayer(A.ui.current).featureCount(); })).toBe(51);
+});

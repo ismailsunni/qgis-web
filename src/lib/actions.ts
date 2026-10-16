@@ -432,6 +432,7 @@ export function commands(): Command[] {
     ...layers.flatMap((l) => [
       { id: `toggle-${l.layerId}`, label: t("Toggle visibility: {name}", { name: l.name }), run: () => setVisible(l, !l.checked) },
       { id: `zoom-${l.layerId}`, label: t("Zoom to layer: {name}", { name: l.name }), run: () => { const e = engine().fullExtent([l.layerId!]); olMapRef().getView().fit([e.xMinimum, e.yMinimum, e.xMaximum, e.yMaximum], { padding: [40, 40, 40, 40] }); } },
+      { id: `props-${l.layerId}`, label: t("Layer properties: {name}", { name: l.name }), run: () => ((ui.current = l.layerId!), (ui.dialog = "layer-properties")) },
       { id: `style-${l.layerId}`, label: t("Style: {name}", { name: l.name }), run: () => ((ui.current = l.layerId!), (ui.panel = "style")) },
       ...(l.layerType === LayerType.Vector && l.valid
         ? [

@@ -92,7 +92,7 @@ export const ui = $state({
   /** Algorithm to open in the Tools panel (from the command palette). */
   pendingAlgorithm: null as string | null,
   /** Open modal dialog, if any. */
-  dialog: null as "project" | "share" | "settings" | "export" | "select-location" | "select-expression" | "export-layer" | "field-calc" | null,
+  dialog: null as "project" | "share" | "settings" | "export" | "select-location" | "select-expression" | "export-layer" | "field-calc" | "layer-properties" | null,
   /** Folder or file name of a project linked to the computer's files (Save writes back to them). */
   local: null as string | null,
   /** OPFS slot of the open project, once saved in the browser. */

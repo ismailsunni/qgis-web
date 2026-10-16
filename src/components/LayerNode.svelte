@@ -15,10 +15,12 @@
   import { copyStyle, pasteStyle, hasCopiedStyle } from "../lib/clipboard";
   import { zoomToSelection, selectAll, clearSelection } from "../lib/selection";
   import { t } from "../lib/i18n";
+  import { dismiss } from "../lib/dismiss";
 
   let { node }: { node: TreeNode } = $props();
   let showLegend = $state(false);
   let menu = $state(false);
+  let menuButton = $state<HTMLElement>();
   let editing = $state(false);
   let drop = $state<"before" | "after" | "into" | null>(null);
 
@@ -74,6 +76,7 @@
     ondragleave={() => (drop = null)}
     ondrop={onDrop}
     ondragend={() => { dragKey = null; drop = null; }}
+    oncontextmenu={(e) => { e.preventDefault(); if (!node.isGroup) ui.current = node.layerId!; menu = true; }}
   >
     {#if node.isGroup}
       <button class="icon chev" class:open={node.expanded} aria-label={t("Expand group")} onclick={() => setExpanded(node, !node.expanded)}><Icon name="chevron" size={14} /></button>
@@ -104,10 +107,10 @@
       {#if !node.isGroup && (node.valid || node.remote)}
         <button class="icon" title={t("Zoom to layer")} onclick={zoomTo}><Icon name="zoom" size={16} /></button>
       {/if}
-      <button class="icon" title={t("More")} aria-label={t("Layer menu")} onclick={() => (menu = !menu)}><Icon name="more" size={16} /></button>
+      <button class="icon" title={t("More")} aria-label={t("Layer menu")} bind:this={menuButton} onclick={() => (menu = !menu)}><Icon name="more" size={16} /></button>
     </span>
     {#if menu}
-      <div class="menu card" role="menu">
+      <div class="menu card" role="menu" use:dismiss={{ close: () => (menu = false), keep: menuButton }}>
         <button role="menuitem" onclick={run(() => (editing = true))}>{t("Rename")}</button>
         {#if !node.isGroup && node.layerType === LayerType.Vector && node.valid}
           <button role="menuitem" onclick={run(() => { ui.current = node.layerId!; ui.tableLayerId = node.layerId!; })}>{t("Open attribute table")}</button>
@@ -131,6 +134,7 @@
           {/if}
         {/if}
         <button role="menuitem" class="danger" onclick={run(() => remove(node))}>{t("Remove")}</button>
+        {#if !node.isGroup}<button role="menuitem" onclick={run(() => { ui.current = node.layerId!; ui.dialog = "layer-properties"; })}>{t("Properties…")}</button>{/if}
       </div>
     {/if}
   </div>
