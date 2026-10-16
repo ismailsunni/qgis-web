@@ -18,6 +18,7 @@
   <button class:active={ui.mapTool === "measure-area"} title="Measure area" aria-label="Measure area" onclick={() => toggle("measure-area")}><Icon name="area" size={17} /></button>
   <button class:active={ui.showLegend} title="Legend" aria-label="Legend" onclick={() => (ui.showLegend = !ui.showLegend)}><Icon name="legend" size={17} /></button>
   <button class:active={ui.mapTips} title="Map tips on hover" aria-label="Map tips" onclick={() => (ui.mapTips = !ui.mapTips)}><Icon name="tip" size={17} /></button>
+  <button class:active={ui.compare.active} title="Compare (swipe or side by side)" aria-label="Compare" onclick={() => (ui.compare.active = !ui.compare.active)}><Icon name="compare" size={17} /></button>
   <button title="Export map image" aria-label="Export map image" onclick={() => (ui.dialog = "export")}><Icon name="image" size={17} /></button>
 </div>
 

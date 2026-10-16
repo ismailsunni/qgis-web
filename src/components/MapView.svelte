@@ -10,6 +10,8 @@
   import SearchBox from "./SearchBox.svelte";
   import { mapTipAt, projectToLonLat } from "../lib/maptools";
   import { selectAt, modeFrom } from "../lib/selection";
+  import { createCompareMap, refreshCompare, updateCompareSize } from "../lib/compare";
+  import ComparePanel from "./ComparePanel.svelte";
 
   let target: HTMLDivElement;
   let coord = $state("");
@@ -18,6 +20,36 @@
   let lonlat = $state("");
   let tip = $state<{ html: string; x: number; y: number } | null>(null);
   let tipTimer = 0;
+  let compareTarget = $state<HTMLDivElement>();
+
+  // The comparison map lives while compare is on, and follows layer and style changes.
+  $effect(() => {
+    if (!ui.compare.active || !compareTarget) return;
+    return createCompareMap(compareTarget);
+  });
+  $effect(() => {
+    ui.version;
+    ui.compare.layers;
+    ui.compare.mode;
+    refreshCompare();
+    requestAnimationFrame(updateCompareSize);
+  });
+
+  // Swipe: the comparison map sits underneath; only the main map's layer canvas is clipped,
+  // so its controls stay usable.
+  $effect(() => {
+    const clip = ui.compare.active && ui.compare.mode === "swipe" ? `inset(0 ${100 - ui.compare.x}% 0 0)` : "";
+    const layers = target?.querySelector<HTMLElement>(".ol-layers");
+    if (layers) layers.style.clipPath = clip;
+  });
+
+  function dragDivider(e: PointerEvent) {
+    const area = (e.currentTarget as HTMLElement).parentElement!.getBoundingClientRect();
+    const move = (ev: PointerEvent) => (ui.compare.x = Math.min(98, Math.max(2, ((ev.clientX - area.left) / area.width) * 100)));
+    const up = () => (removeEventListener("pointermove", move), removeEventListener("pointerup", up));
+    addEventListener("pointermove", move);
+    addEventListener("pointerup", up);
+  }
 
   onMount(() => {
     const map = createMap(target, true);
@@ -56,7 +88,19 @@
   });
 </script>
 
-<div class="map" bind:this={target}></div>
+<div class="map" class:half={ui.compare.active && ui.compare.mode === "side"} class:swiping={ui.compare.active && ui.compare.mode === "swipe"} bind:this={target}></div>
+
+{#if ui.compare.active}
+  <div
+    class="map compare-map {ui.compare.mode}"
+    bind:this={compareTarget}
+    style:clip-path={ui.compare.mode === "swipe" ? `inset(0 0 0 ${ui.compare.x}%)` : undefined}
+  ></div>
+  {#if ui.compare.mode === "swipe"}
+    <div class="swipe-divider" style:left="{ui.compare.x}%" role="separator" aria-label="Swipe divider" onpointerdown={dragDivider}><span></span></div>
+  {/if}
+  <ComparePanel />
+{/if}
 
 {#if ui.phase === "ready"}
   {#if !view.mapOnly}<SearchBox />{/if}

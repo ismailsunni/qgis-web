@@ -365,3 +365,16 @@ textarea.code.small { min-height: 90px; }
 .attrs select, .attrs textarea { width: 100%; font: inherit; }
 .req { color: var(--danger); margin-left: 2px; }
 .field-error { color: var(--danger); font-size: 11px; margin-top: 2px; }
+
+/* Compare */
+.map.half { right: 50%; }
+.map.swiping { z-index: 1; background: transparent; }
+.compare-map.swipe { z-index: 0; pointer-events: none; }
+.compare-map.side { left: 50%; border-left: 2px solid var(--line); }
+.swipe-divider { position: absolute; top: 0; bottom: 0; width: 16px; margin-left: -8px; cursor: ew-resize; z-index: 3; display: grid; place-items: center; touch-action: none; }
+.swipe-divider::before { content: ""; position: absolute; top: 0; bottom: 0; left: 7px; width: 2px; background: var(--green); box-shadow: 0 0 4px rgba(0,0,0,.4); }
+.swipe-divider span { width: 14px; height: 36px; border-radius: 7px; background: var(--green); position: relative; }
+.compare-panel { position: absolute; left: 10px; bottom: 36px; width: 250px; max-height: 50%; display: flex; flex-direction: column; z-index: 5; padding: 8px 10px; gap: 4px; }
+.compare-panel header { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.compare-panel .tabs button { padding: 2px 8px; font-size: 12px; }
+.compare-panel ul { list-style: none; margin: 0; padding: 0; overflow: auto; font-size: 13px; }

@@ -332,6 +332,7 @@ export function commands(): Command[] {
     { id: "clear-selection", label: "Clear all selections", run: () => import("./selection").then((m) => m.clearSelection()) },
     { id: "zoom-selection", label: "Zoom to selection", run: () => import("./selection").then((m) => m.zoomToSelection()) },
     { id: "maptips", label: "Toggle map tips", run: () => (ui.mapTips = !ui.mapTips) },
+    { id: "compare", label: "Compare layers (swipe / side by side)", run: () => (ui.compare.active = !ui.compare.active) },
     ...(ui.editing
       ? [
           { id: "edit-stop", label: "Stop editing (saves)", run: () => import("./editing").then((m) => m.stopEditing()) },
