@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "../lib/i18n";
   import { olMap } from "../lib/map";
   import { identifyAt } from "../lib/actions";
   import { projectToLonLat } from "../lib/maptools";
@@ -9,13 +10,13 @@
   let { at, onclose }: { at: { pixel: number[]; coordinate: number[] }; onclose: () => void } = $props();
 
   const lonlat = $derived(projectToLonLat(at.coordinate));
-  const coords = $derived(FORMATS.filter((f) => f === "project" || lonlat).map((f) => [FORMAT_LABELS[f], formatCoord(f, at.coordinate, lonlat)]));
+  const coords = $derived(FORMATS.filter((f) => f === "project" || lonlat).map((f) => [t(FORMAT_LABELS[f]), formatCoord(f, at.coordinate, lonlat)]));
 
   function run(fn: () => unknown) {
     fn();
     onclose();
   }
-  const copy = (text: string) => run(() => navigator.clipboard.writeText(text).then(() => toast(`Copied ${text}`)));
+  const copy = (text: string) => run(() => navigator.clipboard.writeText(text).then(() => toast(t("Copied {text}", { text }))));
   const view = () => olMap().getView();
 </script>
 
@@ -23,11 +24,11 @@
 
 <div class="context-menu card" role="menu" style:left="{at.pixel[0]}px" style:top="{at.pixel[1]}px">
   {#each coords as [label, text]}
-    <button role="menuitem" title="Copy {label}" onclick={() => copy(text)}><span class="muted">{label}</span> {text}</button>
+    <button role="menuitem" title={t("Copy {label}", { label })} onclick={() => copy(text)}><span class="muted">{label}</span> {text}</button>
   {/each}
   <hr />
-  <button role="menuitem" onclick={() => run(() => identifyAt(at.coordinate))}>Identify here</button>
-  <button role="menuitem" onclick={() => run(() => view().animate({ center: at.coordinate, duration: 250 }))}>Center map here</button>
-  <button role="menuitem" onclick={() => run(() => view().animate({ center: at.coordinate, zoom: view().getZoom()! + 1, duration: 250 }))}>Zoom in here</button>
-  <button role="menuitem" onclick={() => run(() => (view().setCenter(at.coordinate), addBookmark(`Bookmark at ${coords[0][1]}`)))}>Add bookmark here</button>
+  <button role="menuitem" onclick={() => run(() => identifyAt(at.coordinate))}>{t("Identify here")}</button>
+  <button role="menuitem" onclick={() => run(() => view().animate({ center: at.coordinate, duration: 250 }))}>{t("Center map here")}</button>
+  <button role="menuitem" onclick={() => run(() => view().animate({ center: at.coordinate, zoom: view().getZoom()! + 1, duration: 250 }))}>{t("Zoom in here")}</button>
+  <button role="menuitem" onclick={() => run(() => (view().setCenter(at.coordinate), addBookmark(t("Bookmark at {coord}", { coord: coords[0][1] }))))}>{t("Add bookmark here")}</button>
 </div>

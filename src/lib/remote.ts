@@ -4,6 +4,7 @@ import { crsByAuthid, spatialRefSys, type CrsDef } from "./crs";
 import { writeFile } from "./engine";
 import { apply } from "./commit";
 import { ui, toast } from "./state.svelte";
+import { t } from "./i18n";
 
 /**
  * Remote layers are stored as regular QGIS layers (so Desktop opens them) but read by the browser:
@@ -89,7 +90,7 @@ export async function ogcTilesets(url: string) {
     const r = await fetch(`${c}?f=json`, { headers: { Accept: "application/json" } }).catch(() => null);
     if (!r?.ok) continue;
     for (const l of (await r.json()).links ?? []) {
-      const kind = /^image\/(png|jpeg)/.test(l.type) ? "Map tiles" : l.type === "application/vnd.mapbox-vector-tile" ? "Vector tiles" : null;
+      const kind = /^image\/(png|jpeg)/.test(l.type) ? t("Map tiles") : l.type === "application/vnd.mapbox-vector-tile" ? t("Vector tiles") : null;
       if (l.rel === "item" && kind) {
         const template = new URL(l.href, r.url).href.replace(/%7B/gi, "{").replace(/%7D/gi, "}");
         out.push({ name: template.replace("{tileMatrix}", "{z}").replace("{tileRow}", "{y}").replace("{tileCol}", "{x}"), title: `${kind} (${l.type})` });
@@ -206,7 +207,7 @@ export async function hydrateAll() {
   if (!todo.length) return;
   const errors: string[] = [];
   await Promise.all(todo.map(([id, s]) => hydrate(id, s!).catch((e) => errors.push(e.message))));
-  if (errors.length) toast(`Could not load: ${errors.join("; ")} (the server must allow CORS)`);
+  if (errors.length) toast(t("Could not load: {errors} (the server must allow CORS)", { errors: errors.join("; ") }));
 }
 
 async function detectCrs(s: RemoteSpec, bytes?: Uint8Array): Promise<CrsDef | null> {
@@ -259,7 +260,7 @@ export async function addRemote(spec: RemoteSpec, where: "top" | "bottom" = "top
     ui.current = id;
   } catch (e) {
     delete project().local[id];
-    toast(`Could not add ${s.name}: ${(e as Error).message}. The server must allow cross-origin requests (CORS).`);
+    toast(t("Could not add {name}: {error}. The server must allow cross-origin requests (CORS).", { name: s.name, error: (e as Error).message }));
   }
 }
 
@@ -267,7 +268,7 @@ export async function addRemote(spec: RemoteSpec, where: "top" | "bottom" = "top
 async function addPmtilesGroup(s: RemoteSpec, archive: import("pmtiles").PMTiles) {
   const meta = (await archive.getMetadata()) as { vector_layers?: { id: string }[] };
   const sources = (meta.vector_layers ?? []).map((l) => l.id);
-  if (!sources.length) return toast(`${s.name}: no vector layers found in the archive.`);
+  if (!sources.length) return toast(t("{name}: no vector layers found in the archive.", { name: s.name }));
   const crs = await crsByAuthid("EPSG:3857");
   const srs = crs ? `<srs>${spatialRefSys(crs)}</srs>` : "";
   apply(() => {

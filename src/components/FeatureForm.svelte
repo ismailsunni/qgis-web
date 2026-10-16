@@ -2,6 +2,7 @@
   import { readForm, displayValue, parseInput, validate, defaultValues, type FieldForm } from "../lib/forms";
   import { setAttributes, editSession } from "../lib/editing";
   import { ui } from "../lib/state.svelte";
+  import { t } from "../lib/i18n";
 
   let { layerId, fid, attributes }: { layerId: string; fid: number; attributes: [string, unknown][] } = $props();
 
@@ -19,7 +20,7 @@
       return;
     }
     errors = { ...errors, [name]: check.warning ?? "" };
-    setAttributes(fid, { [name]: value, ...defaultValues(layerId, fid, true) }, `edit ${name}`);
+    setAttributes(fid, { [name]: value, ...defaultValues(layerId, fid, true) }, t("edit {name}", { name }));
     const a = attributes.find(([k]) => k === name);
     if (a) a[1] = value;
   }

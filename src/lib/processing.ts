@@ -7,6 +7,7 @@ import { openGpkg, writeGpkgTable, type NewTable } from "./gpkg";
 import { rows } from "./sqlite";
 import { apply } from "./commit";
 import { ui } from "./state.svelte";
+import { t, N_ } from "./i18n";
 
 /**
  * Processing algorithms, modelled on QGIS's native provider (same ids, parameters and defaults).
@@ -209,10 +210,10 @@ const geomTypeName = (wkb: Uint8Array | null) =>
 
 // ---- Algorithms ----------------------------------------------------------------------------
 
-const CAP = ["Round", "Flat", "Square"];
-const JOIN = ["Round", "Miter", "Bevel"];
-const input = (geometry?: Param["geometry"]): Param => ({ name: "INPUT", label: "Input layer", type: "layer", geometry });
-const overlay: Param = { name: "OVERLAY", label: "Overlay layer", type: "layer", geometry: "polygon" };
+const CAP = [N_("Round"), N_("Flat"), N_("Square")];
+const JOIN = [N_("Round"), N_("Miter"), N_("Bevel")];
+const input = (geometry?: Param["geometry"]): Param => ({ name: "INPUT", label: N_("Input layer"), type: "layer", geometry });
+const overlay: Param = { name: "OVERLAY", label: N_("Overlay layer"), type: "layer", geometry: "polygon" };
 
 const perFeature = (r: Input, f: (wkb: Uint8Array | null) => Uint8Array | null, multi = true): Output => ({
   ...r,
@@ -225,17 +226,17 @@ const familyOf = (wkb: Uint8Array) => ((typeCode(wkb) - 1) % 3) + 1;
 export const ALGORITHMS: Algorithm[] = [
   {
     id: "native:buffer",
-    name: "Buffer",
-    group: "Vector geometry",
-    description: "Computes a buffer area for all features at a fixed distance (in layer units).",
+    name: N_("Buffer"),
+    group: N_("Vector geometry"),
+    description: N_("Computes a buffer area for all features at a fixed distance (in layer units)."),
     params: [
       input(),
-      { name: "DISTANCE", label: "Distance (layer units)", type: "number", default: 10 },
-      { name: "SEGMENTS", label: "Segments", type: "number", default: 5 },
-      { name: "END_CAP_STYLE", label: "End cap style", type: "enum", options: CAP, default: 0 },
-      { name: "JOIN_STYLE", label: "Join style", type: "enum", options: JOIN, default: 0 },
-      { name: "MITER_LIMIT", label: "Miter limit", type: "number", default: 2 },
-      { name: "DISSOLVE", label: "Dissolve result", type: "bool", default: false },
+      { name: "DISTANCE", label: N_("Distance (layer units)"), type: "number", default: 10 },
+      { name: "SEGMENTS", label: N_("Segments"), type: "number", default: 5 },
+      { name: "END_CAP_STYLE", label: N_("End cap style"), type: "enum", options: CAP, default: 0 },
+      { name: "JOIN_STYLE", label: N_("Join style"), type: "enum", options: JOIN, default: 0 },
+      { name: "MITER_LIMIT", label: N_("Miter limit"), type: "number", default: 2 },
+      { name: "DISSOLVE", label: N_("Dissolve result"), type: "bool", default: false },
     ],
     run(p, g, read) {
       const r = read(p.INPUT as string);
@@ -245,58 +246,58 @@ export const ALGORITHMS: Algorithm[] = [
   },
   {
     id: "native:centroids",
-    name: "Centroids",
-    group: "Vector geometry",
-    description: "Creates a point at the centroid of each feature.",
-    params: [input(), { name: "ALL_PARTS", label: "Create centroid for each part", type: "bool", default: false }],
+    name: N_("Centroids"),
+    group: N_("Vector geometry"),
+    description: N_("Creates a point at the centroid of each feature."),
+    params: [input(), { name: "ALL_PARTS", label: N_("Create centroid for each part"), type: "bool", default: false }],
     run: (p, g, read) => perFeature(read(p.INPUT as string), (w) => g.unary(w, (x) => g.geos.GEOSGetCentroid(x)), false),
   },
   {
     id: "native:pointonsurface",
-    name: "Point on surface",
-    group: "Vector geometry",
-    description: "Creates a point guaranteed to lie on the surface of each feature.",
+    name: N_("Point on surface"),
+    group: N_("Vector geometry"),
+    description: N_("Creates a point guaranteed to lie on the surface of each feature."),
     params: [input()],
     run: (p, g, read) => perFeature(read(p.INPUT as string), (w) => g.unary(w, (x) => g.geos.GEOSPointOnSurface(x)), false),
   },
   {
     id: "native:convexhull",
-    name: "Convex hull",
-    group: "Vector geometry",
-    description: "Calculates the convex hull of each feature.",
+    name: N_("Convex hull"),
+    group: N_("Vector geometry"),
+    description: N_("Calculates the convex hull of each feature."),
     params: [input()],
     run: (p, g, read) => perFeature(read(p.INPUT as string), (w) => g.unary(w, (x) => g.geos.GEOSConvexHull(x))),
   },
   {
     id: "native:boundingboxes",
-    name: "Bounding boxes",
-    group: "Vector geometry",
-    description: "Calculates the bounding box (envelope) of each feature.",
+    name: N_("Bounding boxes"),
+    group: N_("Vector geometry"),
+    description: N_("Calculates the bounding box (envelope) of each feature."),
     params: [input()],
     run: (p, g, read) => perFeature(read(p.INPUT as string), (w) => g.unary(w, (x) => g.geos.GEOSEnvelope(x))),
   },
   {
     id: "native:simplifygeometries",
-    name: "Simplify",
-    group: "Vector geometry",
-    description: "Simplifies geometries (Douglas-Peucker, topology preserving) with a tolerance in layer units.",
-    params: [input(), { name: "TOLERANCE", label: "Tolerance (layer units)", type: "number", default: 1 }],
+    name: N_("Simplify"),
+    group: N_("Vector geometry"),
+    description: N_("Simplifies geometries (Douglas-Peucker, topology preserving) with a tolerance in layer units."),
+    params: [input(), { name: "TOLERANCE", label: N_("Tolerance (layer units)"), type: "number", default: 1 }],
     run: (p, g, read) => perFeature(read(p.INPUT as string), (w) => g.unary(w, (x) => g.geos.GEOSTopologyPreserveSimplify(x, +p.TOLERANCE!))),
   },
   {
     id: "native:fixgeometries",
-    name: "Fix geometries",
-    group: "Vector geometry",
-    description: "Creates a valid representation of invalid geometries (GEOS MakeValid).",
+    name: N_("Fix geometries"),
+    group: N_("Vector geometry"),
+    description: N_("Creates a valid representation of invalid geometries (GEOS MakeValid)."),
     params: [input()],
     run: (p, g, read) => perFeature(read(p.INPUT as string), (w) => g.unary(w, (x) => g.geos.GEOSMakeValid(x))),
   },
   {
     id: "native:dissolve",
-    name: "Dissolve",
-    group: "Vector geometry",
-    description: "Combines features into new features, optionally grouped by a field.",
-    params: [input(), { name: "FIELD", label: "Dissolve field (optional)", type: "field", parent: "INPUT", optional: true }],
+    name: N_("Dissolve"),
+    group: N_("Vector geometry"),
+    description: N_("Combines features into new features, optionally grouped by a field."),
+    params: [input(), { name: "FIELD", label: N_("Dissolve field (optional)"), type: "field", parent: "INPUT", optional: true }],
     run(p, g, read) {
       const r = read(p.INPUT as string);
       const idx = r.fields.findIndex((f) => f.name === p.FIELD);
@@ -310,9 +311,9 @@ export const ALGORITHMS: Algorithm[] = [
   },
   {
     id: "native:clip",
-    name: "Clip",
-    group: "Vector overlay",
-    description: "Clips a layer using the polygons of an overlay layer; attributes are not changed.",
+    name: N_("Clip"),
+    group: N_("Vector overlay"),
+    description: N_("Clips a layer using the polygons of an overlay layer; attributes are not changed."),
     params: [input(), overlay],
     run(p, g, read) {
       const r = read(p.INPUT as string);
@@ -335,9 +336,9 @@ export const ALGORITHMS: Algorithm[] = [
   },
   {
     id: "native:difference",
-    name: "Difference",
-    group: "Vector overlay",
-    description: "Keeps the parts of input features that fall outside the overlay polygons.",
+    name: N_("Difference"),
+    group: N_("Vector overlay"),
+    description: N_("Keeps the parts of input features that fall outside the overlay polygons."),
     params: [input(), overlay],
     run(p, g, read) {
       const r = read(p.INPUT as string);
@@ -357,9 +358,9 @@ export const ALGORITHMS: Algorithm[] = [
   },
   {
     id: "native:intersection",
-    name: "Intersection",
-    group: "Vector overlay",
-    description: "Extracts the overlapping parts of features, with attributes of both layers.",
+    name: N_("Intersection"),
+    group: N_("Vector overlay"),
+    description: N_("Extracts the overlapping parts of features, with attributes of both layers."),
     params: [input(), overlay],
     run(p, g, read) {
       const r = read(p.INPUT as string);
@@ -390,9 +391,9 @@ export const ALGORITHMS: Algorithm[] = [
   },
   {
     id: "native:union",
-    name: "Union",
-    group: "Vector overlay",
-    description: "Overlays two layers: overlapping parts carry attributes of both, the rest keep their own.",
+    name: N_("Union"),
+    group: N_("Vector overlay"),
+    description: N_("Overlays two layers: overlapping parts carry attributes of both, the rest keep their own."),
     params: [input("polygon"), overlay],
     run(p, g, read) {
       const a = read(p.INPUT as string);
@@ -422,16 +423,16 @@ export const ALGORITHMS: Algorithm[] = [
   },
   {
     id: "native:joinattributesbylocation",
-    name: "Join attributes by location",
-    group: "Vector general",
-    description: "Adds the attributes of features of another layer that match spatially (one-to-one: the first match).",
+    name: N_("Join attributes by location"),
+    group: N_("Vector general"),
+    description: N_("Adds the attributes of features of another layer that match spatially (one-to-one: the first match)."),
     params: [
       input(),
-      { name: "JOIN", label: "Join layer", type: "layer" },
-      { name: "PREDICATE", label: "Where the features", type: "enum", options: ["intersect", "contain", "are within"], default: 0 },
-      { name: "METHOD", label: "Join type", type: "enum", options: ["One-to-many (a feature per match)", "One-to-one (first match only)"], default: 1 },
-      { name: "DISCARD_NONMATCHING", label: "Discard features without a match", type: "bool", default: false },
-      { name: "PREFIX", label: "Joined field prefix", type: "string", default: "" },
+      { name: "JOIN", label: N_("Join layer"), type: "layer" },
+      { name: "PREDICATE", label: N_("Where the features"), type: "enum", options: [N_("intersect"), N_("contain"), N_("are within")], default: 0 },
+      { name: "METHOD", label: N_("Join type"), type: "enum", options: [N_("One-to-many (a feature per match)"), N_("One-to-one (first match only)")], default: 1 },
+      { name: "DISCARD_NONMATCHING", label: N_("Discard features without a match"), type: "bool", default: false },
+      { name: "PREFIX", label: N_("Joined field prefix"), type: "string", default: "" },
     ],
     run(p, g, read) {
       const a = read(p.INPUT as string);
@@ -455,13 +456,13 @@ export const ALGORITHMS: Algorithm[] = [
   },
   {
     id: "native:mergevectorlayers",
-    name: "Merge vector layers",
-    group: "Vector general",
-    description: "Combines layers into one (in the first layer's CRS); adds layer and path fields as QGIS does.",
-    params: [{ name: "LAYERS", label: "Input layers", type: "layers" }],
+    name: N_("Merge vector layers"),
+    group: N_("Vector general"),
+    description: N_("Combines layers into one (in the first layer's CRS); adds layer and path fields as QGIS does."),
+    params: [{ name: "LAYERS", label: N_("Input layers"), type: "layers" }],
     run(p, _g, read) {
       const ids = (p.LAYERS as string[]) ?? [];
-      if (ids.length < 2) throw new Error("Choose at least two layers");
+      if (ids.length < 2) throw new Error(t("Choose at least two layers"));
       const first = read(ids[0]);
       const inputs = [first, ...ids.slice(1).map((id) => read(id, { crs: first.crs }))];
       const fields: Input["fields"] = [];
@@ -481,14 +482,14 @@ export const ALGORITHMS: Algorithm[] = [
   },
   {
     id: "native:pointsalonglines",
-    name: "Points along geometry",
-    group: "Vector geometry",
-    description: "Creates points at regular distances along lines (and polygon boundaries), with distance and angle.",
-    params: [input(), { name: "DISTANCE", label: "Distance (layer units)", type: "number", default: 1 }, { name: "START_OFFSET", label: "Start offset", type: "number", default: 0 }, { name: "END_OFFSET", label: "End offset", type: "number", default: 0 }],
+    name: N_("Points along geometry"),
+    group: N_("Vector geometry"),
+    description: N_("Creates points at regular distances along lines (and polygon boundaries), with distance and angle."),
+    params: [input(), { name: "DISTANCE", label: N_("Distance (layer units)"), type: "number", default: 1 }, { name: "START_OFFSET", label: N_("Start offset"), type: "number", default: 0 }, { name: "END_OFFSET", label: N_("End offset"), type: "number", default: 0 }],
     run(p, g, read) {
       const r = read(p.INPUT as string);
       const step = +p.DISTANCE!;
-      if (!(step > 0)) throw new Error("The distance must be positive");
+      if (!(step > 0)) throw new Error(t("The distance must be positive"));
       const features: Feature[] = [];
       for (const f of r.features) {
         if (!f.wkb) continue;
@@ -518,18 +519,18 @@ export const ALGORITHMS: Algorithm[] = [
   },
   {
     id: "native:extractbyexpression",
-    name: "Extract by expression",
-    group: "Vector selection",
-    description: "Creates a layer with the features matching a QGIS expression (evaluated by QGIS).",
-    params: [input(), { name: "EXPRESSION", label: "Expression", type: "expression", parent: "INPUT", default: "" }],
+    name: N_("Extract by expression"),
+    group: N_("Vector selection"),
+    description: N_("Creates a layer with the features matching a QGIS expression (evaluated by QGIS)."),
+    params: [input(), { name: "EXPRESSION", label: N_("Expression"), type: "expression", parent: "INPUT", default: "" }],
     run: (p, _g, read) => read(p.INPUT as string, { expression: p.EXPRESSION as string }),
   },
   {
     id: "native:extractbylocation",
-    name: "Extract by location",
-    group: "Vector selection",
-    description: "Creates a layer with the features that intersect features of another layer.",
-    params: [input(), { name: "INTERSECT", label: "Where the features intersect", type: "layer" }],
+    name: N_("Extract by location"),
+    group: N_("Vector selection"),
+    description: N_("Creates a layer with the features that intersect features of another layer."),
+    params: [input(), { name: "INTERSECT", label: N_("Where the features intersect"), type: "layer" }],
     run(p, g, read) {
       const r = read(p.INPUT as string);
       const mask = g.union(read(p.INTERSECT as string, { crs: r.crs }).features.map((f) => f.wkb));
@@ -550,10 +551,10 @@ export const ALGORITHMS: Algorithm[] = [
   },
   {
     id: "native:reprojectlayer",
-    name: "Reproject layer",
-    group: "Vector general",
-    description: "Reprojects a layer to another CRS (transformed by QGIS).",
-    params: [input(), { name: "TARGET_CRS", label: "Target CRS", type: "crs", default: "EPSG:4326" }],
+    name: N_("Reproject layer"),
+    group: N_("Vector general"),
+    description: N_("Reprojects a layer to another CRS (transformed by QGIS)."),
+    params: [input(), { name: "TARGET_CRS", label: N_("Target CRS"), type: "crs", default: "EPSG:4326" }],
     run: (p, _g, read) => ({ ...read(p.INPUT as string, { crs: p.TARGET_CRS as string }), crs: p.TARGET_CRS as string }),
   },
 ];
@@ -569,7 +570,7 @@ let selectedOnly = false;
 function readLayer(id: string, opts: { crs?: string; expression?: string; fids?: number[] } = {}): Input {
   const api = engine();
   const layer = findMapLayer(id) as QgsVectorLayer | null;
-  if (!layer) throw new Error("Input layer not found");
+  if (!layer) throw new Error(t("Input layer not found"));
   const all = Array.from({ length: layer.fields().count() }, (_, i) => layer.fields().at(i));
   const keep = all.map((f, i) => [f, i] as const).filter(([f]) => f.name().toLowerCase() !== "fid");
   const req = new api.QgsFeatureRequest();

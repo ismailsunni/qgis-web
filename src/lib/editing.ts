@@ -8,6 +8,7 @@ import { rows, type Db } from "./sqlite";
 import { apply } from "./commit";
 import { srid, redraw } from "./map";
 import { ui, changed, toast } from "./state.svelte";
+import { t, N_ } from "./i18n";
 
 /**
  * Feature editing, written straight into the layer's GeoPackage (as QGIS Desktop does).
@@ -47,7 +48,7 @@ export const canEdit = (layerId: string) => !!gpkgSource(layerId);
 export async function startEditing(layerId: string) {
   if (session) await stopEditing();
   const src = gpkgSource(layerId);
-  if (!src) return toast("Only GeoPackage layers can be edited. Use “Convert to GeoPackage” first.");
+  if (!src) return toast(t("Only GeoPackage layers can be edited. Use “Convert to GeoPackage” first."));
   const db = await openGpkg(readFile(src.path));
   const table = src.table ?? rows<{ table_name: string }>(db, "select table_name from gpkg_contents where data_type = 'features' limit 1")[0]?.table_name;
   session = { layerId, path: src.path, table, db, info: tableInfo(db, table), undo: [], redo: [] };
@@ -112,7 +113,7 @@ function commit(op: Op) {
   try {
     run(op.doSql);
   } catch (e) {
-    return toast(`Edit failed: ${(e as Error).message}`);
+    return toast(t("Edit failed: {error}", { error: (e as Error).message }));
   }
   s.undo.push(op);
   s.redo = [];
@@ -126,7 +127,7 @@ export function undo() {
   run(op.undoSql);
   s.redo.push(op);
   flush();
-  toast(`Undid ${op.label}`);
+  toast(t("Undid {label}", { label: t(op.label) }));
 }
 
 export function redo() {
@@ -148,11 +149,11 @@ export function setAttribute(fid: number, field: string, value: unknown) {
   const s = session!;
   const old = row(fid)?.[field] ?? null;
   const sql = `update ${q(s.table)} set ${q(field)} = ? where ${q(s.info.fid)} = ?`;
-  commit({ label: `edit ${field}`, doSql: [[sql, [value, fid]]], undoSql: [[sql, [old, fid]]] });
+  commit({ label: t("edit {field}", { field }), doSql: [[sql, [value, fid]]], undoSql: [[sql, [old, fid]]] });
 }
 
 /** Sets several attributes of a feature as one undoable edit. */
-export function setAttributes(fid: number, values: Record<string, unknown>, label = "edit attributes") {
+export function setAttributes(fid: number, values: Record<string, unknown>, label = N_("edit attributes")) {
   const s = session!;
   const r = row(fid);
   if (!r) return;
@@ -178,7 +179,7 @@ export function deleteFeatures(fids: number[]) {
     doSql.push([`delete from ${q(s.table)} where ${q(s.info.fid)} = ?`, [fid]]);
     undoSql.push([`insert into ${q(s.table)} (${cols.map(q).join(",")}) values (${cols.map(() => "?").join(",")})`, cols.map((c) => r[c])]);
   }
-  if (doSql.length) commit({ label: fids.length === 1 ? "delete feature" : `delete ${doSql.length} features`, doSql, undoSql });
+  if (doSql.length) commit({ label: fids.length === 1 ? t("delete feature") : t("delete {n} features", { n: doSql.length }), doSql, undoSql });
 }
 
 // ---- Fields ----------------------------------------------------------------------------------
@@ -189,7 +190,7 @@ export type FieldType = "TEXT" | "INTEGER" | "REAL" | "DATE" | "DATETIME" | "BOO
 export async function ensureEditing(layerId: string) {
   if (session?.layerId === layerId) return true;
   if (!canEdit(layerId)) {
-    if (!confirm("This layer isn't a GeoPackage. Copy it into a GeoPackage in the project's data folder so it can be changed?")) return false;
+    if (!confirm(t("This layer isn't a GeoPackage. Copy it into a GeoPackage in the project's data folder so it can be changed?"))) return false;
     await convertToGpkg(layerId);
   }
   await startEditing(layerId);
@@ -200,12 +201,12 @@ const columnType = (name: string) => rows<{ name: string; type: string }>(sessio
 
 export function addField(name: string, type: FieldType) {
   const s = session!;
-  commit({ label: `add field ${name}`, doSql: [[`alter table ${q(s.table)} add column ${q(name)} ${type}`, []]], undoSql: [[`alter table ${q(s.table)} drop column ${q(name)}`, []]] });
+  commit({ label: t("add field {name}", { name }), doSql: [[`alter table ${q(s.table)} add column ${q(name)} ${type}`, []]], undoSql: [[`alter table ${q(s.table)} drop column ${q(name)}`, []]] });
 }
 
 export function renameField(from: string, to: string) {
   const s = session!;
-  commit({ label: `rename field ${from}`, doSql: [[`alter table ${q(s.table)} rename column ${q(from)} to ${q(to)}`, []]], undoSql: [[`alter table ${q(s.table)} rename column ${q(to)} to ${q(from)}`, []]] });
+  commit({ label: t("rename field {name}", { name: from }), doSql: [[`alter table ${q(s.table)} rename column ${q(from)} to ${q(to)}`, []]], undoSql: [[`alter table ${q(s.table)} rename column ${q(to)} to ${q(from)}`, []]] });
 }
 
 export function deleteField(name: string) {
@@ -213,7 +214,7 @@ export function deleteField(name: string) {
   const type = columnType(name);
   const values = rows<Record<string, unknown>>(s.db, `select ${q(s.info.fid)} as fid, ${q(name)} as v from ${q(s.table)} where ${q(name)} is not null`);
   commit({
-    label: `delete field ${name}`,
+    label: t("delete field {name}", { name }),
     doSql: [[`alter table ${q(s.table)} drop column ${q(name)}`, []]],
     undoSql: [[`alter table ${q(s.table)} add column ${q(name)} ${type}`, []], ...values.map((r): Stmt => [`update ${q(s.table)} set ${q(name)} = ? where ${q(s.info.fid)} = ?`, [r.v, r.fid]])],
   });
@@ -226,7 +227,7 @@ export function writeField(name: string, values: Map<number, unknown>, create?: 
   const old = create ? [] : rows<Record<string, unknown>>(s.db, `select ${q(s.info.fid)} as fid, ${q(name)} as v from ${q(s.table)}`);
   const norm = (v: unknown) => (typeof v === "boolean" ? Number(v) : v instanceof Date ? v.toISOString() : v === undefined ? null : typeof v === "object" && v !== null ? JSON.stringify(v) : v);
   commit({
-    label: `calculate ${name}`,
+    label: t("calculate {name}", { name }),
     doSql: [...(create ? [[`alter table ${q(s.table)} add column ${q(name)} ${create}`, []] as Stmt] : []), ...[...values].map(([fid, v]): Stmt => [set, [norm(v), fid]])],
     undoSql: create ? [[`alter table ${q(s.table)} drop column ${q(name)}`, []]] : old.filter((r) => values.has(r.fid as number)).map((r): Stmt => [set, [r.v, r.fid]]),
   });
@@ -255,21 +256,21 @@ async function toBlob(g: Geometry) {
 export async function toLayerWkb(g: Geometry) {
   const s = session!;
   const geom = g.clone();
-  const t = await layerTransform();
+  const tf = await layerTransform();
   let outside = false;
-  if (t) geom.applyTransform((input, output, stride = 2) => {
+  if (tf) geom.applyTransform((input, output, stride = 2) => {
     const out = output ?? input;
     for (let i = 0; i < input.length; i += stride) {
       const p = [input[i], input[i + 1]];
-      [out[i], out[i + 1]] = t.forward(p);
+      [out[i], out[i + 1]] = tf.forward(p);
       // Positions outside the layer CRS's area don't come back (e.g. latitudes beyond 90°).
-      const back = t.inverse([out[i], out[i + 1]]);
+      const back = tf.inverse([out[i], out[i + 1]]);
       outside ||= !(Math.hypot(back[0] - p[0], back[1] - p[1]) <= 1e-6 * Math.max(1, Math.abs(p[0]), Math.abs(p[1])));
     }
     return out;
   });
   if (outside || (geom as never as { getFlatCoordinates(): number[] }).getFlatCoordinates().some((c) => !Number.isFinite(c))) {
-    throw new Error("The geometry is outside the area of the layer's coordinate system");
+    throw new Error(t("The geometry is outside the area of the layer's coordinate system"));
   }
   let olGeom = geom;
   if (s.info.geomType.startsWith("MULTI") && !geom.getType().startsWith("Multi")) {
@@ -355,7 +356,7 @@ export async function addFeature(g: Geometry) {
   if (!blob) return;
   const [{ next }] = rows<{ next: number }>(s.db, `select coalesce(max(${q(s.info.fid)}), 0) + 1 as next from ${q(s.table)}`);
   commit({
-    label: "add feature",
+    label: t("add feature"),
     doSql: [[`insert into ${q(s.table)} (${q(s.info.fid)}, ${q(s.info.geom!)}) values (?, ?)`, [next, blob]]],
     undoSql: [[`delete from ${q(s.table)} where ${q(s.info.fid)} = ?`, [next]]],
   });
@@ -367,7 +368,7 @@ export async function setGeometry(fid: number, g: Geometry) {
   const old = row(fid)?.[s.info.geom!] ?? null;
   const blob = await toBlob(g);
   const sql = `update ${q(s.table)} set ${q(s.info.geom!)} = ? where ${q(s.info.fid)} = ?`;
-  commit({ label: "move vertices", doSql: [[sql, [blob, fid]]], undoSql: [[sql, [old, fid]]] });
+  commit({ label: t("move vertices"), doSql: [[sql, [blob, fid]]], undoSql: [[sql, [old, fid]]] });
 }
 
 /** The feature's geometry in project CRS, for the edit overlay. */
@@ -405,5 +406,5 @@ export async function convertToGpkg(layerId: string) {
     child(el, "provider").textContent = "ogr";
     delete d.local[layerId];
   });
-  toast(`${layer.name} now uses ${path.split("/").pop()}`);
+  toast(t("{layer} now uses {file}", { layer: layer.name, file: path.split("/").pop()! }));
 }

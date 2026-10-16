@@ -4,6 +4,7 @@ import { apply } from "./commit";
 import { readRenderer, setCategorized, setGraduated, setSingle, symbolKind, uniqueCategories, classify, RAMPS, toHex, writeLabels, readLabels } from "./style";
 import { openFiles } from "./actions";
 import { ui, toast } from "./state.svelte";
+import { t } from "./i18n";
 
 /** QGIS Hub resources, mirrored at build time (scripts/hub-mirror.mjs). */
 export interface HubResource {
@@ -26,7 +27,7 @@ export const hubUrl = (path: string) => base + path;
 
 export async function hubIndex(): Promise<{ updated: string; resources: HubResource[] }> {
   const r = await fetch(hubUrl("index.json"));
-  if (!r.ok) throw new Error("The Hub mirror is not available in this build");
+  if (!r.ok) throw new Error(t("The Hub mirror is not available in this build"));
   return r.json();
 }
 
@@ -53,7 +54,7 @@ const KIND = { marker: "marker", line: "line", fill: "fill" } as const;
 /** Uses a Hub symbol as the layer's symbol (single symbol, or the base of its classes). */
 export function applySymbol(layerId: string, symbol: Element) {
   const kind = symbolKind(layerId);
-  if (symbol.getAttribute("type") !== KIND[kind ?? "fill"]) return toast(`This is a ${symbol.getAttribute("type")} symbol; the layer needs a ${kind} symbol.`);
+  if (symbol.getAttribute("type") !== KIND[kind ?? "fill"]) return toast(t("This is a {type} symbol; the layer needs a {kind} symbol.", { type: String(symbol.getAttribute("type")), kind: String(kind) }));
   const sym = project().xml.importNode(symbol, true) as Element;
   apply(() => setSingle(layerId, sym));
 }
@@ -73,13 +74,13 @@ export function rampStops(ramp: Element): string[] | null {
 /** Reclassifies the current categorized/graduated renderer with a Hub color ramp. */
 export function applyRamp(layerId: string, ramp: Element) {
   const stops = rampStops(ramp);
-  if (!stops) return toast(`“${ramp.getAttribute("type")}” ramps can't be used in the browser yet.`);
+  if (!stops) return toast(t("“{type}” ramps can't be used in the browser yet.", { type: String(ramp.getAttribute("type")) }));
   const name = `Hub: ${ramp.getAttribute("name")}`;
   RAMPS[name] = { stops };
   const r = readRenderer(layerId);
   if (r.type === "categorizedSymbol") apply(() => setCategorized(layerId, r.attr, uniqueCategories(layerId, r.attr, name), name));
   else if (r.type === "graduatedSymbol") apply(() => setGraduated(layerId, r.attr, classify(layerId, r.attr, r.mode, r.ranges.length || 5, name), name, r.mode));
-  else toast("Switch the layer to Categorized or Graduated first; the ramp is now in the ramp list.");
+  else toast(t("Switch the layer to Categorized or Graduated first; the ramp is now in the ramp list."));
 }
 
 /** Applies a Hub text format (font, size, color, buffer…) to the layer's labels. */
@@ -145,5 +146,5 @@ export async function addLayerDefinition(r: HubResource) {
     const root = treeRootEl();
     root.insertBefore(node, root.firstElementChild);
   });
-  toast(`Added “${r.name}”`);
+  toast(t("Added “{name}”", { name: r.name }));
 }

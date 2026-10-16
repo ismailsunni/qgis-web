@@ -10,6 +10,7 @@ import { engine, findMapLayer, free } from "./engine";
 import { olMap, overlays, hitBox, srid } from "./map";
 import { hooks } from "./doc";
 import { ui, toast } from "./state.svelte";
+import { t } from "./i18n";
 import { emit } from "./embed";
 
 /**
@@ -89,7 +90,7 @@ export const modeFrom = (e: { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: b
 /** Click selection: the topmost feature of the current layer under the pointer. */
 export function selectAt(coord: Coordinate, mode: SelectMode) {
   const layer = targetLayer();
-  if (!layer) return toast("Select a vector layer in the Layers panel first.");
+  if (!layer) return toast(t("Select a vector layer in the Layers panel first."));
   const api = engine();
   const rect = hitBox(coord, 4);
   const results = api.identify(rect, srid(), IdentifyMode.TopDownAll);
@@ -103,7 +104,7 @@ export function selectAt(coord: Coordinate, mode: SelectMode) {
 /** Rectangle selection (extent in the project CRS). */
 export function selectInExtent(extent: Extent, mode: SelectMode) {
   const layer = targetLayer();
-  if (!layer) return toast("Select a vector layer in the Layers panel first.");
+  if (!layer) return toast(t("Select a vector layer in the Layers panel first."));
   const api = engine();
   const req = new api.QgsFeatureRequest();
   req.setDestinationCrs(srid());
@@ -116,7 +117,7 @@ export function selectInExtent(extent: Extent, mode: SelectMode) {
 /** Polygon or freehand selection (geometry in the project CRS), exact intersection by GEOS. */
 export async function selectInPolygon(polygon: import("ol/geom/Geometry").default, mode: SelectMode) {
   const layer = targetLayer();
-  if (!layer) return toast("Select a vector layer in the Layers panel first.");
+  if (!layer) return toast(t("Select a vector layer in the Layers panel first."));
   const [{ geosOps }, { default: WKB }] = await Promise.all([import("./processing"), import("ol/format/WKB")]);
   const g = await geosOps();
   const shape = g.read(new Uint8Array(new WKB({ hex: false }).writeGeometry(polygon) as ArrayBuffer));

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "../lib/i18n";
   import { parseCoordinate, searchPlaces, goToPlace, goToXY, type Place } from "../lib/maptools";
   import { toast } from "../lib/state.svelte";
   import Icon from "./Icon.svelte";
@@ -17,7 +18,7 @@
     busy = true;
     try {
       results = await searchPlaces(text);
-      if (!results.length) toast("No place found");
+      if (!results.length) toast(t("No place found"));
     } catch (err) {
       toast((err as Error).message);
     }
@@ -27,14 +28,14 @@
 
 <form class="map-search card" onsubmit={submit} role="search">
   <Icon name="search" size={16} />
-  <input bind:value={q} placeholder="Search places or coordinates (lat, lon)" aria-label="Search places or coordinates" oninput={() => (results = [])} onkeydown={(e) => e.key === "Escape" && ((q = ""), (results = []))} />
+  <input bind:value={q} placeholder={t("Search places or coordinates (lat, lon)")} aria-label={t("Search places or coordinates")} oninput={() => (results = [])} onkeydown={(e) => e.key === "Escape" && ((q = ""), (results = []))} />
   {#if busy}<span class="spinner small" aria-hidden="true"></span>{/if}
   {#if results.length}
     <ul class="search-results">
       {#each results as r}
         <li><button type="button" onclick={() => { goToPlace(r); results = []; }}>{r.label}</button></li>
       {/each}
-      <li class="hint">Search by OpenStreetMap Nominatim</li>
+      <li class="hint">{t("Search by OpenStreetMap Nominatim")}</li>
     </ul>
   {/if}
 </form>

@@ -6,6 +6,7 @@
   import { ui, toast } from "../lib/state.svelte";
   import ExpressionInput from "./ExpressionInput.svelte";
   import Icon from "./Icon.svelte";
+  import { t } from "../lib/i18n";
 
   let props: { layerId: string; onclose: () => void } = $props();
   const layerId = untrack(() => props.layerId);
@@ -51,20 +52,20 @@
       const [v] = evaluate(1).values();
       return v === null || v === undefined ? "NULL" : String(v);
     } catch (e) {
-      return `Error: ${(e as Error).message}`;
+      return t("Error: {message}", { message: (e as Error).message });
     }
   });
 
   async function run() {
     const field = create ? name.trim() : target;
-    if (!field) return toast("Choose a field name.");
-    if (create && fields.some((f) => f.toLowerCase() === field.toLowerCase())) return toast(`A field named ${field} exists already.`);
+    if (!field) return toast(t("Choose a field name."));
+    if (create && fields.some((f) => f.toLowerCase() === field.toLowerCase())) return toast(t("A field named {field} exists already.", { field }));
     busy = true;
     try {
       const values = evaluate();
       if (await ensureEditing(layerId)) {
         writeField(field, values, create ? type : undefined);
-        toast(`${create ? "Created" : "Updated"} ${field} for ${values.size.toLocaleString()} features`);
+        toast(t(create ? "Created {field} for {n} features" : "Updated {field} for {n} features", { field, n: values.size.toLocaleString() }));
         props.onclose();
       }
     } catch (e) {
@@ -75,41 +76,41 @@
 </script>
 
 <div class="overlay modal" role="presentation" onclick={(e) => e.target === e.currentTarget && props.onclose()}>
-  <div class="dialog card" role="dialog" aria-modal="true" aria-label="Field calculator">
+  <div class="dialog card" role="dialog" aria-modal="true" aria-label={t("Field calculator")}>
     <header>
-      <h2>Field calculator <small>{layer.name}</small></h2>
-      <button class="icon" aria-label="Close" onclick={props.onclose}><Icon name="close" size={18} /></button>
+      <h2>{t("Field calculator")} <small>{layer.name}</small></h2>
+      <button class="icon" aria-label={t("Close")} onclick={props.onclose}><Icon name="close" size={18} /></button>
     </header>
     <div class="tabs">
-      <button class:active={create} onclick={() => (create = true)}>Create a new field</button>
-      <button class:active={!create} onclick={() => (create = false)}>Update an existing field</button>
+      <button class:active={create} onclick={() => (create = true)}>{t("Create a new field")}</button>
+      <button class:active={!create} onclick={() => (create = false)}>{t("Update an existing field")}</button>
     </div>
     {#if create}
       <div class="grid2">
-        <label class="field">Name<input bind:value={name} placeholder="e.g. area_km2" /></label>
-        <label class="field">Type
+        <label class="field">{t("Name")}<input bind:value={name} placeholder={t("e.g. area_km2")} /></label>
+        <label class="field">{t("Type")}
           <select bind:value={type}>
-            <option value="REAL">Decimal number</option>
-            <option value="INTEGER">Whole number</option>
-            <option value="TEXT">Text</option>
-            <option value="BOOLEAN">Boolean</option>
-            <option value="DATE">Date</option>
-            <option value="DATETIME">Date and time</option>
+            <option value="REAL">{t("Decimal number")}</option>
+            <option value="INTEGER">{t("Whole number")}</option>
+            <option value="TEXT">{t("Text")}</option>
+            <option value="BOOLEAN">{t("Boolean")}</option>
+            <option value="DATE">{t("Date")}</option>
+            <option value="DATETIME">{t("Date and time")}</option>
           </select>
         </label>
       </div>
     {:else}
-      <label class="field">Field<select bind:value={target}>{#each fields.filter((f) => f !== "fid") as f}<option>{f}</option>{/each}</select></label>
+      <label class="field">{t("Field")}<select bind:value={target}>{#each fields.filter((f) => f !== "fid") as f}<option>{f}</option>{/each}</select></label>
     {/if}
-    <label class="field">Expression
-      <ExpressionInput {layerId} value={expression} {fields} placeholder={'e.g. $area / 1e6, upper("name")'} onchange={(v) => (expression = v)} />
+    <label class="field">{t("Expression")}
+      <ExpressionInput {layerId} value={expression} {fields} placeholder={t('e.g. $area / 1e6, upper("name")')} onchange={(v) => (expression = v)} />
     </label>
-    {#if preview}<p class="hint">First feature: <code>{preview}</code></p>{/if}
-    {#if count}<label class="field row-inline"><input type="checkbox" bind:checked={onlySelected} /> Selected features only ({count})</label>{/if}
-    <p class="hint">Evaluated by QGIS and written to the layer's GeoPackage; undo with Ctrl+Z while editing.</p>
+    {#if preview}<p class="hint">{t("First feature:")} <code>{preview}</code></p>{/if}
+    {#if count}<label class="field row-inline"><input type="checkbox" bind:checked={onlySelected} /> {t("Selected features only ({n})", { n: count })}</label>{/if}
+    <p class="hint">{t("Evaluated by QGIS and written to the layer's GeoPackage; undo with Ctrl+Z while editing.")}</p>
     <footer>
-      <button onclick={props.onclose}>Cancel</button>
-      <button class="primary" disabled={busy || !expression.trim()} onclick={run}>{busy ? "Calculating…" : "OK"}</button>
+      <button onclick={props.onclose}>{t("Cancel")}</button>
+      <button class="primary" disabled={busy || !expression.trim()} onclick={run}>{busy ? t("Calculating…") : t("OK")}</button>
     </footer>
   </div>
 </div>

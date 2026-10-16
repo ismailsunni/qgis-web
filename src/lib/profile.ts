@@ -6,6 +6,7 @@ import { isGeoTiff, pixelSampler } from "./raster";
 import { projectToLonLat, startLineTool } from "./maptools";
 import { flatLayers, snapshotTree } from "./tree";
 import { ui, toast } from "./state.svelte";
+import { t } from "./i18n";
 
 /** Elevation profiles along a drawn line, sampled from a DEM raster layer (local GeoTIFF). */
 
@@ -17,7 +18,7 @@ export const demLayers = () => flatLayers(snapshotTree()).filter((l) => l.valid 
 export async function computeProfile(line: LineString, layerId: string, samples = 400): Promise<Profile> {
   const layer = findMapLayer(layerId)!;
   const sample = await pixelSampler(layerId);
-  if (!sample) throw new Error("The raster's file isn't available");
+  if (!sample) throw new Error(t("The raster's file isn't available"));
   const points: Profile["points"] = [];
   let d = 0;
   let prevLonLat: number[] | null = null;
@@ -32,7 +33,7 @@ export async function computeProfile(line: LineString, layerId: string, samples 
     prevXY = xy;
   }
   const zs = points.map((p) => p.z).filter((z): z is number => z !== null);
-  if (!zs.length) throw new Error(`The line doesn't cross ${layer.name}`);
+  if (!zs.length) throw new Error(t("The line doesn't cross {layer}", { layer: layer.name }));
   let gain = 0, loss = 0;
   for (let i = 1; i < points.length; i++) {
     const [a, b] = [points[i - 1].z, points[i].z];
@@ -44,7 +45,7 @@ export async function computeProfile(line: LineString, layerId: string, samples 
 /** Starts drawing a profile line; the result opens in the profile drawer. */
 export function startProfile() {
   const dems = demLayers();
-  if (!dems.length) return toast("Add an elevation raster (GeoTIFF) to draw a profile.");
+  if (!dems.length) return toast(t("Add an elevation raster (GeoTIFF) to draw a profile."));
   const layerId = dems.find((l) => l.layerId === ui.current)?.layerId ?? dems[0].layerId!;
   startLineTool(async (line) => {
     try {
@@ -54,5 +55,5 @@ export function startProfile() {
     }
   });
   ui.mapTool = "profile";
-  toast(`Draw a line to profile ${findMapLayer(layerId)?.name}; double-click to finish.`);
+  toast(t("Draw a line to profile {layer}; double-click to finish.", { layer: findMapLayer(layerId)?.name ?? "" }));
 }

@@ -33,6 +33,7 @@ import { drawnByBrowser, remoteSpec, attributionFor, arcgisTiles, type RemoteSpe
 import { hooks } from "./doc";
 import { mbtilesLayer } from "./mbtiles";
 import { toast } from "./state.svelte";
+import { t } from "./i18n";
 
 let map: Map;
 let projection: Projection;
@@ -184,7 +185,7 @@ const pmtilesSources = new globalThis.Map<string, VectorTileSource>();
 const failed = new Set<string>();
 function layerError(name: string) {
   failed.add(name);
-  toast(`Could not load ${[...failed].join(", ")}: the server may block cross-origin requests (CORS) or be offline.`);
+  toast(t("Could not load {names}: the server may block cross-origin requests (CORS) or be offline.", { names: [...failed].join(", ") }));
 }
 
 export function zoomToFull() {

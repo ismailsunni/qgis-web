@@ -24,6 +24,7 @@ import { addFeature, deleteFeature, featureGeometry, setGeometry, setAttributes,
 import { selectFids } from "./selection";
 import { defaultValues } from "./forms";
 import { ui, toast } from "./state.svelte";
+import { t } from "./i18n";
 
 /** Map interactions for editing: sketching new features and moving vertices. */
 
@@ -108,7 +109,7 @@ export function setTool(tool: typeof ui.editTool) {
       if (fid === undefined) return;
       // Default values from the project's form configuration, evaluated by QGIS.
       const defaults = defaultValues(ui.editing!, fid);
-      if (Object.keys(defaults).length) setAttributes(fid, defaults, "default values");
+      if (Object.keys(defaults).length) setAttributes(fid, defaults, t("default values"));
       showFeatureForm(fid);
     });
     use(draw);
@@ -134,9 +135,9 @@ function transformTool(tool: "move" | "rotate") {
   source.addFeatures(feats);
   const save = (label: string) => updateGeometries(label, feats.map((f) => [f.fid, f.getGeometry()!])).catch((e) => toast(e.message));
   if (tool === "move") {
-    const t = new Translate({ features: new Collection(feats), hitTolerance: 4 });
-    t.on("translateend", () => save(`move ${feats.length} feature${feats.length === 1 ? "" : "s"}`));
-    return use(t);
+    const tr = new Translate({ features: new Collection(feats), hitTolerance: 4 });
+    tr.on("translateend", () => save(feats.length === 1 ? t("move {n} feature", { n: 1 }) : t("move {n} features", { n: feats.length })));
+    return use(tr);
   }
   // Rotate: drag anywhere; the features turn around the centre of their extent.
   let anchor: number[], start = 0, originals: Geometry[] = [];
@@ -156,11 +157,11 @@ function transformTool(tool: "move" | "rotate") {
           g.rotate(a, anchor);
           f.setGeometry(g);
         });
-        ui.measure = `Rotation ${(((-a * 180) / Math.PI + 540) % 360 - 180).toFixed(1)}°`;
+        ui.measure = t("Rotation {angle}°", { angle: (((-a * 180) / Math.PI + 540) % 360 - 180).toFixed(1) });
       },
       handleUpEvent: () => {
         ui.measure = "";
-        save(`rotate ${feats.length} feature${feats.length === 1 ? "" : "s"}`);
+        save(feats.length === 1 ? t("rotate {n} feature", { n: 1 }) : t("rotate {n} features", { n: feats.length }));
         return false;
       },
     }),

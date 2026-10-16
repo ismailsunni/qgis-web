@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "../lib/i18n";
   import { onDestroy } from "svelte";
   import { addStep, applyTime, defaultStep, floorTo, timeExtent, UNITS, type Unit } from "../lib/temporal";
   import { ui } from "../lib/state.svelte";
@@ -14,7 +15,7 @@
   const frames = $derived.by(() => {
     if (!extent) return 0;
     let n = 0;
-    for (let t = first; t <= extent[1] && n < 5000; t = addStep(t, step, unit)) n++;
+    for (let ms = first; ms <= extent[1] && n < 5000; ms = addStep(ms, step, unit)) n++;
     return n;
   });
   const range = $derived<[number, number] | null>(extent ? [addStep(first, frame * step, unit), addStep(first, (frame + 1) * step, unit)] : null);
@@ -42,17 +43,17 @@
   };
 </script>
 
-<div class="time-slider card" role="group" aria-label="Time slider">
+<div class="time-slider card" role="group" aria-label={t("Time slider")}>
   {#if !extent}
-    <span class="muted">No dates found in the temporal layers.</span>
+    <span class="muted">{t("No dates found in the temporal layers.")}</span>
   {:else}
-    <button class="icon" title={playing ? "Pause" : "Play"} aria-label={playing ? "Pause" : "Play"} onclick={play}>{playing ? "⏸" : "▶"}</button>
-    <button class="icon" title="Previous step" aria-label="Previous step" disabled={frame <= 0} onclick={() => frame--}><Icon name="back" size={16} /></button>
-    <input type="range" min="0" max={frames - 1} bind:value={frame} aria-label="Time" />
-    <button class="icon" title="Next step" aria-label="Next step" disabled={frame >= frames - 1} onclick={() => frame++}><Icon name="forward" size={16} /></button>
+    <button class="icon" title={playing ? t("Pause") : t("Play")} aria-label={playing ? t("Pause") : t("Play")} onclick={play}>{playing ? "⏸" : "▶"}</button>
+    <button class="icon" title={t("Previous step")} aria-label={t("Previous step")} disabled={frame <= 0} onclick={() => frame--}><Icon name="back" size={16} /></button>
+    <input type="range" min="0" max={frames - 1} bind:value={frame} aria-label={t("Time")} />
+    <button class="icon" title={t("Next step")} aria-label={t("Next step")} disabled={frame >= frames - 1} onclick={() => frame++}><Icon name="forward" size={16} /></button>
     <span class="time-label">{range && `${fmt(range[0])} – ${fmt(range[1])}`}</span>
-    <input class="step" type="number" min="1" bind:value={step} aria-label="Step" onchange={() => (frame = 0)} />
-    <select bind:value={unit} aria-label="Step unit" onchange={() => (frame = 0)}>{#each Object.keys(UNITS) as u}<option>{u}</option>{/each}</select>
+    <input class="step" type="number" min="1" bind:value={step} aria-label={t("Step")} onchange={() => (frame = 0)} />
+    <select bind:value={unit} aria-label={t("Step unit")} onchange={() => (frame = 0)}>{#each Object.keys(UNITS) as u}<option value={u}>{t(u)}</option>{/each}</select>
   {/if}
-  <button class="icon" title="Close (show all features)" aria-label="Close time slider" onclick={() => (ui.time.active = false)}><Icon name="close" size={16} /></button>
+  <button class="icon" title={t("Close (show all features)")} aria-label={t("Close time slider")} onclick={() => (ui.time.active = false)}><Icon name="close" size={16} /></button>
 </div>

@@ -1,5 +1,6 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { engine, readFile, writeFile, exists, listFiles } from "./engine";
+import { t } from "./i18n";
 
 /**
  * The open project as a QGIS XML document. It is the project file itself: every edit is
@@ -43,7 +44,7 @@ export function openDoc(path: string, root: string) {
     extra = entries;
   } else text = strFromU8(bytes);
   const xml = parse(text);
-  if (xml.querySelector("parsererror") || !xml.querySelector("qgis")) throw new Error(`${file} is not a QGIS project`);
+  if (xml.querySelector("parsererror") || !xml.querySelector("qgis")) throw new Error(t("{file} is not a QGIS project", { file }));
   doc = { xml, root, dir: path.slice(0, -file.length - 1), file, extra, innerName, local: {} };
 }
 
@@ -81,7 +82,7 @@ export function reload() {
   }
   writeFile(enginePath(), serialize(xml));
   hooks.beforeReload();
-  if (!engine().loadProject(enginePath())) throw new Error("QGIS could not read the project");
+  if (!engine().loadProject(enginePath())) throw new Error(t("QGIS could not read the project"));
   hooks.afterReload();
 }
 

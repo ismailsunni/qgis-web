@@ -2,6 +2,7 @@ import { findChild, layerSource, project, serialize } from "./doc";
 import { exists, readFile } from "./engine";
 import { remoteSpec, type RemoteSpec } from "./remote";
 import { cleanDatasource, stripSecrets } from "./secrets";
+import { t } from "./i18n";
 
 export { stripSecrets };
 
@@ -22,8 +23,8 @@ export function localLayers(): LayerCheck[] {
     const id = findChild(el, "id")!.textContent!;
     if (remoteSpec(id) && remoteSpec(id)!.kind !== "mbtiles") continue;
     const { provider, datasource } = layerSource(id);
-    const what = provider === "memory" ? "a temporary (memory) layer" : /\.gpkg/i.test(datasource) ? "a local GeoPackage" : `a local file (${datasource.split("|")[0]})`;
-    out.push({ id, name: layerName(el), problem: "local", detail: `uses ${what}` });
+    const detail = provider === "memory" ? t("uses a temporary (memory) layer") : /\.gpkg/i.test(datasource) ? t("uses a local GeoPackage") : t("uses a local file ({file})", { file: datasource.split("|")[0] });
+    out.push({ id, name: layerName(el), problem: "local", detail });
   }
   return out;
 }
@@ -58,13 +59,13 @@ export async function remoteProblems(): Promise<LayerCheck[]> {
       if (!spec || spec.kind === "mbtiles") return null;
       const name = layerName(el);
       const ds = layerSource(id).datasource;
-      if (cleanDatasource(ds) !== ds) return { id, name, problem: "credentials", detail: "needs credentials, which are removed when publishing" };
+      if (cleanDatasource(ds) !== ds) return { id, name, problem: "credentials", detail: t("needs credentials, which are removed when publishing") };
       try {
         const r = await fetch(probeUrl(spec), { method: spec.kind === "cog" || spec.kind === "file" ? "HEAD" : "GET", mode: "cors" });
-        if (!r.ok && r.status !== 404) return { id, name, problem: "cors", detail: `the server answered ${r.status}` };
+        if (!r.ok && r.status !== 404) return { id, name, problem: "cors", detail: t("the server answered {status}", { status: r.status }) };
         return null;
       } catch {
-        return { id, name, problem: "cors", detail: "the server blocks cross-origin requests (no CORS), viewers will see an error" };
+        return { id, name, problem: "cors", detail: t("the server blocks cross-origin requests (no CORS), viewers will see an error") };
       }
     }),
   );
@@ -184,7 +185,7 @@ export async function loadPublished(ref: string, rev?: string | null) {
   const [owner, id] = ref.split("/");
   const [qgs, meta] = await Promise.all([
     fetch(raw(owner, id, "project.qgs", rev)).then((r) => {
-      if (!r.ok) throw new Error(`This shared map was not found (${r.status})`);
+      if (!r.ok) throw new Error(t("This shared map was not found ({status})", { status: r.status }));
       return r.arrayBuffer();
     }),
     fetch(raw(owner, id, "qgisweb.json", rev)).then((r) => (r.ok ? (r.json() as Promise<PublishMeta>) : null)).catch(() => null),

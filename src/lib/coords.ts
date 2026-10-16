@@ -1,11 +1,12 @@
 import proj4 from "proj4";
 import { forward as toMgrs } from "mgrs";
 import type { CoordFormat } from "./settings";
+import { t, N_ } from "./i18n";
 
 /** Coordinate readouts: project CRS, decimal degrees, degrees-minutes-seconds and UTM. */
 
 export const FORMATS: CoordFormat[] = ["decimal", "dms", "utm", "mgrs", "project"];
-export const FORMAT_LABELS: Record<CoordFormat, string> = { decimal: "Latitude, longitude", dms: "Degrees, minutes, seconds", utm: "UTM (WGS 84)", mgrs: "MGRS", project: "Project CRS" };
+export const FORMAT_LABELS: Record<CoordFormat, string> = { decimal: N_("Latitude, longitude"), dms: N_("Degrees, minutes, seconds"), utm: N_("UTM (WGS 84)"), mgrs: "MGRS", project: N_("Project CRS") };
 
 function dms(v: number, pos: string, neg: string) {
   const a = Math.abs(v);
@@ -31,8 +32,8 @@ export function formatCoord(format: CoordFormat, projected: number[], lonlat: nu
   const [lon, lat] = lonlat;
   if (format === "decimal") return `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
   if (format === "dms") return `${dms(lat, "N", "S")} ${dms(lon, "E", "W")}`;
-  if (format === "mgrs") return lat > 84 || lat < -80 ? "outside MGRS" : toMgrs([lon, lat], 5).replace(/^(\d+\w)(\w\w)(\d{5})(\d{5})$/, "$1 $2 $3 $4");
-  if (Math.abs(lat) > 84) return "outside UTM";
+  if (format === "mgrs") return lat > 84 || lat < -80 ? t("outside MGRS") : toMgrs([lon, lat], 5).replace(/^(\d+\w)(\w\w)(\d{5})(\d{5})$/, "$1 $2 $3 $4");
+  if (Math.abs(lat) > 84) return t("outside UTM");
   const u = utm(lon, lat);
   return `${u.zone}${u.band} ${Math.round(u.e)}E ${Math.round(u.n)}N`;
 }

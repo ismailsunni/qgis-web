@@ -20,6 +20,7 @@ import { setVisible, snapshotTree, flatLayers } from "./tree";
 import { resetViews, savedExtent, previousView, nextView, toggleGrid } from "./navigation";
 import { isGeoTiff, pixelSampler } from "./raster";
 import { ui, changed, toast, featureAttributes, type IdentifyHit } from "./state.svelte";
+import { t, N_ } from "./i18n";
 
 function opened(name: string, storedId: string | null) {
   resetHistory();
@@ -38,14 +39,14 @@ function opened(name: string, storedId: string | null) {
   if (saved) olMapRef().getView().fit(saved);
   resetViews();
   const broken = flatLayers(snapshotTree()).filter((l) => !l.valid && !l.remote);
-  if (broken.length) toast(`Missing data for: ${broken.map((l) => l.name).join(", ")}`);
+  if (broken.length) toast(t("Missing data for: {names}", { names: broken.map((l) => l.name).join(", ") }));
   emit("projectLoaded", { name: ui.projectName, layers: flatLayers(snapshotTree()).map((l) => ({ id: l.layerId, name: l.name })) });
 }
 
 export async function newProject() {
   const root = await mountFiles([]);
   newDoc(root, emptyProject);
-  opened("Untitled", null);
+  opened(t("Untitled"), null);
   ui.sourceUrl = null;
   ui.panel = "add";
 }
@@ -54,11 +55,11 @@ export const DEMO_URL = `${import.meta.env.BASE_URL}projects/world/world.qgz`;
 
 async function open(name: string, load: () => Promise<{ root: string; path: string }>, storedId: string | null = null) {
   ui.phase = "loading";
-  ui.status = `Opening ${name}…`;
+  ui.status = t("Opening {name}…", { name });
   try {
     const { root, path } = await load();
     openDoc(path, root);
-    ui.status = "Loading remote layers…";
+    ui.status = t("Loading remote layers…");
     await hydrateAll();
     reload();
     opened(name, storedId);
@@ -87,7 +88,7 @@ export async function openFiles(files: { path: string; data: File }[]) {
       }
     }
     if (files.some((f) => DATA_EXT.test(f.path))) await addData(files);
-    else toast("Drop a QGIS project (.qgs/.qgz) or data files (GeoPackage, GeoJSON, Shapefile, GeoTIFF…).");
+    else toast(t("Drop a QGIS project (.qgs/.qgz) or data files (GeoPackage, GeoJSON, Shapefile, GeoTIFF…)."));
     return;
   }
   const project = projects.sort((a, b) => a.path.split("/").length - b.path.split("/").length)[0];
@@ -123,7 +124,7 @@ export async function saveInBrowser() {
   ui.dirty = false;
   discardAutosave();
   rememberLast({ kind: "stored", id, name: ui.projectName });
-  toast(`Saved “${ui.projectName}” in this browser`);
+  toast(t("Saved “{name}” in this browser", { name: ui.projectName }));
 }
 
 function download(data: Uint8Array | string, name: string) {
@@ -159,7 +160,7 @@ export const openDemo = () => openUrl(DEMO_URL);
 /** Opens a published map (F21): only the project file is fetched, its layers are all remote. */
 export async function openPublished(ref: string, rev: string | null) {
   const { loadPublished, embedAllowed } = await import("./publish");
-  await open("shared map", async () => {
+  await open(t("shared map"), async () => {
     const { qgs, meta } = await loadPublished(ref, rev);
     if (!embedAllowed(meta)) ui.embedBlocked = meta!.allowedDomains.join(", ");
     setAllowedDomains(meta?.allowedDomains ?? []);
@@ -175,9 +176,9 @@ export async function openRef(ref: ProjectRef): Promise<boolean> {
   else if (ref.kind === "gist") await openPublished(ref.ref, null);
   else if (ref.kind === "stored") {
     const meta = (await listProjects()).find((p) => p.id === ref.id);
-    if (!meta) return toast(`“${ref.name}” is no longer saved in this browser.`), false;
+    if (!meta) return toast(t("“{name}” is no longer saved in this browser.", { name: ref.name })), false;
     await openStored(meta);
-  } else return toast(`“${ref.name}” was opened from local files. Save it in the browser to reopen it on launch.`), false;
+  } else return toast(t("“{name}” was opened from local files. Save it in the browser to reopen it on launch.", { name: ref.name })), false;
   return ui.phase === "ready";
 }
 
@@ -278,7 +279,7 @@ async function identifyRasters(coord: Coordinate) {
   for (const l of flatLayers(snapshotTree()).filter((l) => l.visible && l.layerType === LayerType.Raster && isGeoTiff(l.layerId!))) {
     const values = await (await pixelSampler(l.layerId!))?.(coord);
     if (!values || values.every((v) => v === null)) continue;
-    ui.hits = [...ui.hits, { layerId: l.layerId!, layerName: l.name, fid: -1, title: values.length === 1 ? `Value ${values[0] === null ? "NULL" : +values[0].toPrecision(6)}` : "Pixel", attributes: values.map((v, i) => [`Band ${i + 1}`, v]), raster: true }];
+    ui.hits = [...ui.hits, { layerId: l.layerId!, layerName: l.name, fid: -1, title: values.length === 1 ? t("Value {value}", { value: values[0] === null ? "NULL" : +values[0].toPrecision(6) }) : t("Pixel"), attributes: values.map((v, i) => [t("Band {n}", { n: i + 1 }), v]), raster: true }];
     ui.hitAt = [coord[0], coord[1]];
   }
 }
@@ -318,75 +319,75 @@ export interface Command {
 /** Everything reachable from the command palette (Ctrl/Cmd+K). */
 export function commands(): Command[] {
   const base: Command[] = [
-    { id: "open", label: "Open project…", hint: "Ctrl+O", run: () => document.getElementById("pick-files")?.click() },
-    { id: "open-folder", label: "Open project folder…", run: () => document.getElementById("pick-folder")?.click() },
-    { id: "demo", label: "Open demo project", run: openDemo },
-    { id: "panel-layers", label: "Show Layers panel", run: () => (ui.panel = "layers") },
-    { id: "panel-add", label: "Show Add data panel", run: () => (ui.panel = "add") },
-    { id: "panel-style", label: "Show Style panel", run: () => (ui.panel = "style") },
-    { id: "panel-tools", label: "Show Processing tools", run: () => (ui.panel = "tools") },
-    { id: "panel-hub", label: "Browse the QGIS Hub", run: () => (ui.panel = "hub") },
-    { id: "panel-bookmarks", label: "Show Bookmarks", run: () => (ui.panel = "bookmarks") },
-    { id: "panel-close", label: "Close side panel", run: () => (ui.panel = null) },
+    { id: "open", label: t("Open project…"), hint: "Ctrl+O", run: () => document.getElementById("pick-files")?.click() },
+    { id: "open-folder", label: t("Open project folder…"), run: () => document.getElementById("pick-folder")?.click() },
+    { id: "demo", label: t("Open demo project"), run: openDemo },
+    { id: "panel-layers", label: t("Show Layers panel"), run: () => (ui.panel = "layers") },
+    { id: "panel-add", label: t("Show Add data panel"), run: () => (ui.panel = "add") },
+    { id: "panel-style", label: t("Show Style panel"), run: () => (ui.panel = "style") },
+    { id: "panel-tools", label: t("Show Processing tools"), run: () => (ui.panel = "tools") },
+    { id: "panel-hub", label: t("Browse the QGIS Hub"), run: () => (ui.panel = "hub") },
+    { id: "panel-bookmarks", label: t("Show Bookmarks"), run: () => (ui.panel = "bookmarks") },
+    { id: "panel-close", label: t("Close side panel"), run: () => (ui.panel = null) },
   ];
   if (ui.phase !== "ready") return base;
   const layers = flatLayers(snapshotTree());
   return [
     ...base,
-    { id: "full", label: "Zoom to full extent", run: zoomToFull },
-    { id: "view-back", label: "Previous map view", hint: "Alt+←", run: previousView },
-    { id: "view-next", label: "Next map view", hint: "Alt+→", run: nextView },
-    { id: "grid", label: "Show/hide coordinate grid", run: () => toggleGrid() },
-    { id: "time", label: "Show/hide time slider (temporal layers)", run: () => (ui.time.active = !ui.time.active) },
-    { id: "shortcuts", label: "Keyboard shortcuts", hint: "?", run: () => (ui.shortcuts = true) },
-    { id: "undo", label: "Undo", hint: "Ctrl+Z", run: () => (ui.editing ? import("./editing").then((m) => m.undo()) : undoProject()) },
-    { id: "redo", label: "Redo", hint: "Ctrl+Shift+Z", run: () => (ui.editing ? import("./editing").then((m) => m.redo()) : redoProject()) },
-    { id: "project", label: "Project properties (title, CRS)…", run: () => (ui.dialog = "project") },
-    { id: "save", label: "Save in this browser", hint: "Ctrl+S", run: saveInBrowser },
-    { id: "download", label: "Download project file (.qgz)", run: downloadProject },
-    { id: "bundle", label: "Download project with data (.zip)", run: downloadBundle },
-    { id: "new", label: "New empty project", run: newProject },
-    { id: "settings", label: "Settings (open project on launch)…", run: () => (ui.dialog = "settings") },
-    { id: "add-data", label: "Add data files…", run: () => document.getElementById("pick-data")?.click() },
-    ...PRESETS.map((p) => ({ id: `basemap-${p.name}`, label: `Add basemap: ${p.name}`, run: () => addRemote(p, "bottom") })),
-    { id: "share", label: "Share / publish…", run: () => (ui.dialog = "share") },
-    { id: "export-image", label: "Export map image (PNG)…", run: () => (ui.dialog = "export") },
-    { id: "measure-line", label: "Measure distance", run: () => import("./maptools").then((m) => m.startMeasure("line")) },
-    { id: "profile", label: "Elevation profile", run: () => import("./profile").then((m) => m.startProfile()) },
-    { id: "measure-area", label: "Measure area", run: () => import("./maptools").then((m) => m.startMeasure("area")) },
-    { id: "legend", label: "Show/hide legend on map", run: () => (ui.showLegend = !ui.showLegend) },
-    { id: "select-tool", label: "Select features (click)", run: () => (ui.mapTool = "select") },
-    ...(ui.current && ui.selection[ui.current]?.length ? [{ id: "copy-features", label: "Copy selected features", hint: "Ctrl+C", run: () => import("./clipboard").then((m) => m.copyFeatures(ui.current!, ui.selection[ui.current!])) }] : []),
-    { id: "clear-selection", label: "Clear all selections", run: () => import("./selection").then((m) => m.clearSelection()) },
-    { id: "zoom-selection", label: "Zoom to selection", run: () => import("./selection").then((m) => m.zoomToSelection()) },
-    { id: "maptips", label: "Toggle map tips", run: () => (ui.mapTips = !ui.mapTips) },
-    { id: "compare", label: "Compare layers (swipe / side by side)", run: () => (ui.compare.active = !ui.compare.active) },
+    { id: "full", label: t("Zoom to full extent"), run: zoomToFull },
+    { id: "view-back", label: t("Previous map view"), hint: "Alt+←", run: previousView },
+    { id: "view-next", label: t("Next map view"), hint: "Alt+→", run: nextView },
+    { id: "grid", label: t("Show/hide coordinate grid"), run: () => toggleGrid() },
+    { id: "time", label: t("Show/hide time slider (temporal layers)"), run: () => (ui.time.active = !ui.time.active) },
+    { id: "shortcuts", label: t("Keyboard shortcuts"), hint: "?", run: () => (ui.shortcuts = true) },
+    { id: "undo", label: t("Undo"), hint: "Ctrl+Z", run: () => (ui.editing ? import("./editing").then((m) => m.undo()) : undoProject()) },
+    { id: "redo", label: t("Redo"), hint: "Ctrl+Shift+Z", run: () => (ui.editing ? import("./editing").then((m) => m.redo()) : redoProject()) },
+    { id: "project", label: t("Project properties (title, CRS)…"), run: () => (ui.dialog = "project") },
+    { id: "save", label: t("Save in this browser"), hint: "Ctrl+S", run: saveInBrowser },
+    { id: "download", label: t("Download project file (.qgz)"), run: downloadProject },
+    { id: "bundle", label: t("Download project with data (.zip)"), run: downloadBundle },
+    { id: "new", label: t("New empty project"), run: newProject },
+    { id: "settings", label: t("Settings (open project on launch)…"), run: () => (ui.dialog = "settings") },
+    { id: "add-data", label: t("Add data files…"), run: () => document.getElementById("pick-data")?.click() },
+    ...PRESETS.map((p) => ({ id: `basemap-${p.name}`, label: t("Add basemap: {name}", { name: p.name }), run: () => addRemote(p, "bottom") })),
+    { id: "share", label: t("Share / publish…"), run: () => (ui.dialog = "share") },
+    { id: "export-image", label: t("Export map image (PNG)…"), run: () => (ui.dialog = "export") },
+    { id: "measure-line", label: t("Measure distance"), run: () => import("./maptools").then((m) => m.startMeasure("line")) },
+    { id: "profile", label: t("Elevation profile"), run: () => import("./profile").then((m) => m.startProfile()) },
+    { id: "measure-area", label: t("Measure area"), run: () => import("./maptools").then((m) => m.startMeasure("area")) },
+    { id: "legend", label: t("Show/hide legend on map"), run: () => (ui.showLegend = !ui.showLegend) },
+    { id: "select-tool", label: t("Select features (click)"), run: () => (ui.mapTool = "select") },
+    ...(ui.current && ui.selection[ui.current]?.length ? [{ id: "copy-features", label: t("Copy selected features"), hint: "Ctrl+C", run: () => import("./clipboard").then((m) => m.copyFeatures(ui.current!, ui.selection[ui.current!])) }] : []),
+    { id: "clear-selection", label: t("Clear all selections"), run: () => import("./selection").then((m) => m.clearSelection()) },
+    { id: "zoom-selection", label: t("Zoom to selection"), run: () => import("./selection").then((m) => m.zoomToSelection()) },
+    { id: "maptips", label: t("Toggle map tips"), run: () => (ui.mapTips = !ui.mapTips) },
+    { id: "compare", label: t("Compare layers (swipe / side by side)"), run: () => (ui.compare.active = !ui.compare.active) },
     ...(ui.editing
       ? [
-          { id: "edit-stop", label: "Stop editing (saves)", run: () => import("./editing").then((m) => m.stopEditing()) },
-          { id: "edit-paste", label: "Paste features", hint: "Ctrl+V", run: () => import("./clipboard").then((m) => m.pasteFeatures()) },
-          { id: "edit-explode", label: "Explode selected multipart features", run: () => import("./editops").then((m) => m.explodeSelected()) },
-          { id: "edit-undo", label: "Undo edit", hint: "Ctrl+Z", run: () => import("./editing").then((m) => m.undo()) },
-          { id: "edit-redo", label: "Redo edit", hint: "Ctrl+Shift+Z", run: () => import("./editing").then((m) => m.redo()) },
-          ...(["add", "modify", "delete", "move", "rotate"] as const).map((t) => ({ id: `edit-${t}`, label: `Edit tool: ${{ add: "add feature", modify: "edit vertices", delete: "delete feature", move: "move features", rotate: "rotate features" }[t]}`, run: () => import("./editmap").then((m) => m.setTool(t)) })),
+          { id: "edit-stop", label: t("Stop editing (saves)"), run: () => import("./editing").then((m) => m.stopEditing()) },
+          { id: "edit-paste", label: t("Paste features"), hint: "Ctrl+V", run: () => import("./clipboard").then((m) => m.pasteFeatures()) },
+          { id: "edit-explode", label: t("Explode selected multipart features"), run: () => import("./editops").then((m) => m.explodeSelected()) },
+          { id: "edit-undo", label: t("Undo edit"), hint: "Ctrl+Z", run: () => import("./editing").then((m) => m.undo()) },
+          { id: "edit-redo", label: t("Redo edit"), hint: "Ctrl+Shift+Z", run: () => import("./editing").then((m) => m.redo()) },
+          ...(["add", "modify", "delete", "move", "rotate"] as const).map((tool) => ({ id: `edit-${tool}`, label: t("Edit tool: {tool}", { tool: t({ add: N_("add feature"), modify: N_("edit vertices"), delete: N_("delete feature"), move: N_("move features"), rotate: N_("rotate features") }[tool]) }), run: () => import("./editmap").then((m) => m.setTool(tool)) })),
         ]
       : []),
-    ...ALGORITHMS.map((a) => ({ id: `alg-${a.id}`, label: `Processing: ${a.name}`, hint: a.id, run: () => ((ui.panel = "tools"), (ui.pendingAlgorithm = a.id)) })),
-    { id: "clear", label: "Clear identify results", run: clearIdentify },
-    { id: "close-table", label: "Close attribute table", run: () => (ui.tableLayerId = null) },
-    ...readBookmarks().map((b) => ({ id: `bm-${b.id}`, label: `Go to bookmark: ${b.name}`, run: () => zoomToBookmark(b) })),
+    ...ALGORITHMS.map((a) => ({ id: `alg-${a.id}`, label: t("Processing: {name}", { name: t(a.name) }), hint: a.id, run: () => ((ui.panel = "tools"), (ui.pendingAlgorithm = a.id)) })),
+    { id: "clear", label: t("Clear identify results"), run: clearIdentify },
+    { id: "close-table", label: t("Close attribute table"), run: () => (ui.tableLayerId = null) },
+    ...readBookmarks().map((b) => ({ id: `bm-${b.id}`, label: t("Go to bookmark: {name}", { name: b.name }), run: () => zoomToBookmark(b) })),
     ...layers.flatMap((l) => [
-      { id: `toggle-${l.layerId}`, label: `Toggle visibility: ${l.name}`, run: () => setVisible(l, !l.checked) },
-      { id: `zoom-${l.layerId}`, label: `Zoom to layer: ${l.name}`, run: () => { const e = engine().fullExtent([l.layerId!]); olMapRef().getView().fit([e.xMinimum, e.yMinimum, e.xMaximum, e.yMaximum], { padding: [40, 40, 40, 40] }); } },
-      { id: `style-${l.layerId}`, label: `Style: ${l.name}`, run: () => ((ui.current = l.layerId!), (ui.panel = "style")) },
+      { id: `toggle-${l.layerId}`, label: t("Toggle visibility: {name}", { name: l.name }), run: () => setVisible(l, !l.checked) },
+      { id: `zoom-${l.layerId}`, label: t("Zoom to layer: {name}", { name: l.name }), run: () => { const e = engine().fullExtent([l.layerId!]); olMapRef().getView().fit([e.xMinimum, e.yMinimum, e.xMaximum, e.yMaximum], { padding: [40, 40, 40, 40] }); } },
+      { id: `style-${l.layerId}`, label: t("Style: {name}", { name: l.name }), run: () => ((ui.current = l.layerId!), (ui.panel = "style")) },
       ...(l.layerType === LayerType.Vector && l.valid
         ? [
-            { id: `table-${l.layerId}`, label: `Open attribute table: ${l.name}`, run: () => (ui.tableLayerId = l.layerId!) },
-            { id: `selexpr-${l.layerId}`, label: `Select by expression: ${l.name}`, run: () => ((ui.current = l.layerId!), (ui.dialog = "select-expression")) },
-            { id: `selloc-${l.layerId}`, label: `Select by location: ${l.name}`, run: () => ((ui.current = l.layerId!), (ui.dialog = "select-location")) },
-            { id: `calc-${l.layerId}`, label: `Field calculator: ${l.name}`, run: () => ((ui.current = l.layerId!), (ui.dialog = "field-calc")) },
-            { id: `export-${l.layerId}`, label: `Export layer: ${l.name}`, run: () => ((ui.current = l.layerId!), (ui.dialog = "export-layer")) },
-            { id: `edit-${l.layerId}`, label: `Start editing: ${l.name}`, run: () => import("./editing").then((m) => (m.canEdit(l.layerId!) ? m.startEditing(l.layerId!) : m.convertToGpkg(l.layerId!).then(() => m.startEditing(l.layerId!)))) },
+            { id: `table-${l.layerId}`, label: t("Open attribute table: {name}", { name: l.name }), run: () => (ui.tableLayerId = l.layerId!) },
+            { id: `selexpr-${l.layerId}`, label: t("Select by expression: {name}", { name: l.name }), run: () => ((ui.current = l.layerId!), (ui.dialog = "select-expression")) },
+            { id: `selloc-${l.layerId}`, label: t("Select by location: {name}", { name: l.name }), run: () => ((ui.current = l.layerId!), (ui.dialog = "select-location")) },
+            { id: `calc-${l.layerId}`, label: t("Field calculator: {name}", { name: l.name }), run: () => ((ui.current = l.layerId!), (ui.dialog = "field-calc")) },
+            { id: `export-${l.layerId}`, label: t("Export layer: {name}", { name: l.name }), run: () => ((ui.current = l.layerId!), (ui.dialog = "export-layer")) },
+            { id: `edit-${l.layerId}`, label: t("Start editing: {name}", { name: l.name }), run: () => import("./editing").then((m) => (m.canEdit(l.layerId!) ? m.startEditing(l.layerId!) : m.convertToGpkg(l.layerId!).then(() => m.startEditing(l.layerId!)))) },
           ]
         : []),
     ]),

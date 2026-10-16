@@ -256,3 +256,46 @@ test("elevation profile along a line", async ({ page }) => {
   await page.mouse.dblclick(box.x + box.width * 0.7, box.y + box.height * 0.5);
   await expect(page.locator(".drawer.profile header")).toContainText("max 1");
 });
+
+test("previous view and map context menu", async ({ page }) => {
+  await demo(page);
+  const res = () => page.evaluate(() => (globalThis as any).qgisWebApp.map.olMap().getView().getResolution());
+  const r0 = await res();
+  await page.locator(".ol-zoom-in").click();
+  await expect.poll(res).toBeLessThan(r0);
+  await page.locator('button[aria-label="Previous view"]').click();
+  await expect.poll(res).toBeCloseTo(r0);
+  const box = (await page.locator(".map").boundingBox())!;
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2, { button: "right" });
+  await expect(page.locator(".context-menu")).toContainText("MGRS");
+  await expect(page.locator(".context-menu")).toContainText("Identify here");
+});
+
+test("time slider filters temporal layers", async ({ page }) => {
+  await demo(page);
+  const features = [1, 2, 3].map((m) => ({ type: "Feature", properties: { when: `2024-0${m}-15T12:00:00` }, geometry: { type: "Point", coordinates: [m, 45] } }));
+  await page.evaluate(async (fc) => {
+    const A = (globalThis as any).qgisWebApp;
+    const [id] = await A.adddata.addData([{ path: "events.geojson", data: new TextEncoder().encode(JSON.stringify(fc)) }]);
+    A.ui.current = id;
+    A.ui.panel = "style";
+  }, { type: "FeatureCollection", features });
+  await page.locator("section", { hasText: "Time (temporal controller)" }).locator('input[type="checkbox"]').first().check();
+  await page.locator('button[aria-label="Time slider"]').click();
+  const count = () => page.evaluate(() => { const A = (globalThis as any).qgisWebApp; const it = A.engine.findMapLayer(A.ui.current).getFeatures(); let n = 0; while (it.nextFeature()) n++; it.delete(); return n; });
+  await expect.poll(count).toBe(1);
+  await page.locator('button[aria-label="Close time slider"]').click();
+  await expect.poll(count).toBe(3);
+});
+
+test("explode multipart features while editing", async ({ page }) => {
+  await demo(page);
+  await page.evaluate(async () => {
+    const A = (globalThis as any).qgisWebApp;
+    const id = A.tree.flatLayers(A.tree.snapshotTree()).find((l: any) => l.name === "Countries").layerId;
+    await A.editing.startEditing(id);
+    A.selection.selectByExpression(id, `"NAME" = 'Indonesia'`, "new");
+  });
+  await page.locator('button[aria-label="Explode multipart features"]').click();
+  await expect(page.locator(".toast")).toContainText("Exploded into 13 features");
+});

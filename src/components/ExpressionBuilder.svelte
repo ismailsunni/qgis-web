@@ -3,10 +3,11 @@
   import type { QgsVectorLayer } from "qgis-js";
   import { engine, findMapLayer, free } from "../lib/engine";
   import Icon from "./Icon.svelte";
+  import { t } from "../lib/i18n";
 
   interface Fn { name: string; group: string; syntax: string; description: string; example: string; params: number }
 
-  let { layerId, initial = "", onapply, onclose, title = "Expression" }: {
+  let { layerId, initial = "", onapply, onclose, title = t("Expression") }: {
     layerId: string;
     initial?: string;
     onapply: (expr: string) => void;
@@ -95,41 +96,41 @@
 </script>
 
 <div class="overlay modal" role="presentation" onclick={(e) => e.target === e.currentTarget && onclose()}>
-  <div class="dialog card builder" role="dialog" aria-modal="true" aria-label="Expression builder">
+  <div class="dialog card builder" role="dialog" aria-modal="true" aria-label={t("Expression builder")}>
     <header>
       <h2>{title} <small>{layer.name}</small></h2>
-      <button class="icon" aria-label="Close" onclick={onclose}><Icon name="close" size={18} /></button>
+      <button class="icon" aria-label={t("Close")} onclick={onclose}><Icon name="close" size={18} /></button>
     </header>
     <div class="builder-body">
       <div class="builder-left">
-        <textarea bind:this={textarea} bind:value={expr} class="code" spellcheck="false" placeholder={'e.g. "population" > 1000000 AND "continent" = \'Africa\''}></textarea>
+        <textarea bind:this={textarea} bind:value={expr} class="code" spellcheck="false" placeholder={t('e.g. "population" > 1000000 AND "continent" = \'Africa\'')}></textarea>
         <div class="row ops">{#each OPERATORS as op}<button onclick={() => insert(` ${op} `)}>{op}</button>{/each}</div>
         <div class="preview" class:error={!preview.ok}>
-          <span class="muted">Preview</span>
-          <button class="icon" aria-label="Previous feature" disabled={featureIndex === 0} onclick={() => featureIndex--}>‹</button>
-          <span class="muted">feature {featureIndex + 1}</span>
-          <button class="icon" aria-label="Next feature" onclick={() => featureIndex++}>›</button>
+          <span class="muted">{t("Preview")}</span>
+          <button class="icon" aria-label={t("Previous feature")} disabled={featureIndex === 0} onclick={() => featureIndex--}>‹</button>
+          <span class="muted">{t("feature {n}", { n: featureIndex + 1 })}</span>
+          <button class="icon" aria-label={t("Next feature")} onclick={() => featureIndex++}>›</button>
           <code>{preview.text}</code>
         </div>
         {#if selected}
           <div class="fn-help">
             {#if "field" in selected}
               <h3>{selected.name}</h3>
-              <p class="muted">Field. Double-click a value to insert it.</p>
+              <p class="muted">{t("Field. Double-click a value to insert it.")}</p>
               <div class="values">{#each sampleValues(selected.name) as v}<button ondblclick={() => insert(v)}>{v}</button>{/each}</div>
             {:else}
               <h3>{selected.name}</h3>
               <code>{selected.syntax}</code>
               <p>{selected.description}</p>
-              {#if selected.example}<p class="muted">Example: <code>{selected.example}</code></p>{/if}
+              {#if selected.example}<p class="muted">{t("Example:")} <code>{selected.example}</code></p>{/if}
             {/if}
           </div>
         {/if}
       </div>
       <div class="builder-right">
-        <input placeholder="Search functions and fields" bind:value={search} />
+        <input placeholder={t("Search functions and fields")} bind:value={search} />
         <ul class="fn-list">
-          <li class="group">Fields</li>
+          <li class="group">{t("Fields")}</li>
           {#each fields.filter((f) => !q || f.toLowerCase().includes(q)) as f}
             <li><button onclick={() => (selected = { name: f, field: true })} ondblclick={() => insert(quoteField(f))}>{f}</button></li>
           {/each}
@@ -140,12 +141,12 @@
             {/each}
           {/each}
         </ul>
-        <p class="hint">Double-click to insert.</p>
+        <p class="hint">{t("Double-click to insert.")}</p>
       </div>
     </div>
     <footer class="row end">
-      <button onclick={onclose}>Cancel</button>
-      <button class="primary" disabled={!preview.ok} onclick={() => onapply(expr.trim())}>OK</button>
+      <button onclick={onclose}>{t("Cancel")}</button>
+      <button class="primary" disabled={!preview.ok} onclick={() => onapply(expr.trim())}>{t("OK")}</button>
     </footer>
   </div>
 </div>

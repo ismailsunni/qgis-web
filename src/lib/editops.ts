@@ -3,6 +3,7 @@ import { geosOps, toMulti } from "./processing";
 import { geometries, isMultiLayer, replaceFeatures, toLayerWkb, editSession } from "./editing";
 import { ui, toast } from "./state.svelte";
 import { wkbBounds } from "./gpkg";
+import { t } from "./i18n";
 
 /** Merge and split for the edit layer, computed with GEOS in the layer's CRS. */
 
@@ -12,13 +13,13 @@ const typeOf = (wkb: Uint8Array) => new DataView(wkb.buffer, wkb.byteOffset).get
 export async function mergeSelected() {
   const s = editSession();
   const fids = s ? [...(ui.selection[s.layerId] ?? [])].sort((a, b) => a - b) : [];
-  if (fids.length < 2) return toast("Select two or more features of the layer being edited.");
+  if (fids.length < 2) return toast(t("Select two or more features of the layer being edited."));
   const g = await geosOps();
   const merged = g.union([...geometries(fids).values()]);
-  if (!merged) return toast("Nothing to merge.");
+  if (!merged) return toast(t("Nothing to merge."));
   const type = typeOf(merged);
-  if (!isMultiLayer() && type >= 4) return toast("The merged features don't touch: this single-part layer can't store a multipart result.");
-  replaceFeatures(`merge ${fids.length} features`, { update: [[fids[0], isMultiLayer() ? toMulti(merged)! : merged]], remove: fids.slice(1) });
+  if (!isMultiLayer() && type >= 4) return toast(t("The merged features don't touch: this single-part layer can't store a multipart result."));
+  replaceFeatures(t("merge {n} features", { n: fids.length }), { update: [[fids[0], isMultiLayer() ? toMulti(merged)! : merged]], remove: fids.slice(1) });
   ui.selection = { ...ui.selection, [s!.layerId]: [fids[0]] };
 }
 
@@ -26,7 +27,7 @@ export async function mergeSelected() {
 export async function explodeSelected() {
   const s = editSession();
   const fids = s ? (ui.selection[s.layerId] ?? []) : [];
-  if (!fids.length) return toast("Select multipart features of the layer being edited.");
+  if (!fids.length) return toast(t("Select multipart features of the layer being edited."));
   const g = await geosOps();
   const update: [number, Uint8Array][] = [];
   const insert: [number, Uint8Array][] = [];
@@ -39,9 +40,9 @@ export async function explodeSelected() {
     update.push([fid, fit(parts[0])]);
     for (const p of parts.slice(1)) insert.push([fid, fit(p)]);
   }
-  if (!update.length) return toast("The selected features have a single part.");
-  replaceFeatures(`explode ${update.length} feature${update.length === 1 ? "" : "s"}`, { update, insert });
-  toast(`Exploded into ${update.length + insert.length} features`);
+  if (!update.length) return toast(t("The selected features have a single part."));
+  replaceFeatures(update.length === 1 ? t("explode {n} feature", { n: 1 }) : t("explode {n} features", { n: update.length }), { update, insert });
+  toast(t("Exploded into {n} features", { n: update.length + insert.length }));
 }
 
 /** Splits polygons and lines of the edit layer crossed by a line drawn on the map. */
@@ -93,9 +94,9 @@ export async function splitWith(line: Geometry) {
     for (const p of pieces.slice(1)) insert.push([fid, fit(p)]);
   }
   g.geos.GEOSGeom_destroy(cut);
-  if (!update.length) return toast("The line doesn't split any feature (it must cross it completely).");
-  replaceFeatures(`split ${update.length} feature${update.length === 1 ? "" : "s"}`, { update, insert });
-  toast(`Split into ${update.length + insert.length} features`);
+  if (!update.length) return toast(t("The line doesn't split any feature (it must cross it completely)."));
+  replaceFeatures(update.length === 1 ? t("split {n} feature", { n: 1 }) : t("split {n} features", { n: update.length }), { update, insert });
+  toast(t("Split into {n} features", { n: update.length + insert.length }));
 }
 
 /** Features of the edit layer whose bounding box meets the cut line's (from the GeoPackage R-tree). */

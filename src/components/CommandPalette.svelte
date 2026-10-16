@@ -1,6 +1,7 @@
 <script lang="ts">
   import { commands } from "../lib/actions";
   import { ui } from "../lib/state.svelte";
+  import { t } from "../lib/i18n";
 
   let query = $state("");
   let active = $state(0);
@@ -27,9 +28,9 @@
 </script>
 
 <div class="overlay modal top" role="presentation" onclick={(e) => e.target === e.currentTarget && (ui.palette = false)}>
-  <div class="palette card" role="dialog" aria-modal="true" aria-label="Command palette">
+  <div class="palette card" role="dialog" aria-modal="true" aria-label={t("Command palette")}>
     <!-- svelte-ignore a11y_autofocus -->
-    <input placeholder="Type an action or layer name…" bind:value={query} oninput={() => (active = 0)} onkeydown={onKey} autofocus />
+    <input placeholder={t("Type an action or layer name…")} bind:value={query} oninput={() => (active = 0)} onkeydown={onKey} autofocus />
     <ul role="listbox">
       {#each results as cmd, i (cmd.id)}
         <li role="option" aria-selected={i === active}>
@@ -38,7 +39,7 @@
           </button>
         </li>
       {:else}
-        <li class="muted empty">No matching action</li>
+        <li class="muted empty">{t("No matching action")}</li>
       {/each}
     </ul>
   </div>

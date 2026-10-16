@@ -5,6 +5,7 @@ import { crsByAuthid, spatialRefSys, type CrsDef } from "./crs";
 import { openDb, rows } from "./sqlite";
 import { apply } from "./commit";
 import { ui, toast } from "./state.svelte";
+import { t, N_ } from "./i18n";
 import { previewCsv, delimitedTextUri, toCsv, type CsvOptions, type CsvPreview } from "./csv";
 
 /** Formats QGIS (GDAL/OGR) reads in the browser engine. */
@@ -213,21 +214,21 @@ export async function addData(files: { path: string; data: Blob | Uint8Array }[]
     const { newProject } = await import("./actions");
     await newProject();
   }
-  ui.status = "Adding data…";
+  ui.status = t("Adding data…");
   const data = await Promise.all(files.map(async (f) => ({ path: f.path, data: f.data instanceof Uint8Array ? f.data : new Uint8Array(await f.data.arrayBuffer()) })));
   let sources: Source[];
   try {
     sources = await prepare(data);
   } catch (e) {
-    return toast(`Could not read the data: ${(e as Error).message}`);
+    return toast(t("Could not read the data: {error}", { error: (e as Error).message }));
   }
-  if (!sources.length) return toast("No supported data found (GeoPackage, GeoJSON, Shapefile, FlatGeobuf, GeoTIFF, GeoParquet, KML, GPX).");
+  if (!sources.length) return toast(t("No supported data found (GeoPackage, GeoJSON, Shapefile, FlatGeobuf, GeoTIFF, GeoParquet, KML, GPX)."));
   const ids: string[] = [];
   apply(() => {
     for (const s of sources.reverse()) ids.push(insertLayerXml(mapLayerXml(s), s.name));
-  }, "add data");
+  }, N_("add data"));
   const unknown = sources.filter((s) => !s.crs);
-  if (unknown.length) toast(`No CRS found for ${unknown.map((s) => s.name).join(", ")}; QGIS will use the project CRS.`);
+  if (unknown.length) toast(t("No CRS found for {names}; QGIS will use the project CRS.", { names: unknown.map((s) => s.name).join(", ") }));
   ui.current = ids.at(-1) ?? ui.current;
   return ids;
 }

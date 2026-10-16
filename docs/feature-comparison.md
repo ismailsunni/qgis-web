@@ -19,18 +19,18 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | Feature | GeoLibre | RustGIS | QGIS Web |
 | --- | --- | --- | --- |
 | Command palette (Ctrl/Cmd+K) | ✅ | ✅ | ✅ |
-| Keyboard shortcuts, shortcut cheat sheet | ✅ | ✅ | ◐ (no cheat sheet) |
+| Keyboard shortcuts, shortcut cheat sheet | ✅ | ✅ | ✅ |
 | Undo/redo for layer and style changes | ✅ | ✅ (everything) | ✅ |
 | Dark mode | ✅ | ✅ | ✅ |
-| Translations (i18n) | ✅ 20 languages, RTL | ✅ 16 languages | — |
+| Translations (i18n) | ✅ 20 languages, RTL | ✅ 16 languages | ◐ (5 languages) |
 | Accessibility pass (axe, screen readers) | ✅ | — | ◐ |
 | Phone layout | ✅ | — | ✅ |
 | UI profiles / customizable menus or ribbon | ✅ | ✅ | — |
 | Startup options (welcome, blank, last, specific project) | ✅ | ✅ | ✅ |
-| Startup map view / projection / extent | ✅ | ✅ | — |
+| Startup map view / projection / extent | ✅ | ✅ | ✅ (project's saved view or full extent) |
 | Color-vision-deficiency preview | ✅ | — | — |
 | Error boundaries keep the app usable | ✅ | — | ◐ |
-| Settings import/export | ✅ | — | — |
+| Settings import/export | ✅ | — | ✅ |
 
 ### Map and basemaps
 
@@ -46,15 +46,15 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | Split / side-by-side linked views | ✅ | ✅ | ✅ |
 | Swipe compare | ✅ | ✅ | ✅ |
 | Scale bar, coordinates readout | ✅ | ✅ | ✅ |
-| Coordinates in DMS / UTM / MGRS, grid overlays | ✅ | ◐ | ◐ (decimal, DMS, UTM, project CRS; no MGRS or grids) |
+| Coordinates in DMS / UTM / MGRS, grid overlays | ✅ | ◐ | ✅ (decimal, DMS, UTM, MGRS, project CRS; lat/lon grid) |
 | Go to coordinate / place search (geocoding) | ✅ | ✅ (Go To XY, locators) | ✅ |
 | Bookmarks | ✅ | ✅ | ✅ (saved in the project) |
-| Extent history (back/forward) | ✅ | ✅ | — |
+| Extent history (back/forward) | ✅ | ✅ | ✅ |
 | Measure distance and area | ✅ | ✅ | ✅ |
-| Right-click map context menu (copy coordinate, quick analysis) | ✅ | — | — |
+| Right-click map context menu (copy coordinate, quick analysis) | ✅ | — | ✅ |
 | On-map legend | ✅ | ✅ | ✅ (QGIS legend) |
 | Annotations / graphics layer (text, arrows, shapes) | ✅ | ✅ | — |
-| Time slider (temporal data) | ✅ | — | — |
+| Time slider (temporal data) | ✅ | — | ✅ (QGIS temporal settings) |
 | Timelapse, weather overlays, sun simulation, Wikipedia cards | ✅ | — | — |
 | Elevation profile, line of sight, viewshed | ✅ | ✅ | ◐ (profile from a GeoTIFF DEM) |
 
@@ -70,16 +70,16 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | OpenStreetMap PBF | ✅ | ✅ | — |
 | LiDAR (LAS, LAZ, COPC) | ✅ | ✅ | — |
 | NetCDF, HDF5, Zarr | ✅ | ✅ | — |
-| PMTiles, MBTiles | ✅ | ✅ | ◐ (PMTiles) |
+| PMTiles, MBTiles | ✅ | ✅ | ✅ |
 | Geotagged photos (EXIF) | ✅ | ✅ | — |
 | XYZ, WMS, WMTS, WFS, vector tiles, COG by URL | ✅ | ✅ | ✅ |
-| OGC API Features / Tiles | ✅ | ✅ | ◐ (Features) |
-| ArcGIS REST (Feature/Map/Image/VectorTile Server) | ✅ | ✅ | ◐ (FeatureServer, MapServer) |
+| OGC API Features / Tiles | ✅ | ✅ | ✅ |
+| ArcGIS REST (Feature/Map/Image/VectorTile Server) | ✅ | ✅ | ✅ |
 | STAC catalogs | ✅ | — | — |
 | Data-catalog plugins (Planetary Computer, Earth Engine, Overture, HF, NASA…) | ✅ (dozens) | — | — |
 | Databases (PostGIS, SQL Server, DuckDB, Iceberg) | ✅ | ✅ (desktop) | — (PRD non-goal) |
 | Private cloud storage (S3) | ✅ | — | — |
-| Layer picker for multi-layer GeoPackage | ✅ | — | ◐ (adds every table) |
+| Layer picker for multi-layer GeoPackage | ✅ | — | ✅ |
 | Drag and drop files | ✅ | ✅ | ✅ |
 | QGIS project files (.qgs/.qgz) | ◐ (import, lossy) | — | ✅ (native, lossless) |
 
@@ -93,13 +93,13 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | Rule-based renderer (form) | ✅ | — | ✅ |
 | Proportional symbols | ✅ | ✅ | ◐ (via QML) |
 | Heatmap, point clustering renderers | ✅ | ✅ (aggregation bins) | ✅ |
-| More classification modes (std dev, manual breaks) | ✅ | — | ◐ (4 modes) |
+| More classification modes (std dev, manual breaks) | ✅ | — | ✅ (as QGIS) |
 | Custom color ramps (import QGIS/GDAL/GMT ramps) | ◐ | ✅ | — |
 | Marker library, SVG/image markers, fill patterns | ✅ | ◐ | ◐ (Hub styles, QML) |
 | Blend modes | ✅ | ✅ | ◐ (via QML) |
-| Scale-dependent visibility | ✅ | ✅ | ◐ (respected, not editable) |
+| Scale-dependent visibility | ✅ | ✅ | ✅ |
 | Raster styling forms (stretch, pseudocolor, hillshade, RGB) | ✅ | ✅ | ✅ |
-| Raster histogram, pixel value identify | ✅ | — | — |
+| Raster histogram, pixel value identify | ✅ | — | ✅ (GeoTIFF) |
 | Label placement, buffer, expressions | ✅ | ✅ | ✅ |
 | Label-to-annotation conversion | — | ✅ | — |
 | Copy/paste style between layers | ✅ | ✅ | ✅ |
@@ -134,8 +134,8 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | Move vertices | ✅ | ◐ (planned) | ✅ |
 | Undo/redo | ✅ | ✅ | ✅ |
 | Snapping to other layers | ✅ | ✅ | ✅ |
-| Move, rotate, scale, merge, split, explode | ◐ | ✅ | ◐ (merge, split) |
-| Copy/paste features | — | ✅ | — |
+| Move, rotate, scale, merge, split, explode | ◐ | ✅ | ◐ (no scale) |
+| Copy/paste features | — | ✅ | ✅ |
 | Topology rules / topological digitizing | ✅ | ✅ | — |
 | Feature templates, editor tracking | ✅ | ✅ | — |
 | Write back to services (ArcGIS, SQL Server, GeoLens) | ✅ | — | — |

@@ -33,17 +33,18 @@
   import { previousView, nextView } from "./lib/navigation";
   import { copyFeatures, pasteFeatures } from "./lib/clipboard";
   import { selectByExpression } from "./lib/selection";
+  import { t, N_ } from "./lib/i18n";
 
   const rail: { id: Panel | "table"; icon: "layers" | "add" | "style" | "table" | "tools" | "hub" | "bookmark"; label: string; planned?: string }[] = [
-    { id: "layers", icon: "layers", label: "Layers" },
-    { id: "add", icon: "add", label: "Add data" },
-    { id: "style", icon: "style", label: "Style" },
-    { id: "table", icon: "table", label: "Attribute table" },
-    { id: "tools", icon: "tools", label: "Processing tools" },
-    { id: "bookmarks", icon: "bookmark", label: "Bookmarks" },
-    { id: "hub", icon: "hub", label: "QGIS Hub" },
+    { id: "layers", icon: "layers", label: N_("Layers") },
+    { id: "add", icon: "add", label: N_("Add data") },
+    { id: "style", icon: "style", label: N_("Style") },
+    { id: "table", icon: "table", label: N_("Attribute table") },
+    { id: "tools", icon: "tools", label: N_("Processing tools") },
+    { id: "bookmarks", icon: "bookmark", label: N_("Bookmarks") },
+    { id: "hub", icon: "hub", label: N_("QGIS Hub") },
   ];
-  const titles: Record<Panel, string> = { layers: "Layers", add: "Add data", style: "Style", tools: "Processing", hub: "QGIS Hub", bookmarks: "Bookmarks" };
+  const titles: Record<Panel, string> = { layers: N_("Layers"), add: N_("Add data"), style: N_("Style"), tools: N_("Processing"), hub: N_("QGIS Hub"), bookmarks: N_("Bookmarks") };
 
   let dragging = $state(false);
   let menuOpen = $state(false);
@@ -65,7 +66,7 @@
     // Embedded in a page that isn't cross-origin isolated, multithreaded WebAssembly can't run.
     if (!crossOriginIsolated && window.top !== window) {
       ui.phase = "error";
-      ui.error = "This page can't run the QGIS engine inside an embedded frame. Open the map in its own tab.";
+      ui.error = t("This page can't run the QGIS engine inside an embedded frame. Open the map in its own tab.");
       return;
     }
     try {
@@ -76,7 +77,7 @@
       else await runStartup();
     } catch (e) {
       ui.phase = "error";
-      ui.error = `The QGIS engine failed to start: ${(e as Error).message}. qgis-js needs a recent Chromium or Firefox desktop browser.`;
+      ui.error = t("The QGIS engine failed to start: {message}. qgis-js needs a recent Chromium or Firefox desktop browser.", { message: (e as Error).message });
     }
   });
 
@@ -137,38 +138,38 @@
     <header class="topbar">
       <div class="brand"><span class="logo"></span>QGIS Web</div>
       <div class="project-name">
-        {#if ui.phase === "ready"}<button title="Project properties" onclick={() => (ui.dialog = "project")}>{ui.projectName}</button>{/if}{#if ui.dirty}<span class="dirty" title="Unsaved changes">•</span>{/if}
+        {#if ui.phase === "ready"}<button title={t("Project properties")} onclick={() => (ui.dialog = "project")}>{ui.projectName}</button>{/if}{#if ui.dirty}<span class="dirty" title={t("Unsaved changes")}>•</span>{/if}
       </div>
       <button class="palette-btn" onclick={() => (ui.palette = true)}>
-        <Icon name="search" size={16} /> Search actions <kbd>Ctrl K</kbd>
+        <Icon name="search" size={16} /> {t("Search actions")} <kbd>Ctrl K</kbd>
       </button>
-      <button class="icon" title="Undo (Ctrl+Z)" aria-label="Undo" disabled={!ui.canUndoProject || !!ui.editing} onclick={undoProject}><Icon name="undo" size={18} /></button>
-      <button class="icon" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled={!ui.canRedoProject || !!ui.editing} onclick={redoProject}><Icon name="redo" size={18} /></button>
+      <button class="icon" title={t("Undo (Ctrl+Z)")} aria-label={t("Undo")} disabled={!ui.canUndoProject || !!ui.editing} onclick={undoProject}><Icon name="undo" size={18} /></button>
+      <button class="icon" title={t("Redo (Ctrl+Shift+Z)")} aria-label={t("Redo")} disabled={!ui.canRedoProject || !!ui.editing} onclick={redoProject}><Icon name="redo" size={18} /></button>
       <div class="menu-anchor">
-        <button class="ghost" onclick={() => (saveMenu = !saveMenu)} disabled={ui.phase !== "ready"}><Icon name="save" size={18} /> Save</button>
+        <button class="ghost" onclick={() => (saveMenu = !saveMenu)} disabled={ui.phase !== "ready"}><Icon name="save" size={18} /> {t("Save")}</button>
         {#if saveMenu}
           <div class="menu card right" role="menu">
-            <button role="menuitem" onclick={() => { saveMenu = false; saveInBrowser(); }}>Save in this browser <kbd>Ctrl S</kbd></button>
-            <button role="menuitem" onclick={() => { saveMenu = false; downloadProject(); }}>Download project file (.qgz)</button>
-            <button role="menuitem" onclick={() => { saveMenu = false; downloadBundle(); }}>Download project with data (.zip)</button>
+            <button role="menuitem" onclick={() => { saveMenu = false; saveInBrowser(); }}>{t("Save in this browser")} <kbd>Ctrl S</kbd></button>
+            <button role="menuitem" onclick={() => { saveMenu = false; downloadProject(); }}>{t("Download project file (.qgz)")}</button>
+            <button role="menuitem" onclick={() => { saveMenu = false; downloadBundle(); }}>{t("Download project with data (.zip)")}</button>
           </div>
         {/if}
       </div>
-      <button class="ghost" onclick={() => (ui.dialog = "share")} disabled={ui.phase !== "ready"}><Icon name="share" size={18} /> Share</button>
-      <button class="icon" title="Settings" aria-label="Settings" onclick={() => (ui.dialog = "settings")}><Icon name="settings" size={18} /></button>
+      <button class="ghost" onclick={() => (ui.dialog = "share")} disabled={ui.phase !== "ready"}><Icon name="share" size={18} /> {t("Share")}</button>
+      <button class="icon" title={t("Settings")} aria-label={t("Settings")} onclick={() => (ui.dialog = "settings")}><Icon name="settings" size={18} /></button>
     </header>
   {/if}
 
   <div class="body">
     {#if !view.mapOnly}
-      <nav class="rail" aria-label="Panels">
+      <nav class="rail" aria-label={t("Panels")}>
         {#if view.compact}
-          <button class="rail-btn" title="Menu" onclick={() => (menuOpen = !menuOpen)}><Icon name="menu" /></button>
+          <button class="rail-btn" title={t("Menu")} onclick={() => (menuOpen = !menuOpen)}><Icon name="menu" /></button>
           {#if menuOpen}
             <div class="compact-menu">
-              <button onclick={() => { ui.palette = true; menuOpen = false; }}>Search actions…</button>
-              <button onclick={() => { ui.dialog = "share"; menuOpen = false; }} disabled={ui.phase !== "ready"}>Share…</button>
-              <button onclick={() => { ui.dialog = "settings"; menuOpen = false; }}>Settings…</button>
+              <button onclick={() => { ui.palette = true; menuOpen = false; }}>{t("Search actions…")}</button>
+              <button onclick={() => { ui.dialog = "share"; menuOpen = false; }} disabled={ui.phase !== "ready"}>{t("Share…")}</button>
+              <button onclick={() => { ui.dialog = "settings"; menuOpen = false; }}>{t("Settings…")}</button>
             </div>
           {/if}
         {/if}
@@ -177,8 +178,8 @@
             class="rail-btn"
             class:active={item.id === "table" ? !!ui.tableLayerId : ui.panel === item.id}
             disabled={!!item.planned || (item.id === "table" && !ui.current)}
-            title={item.planned ? `${item.label} — planned for ${item.planned}` : item.label}
-            aria-label={item.label}
+            title={item.planned ? t("{label} — planned for {version}", { label: t(item.label), version: item.planned }) : t(item.label)}
+            aria-label={t(item.label)}
             onclick={() => railClick(item.id)}
           >
             <Icon name={item.icon} />
@@ -189,8 +190,8 @@
       {#if ui.panel}
         <aside class="panel">
           <header>
-            <h2>{titles[ui.panel]}</h2>
-            <button class="icon" aria-label="Close panel" onclick={() => (ui.panel = null)}><Icon name="close" size={18} /></button>
+            <h2>{t(titles[ui.panel])}</h2>
+            <button class="icon" aria-label={t("Close panel")} onclick={() => (ui.panel = null)}><Icon name="close" size={18} /></button>
           </header>
           <div class="panel-body">
             {#if ui.panel === "layers"}<LayersPanel />
@@ -208,7 +209,7 @@
       <div class="map-area">
         <MapView />
         {#if ui.phase !== "ready"}<Welcome />{/if}
-        {#if dragging}<div class="drop-hint">Drop a QGIS project (.qgs / .qgz) with its data files or folder</div>{/if}
+        {#if dragging}<div class="drop-hint">{t("Drop a QGIS project (.qgs / .qgz) with its data files or folder")}</div>{/if}
       </div>
       {#if ui.profile && !view.mapOnly}<ProfilePanel />{/if}
       {#if ui.tableLayerId && !view.mapOnly}
@@ -230,13 +231,13 @@
     {#if ui.dialog === "export-layer"}<ExportLayerDialog layerId={ui.current} onclose={() => (ui.dialog = null)} />{/if}
     {#if ui.dialog === "field-calc"}<FieldCalculator layerId={ui.current} onclose={() => (ui.dialog = null)} />{/if}
     {#if ui.dialog === "select-expression"}
-      <ExpressionBuilder layerId={ui.current} title="Select by expression" onclose={() => (ui.dialog = null)} onapply={(v) => { selectByExpression(ui.current!, v, "new"); ui.dialog = null; }} />
+      <ExpressionBuilder layerId={ui.current} title={t("Select by expression")} onclose={() => (ui.dialog = null)} onapply={(v) => { selectByExpression(ui.current!, v, "new"); ui.dialog = null; }} />
     {/if}
   {/if}
   {#if ui.toast}<div class="toast" role="status">{ui.toast}</div>{/if}
   {#if ui.embedBlocked}
     <div class="embed-blocked">
-      <div><h2>This map can't be embedded here</h2><p class="muted">Its owner allows embedding on: {ui.embedBlocked}</p><a href={location.href} target="_blank" rel="noopener">Open the map</a></div>
+      <div><h2>{t("This map can't be embedded here")}</h2><p class="muted">{t("Its owner allows embedding on: {hosts}", { hosts: ui.embedBlocked })}</p><a href={location.href} target="_blank" rel="noopener">{t("Open the map")}</a></div>
     </div>
   {/if}
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "../lib/i18n";
   import { LayerType, type QgsVectorLayer } from "qgis-js";
   import { ALGORITHMS, runAlgorithm, type Algorithm } from "../lib/processing";
   import { findMapLayer } from "../lib/engine";
@@ -22,7 +23,7 @@
   const groups = $derived.by(() => {
     const q = search.toLowerCase();
     const out: Record<string, Algorithm[]> = {};
-    for (const a of ALGORITHMS) if (!q || a.name.toLowerCase().includes(q) || a.id.includes(q)) (out[a.group] ??= []).push(a);
+    for (const a of ALGORITHMS) if (!q || t(a.name).toLowerCase().includes(q) || a.id.includes(q)) (out[a.group] ??= []).push(a);
     return Object.entries(out);
   });
 
@@ -33,7 +34,7 @@
     if (preset) values = { ...values, ...structuredClone(preset) };
   }
 
-  const layerName = (id: unknown) => layers.find((l) => l.layerId === id)?.name ?? "(removed layer)";
+  const layerName = (id: unknown) => layers.find((l) => l.layerId === id)?.name ?? t("(removed layer)");
 
   const fieldsOf = (layerId: unknown) => {
     const l = layerId ? (findMapLayer(layerId as string) as QgsVectorLayer | null) : null;
@@ -44,9 +45,9 @@
     running = true;
     try {
       const r = await runAlgorithm(alg!, $state.snapshot(values), onlySelected && !!ui.selection[values.INPUT as string]?.length);
-      toast(`${alg!.name}: ${r.features.toLocaleString()} features in ${r.ms} ms`);
+      toast(t("{name}: {n} features in {ms} ms", { name: t(alg!.name), n: r.features.toLocaleString(), ms: r.ms }));
     } catch (e) {
-      toast(`${alg!.name} failed: ${(e as Error).message}`);
+      toast(t("{name} failed: {error}", { name: t(alg!.name), error: (e as Error).message }));
     }
     running = false;
   }
@@ -61,25 +62,25 @@
 </script>
 
 {#if ui.phase !== "ready"}
-  <p class="muted pad">Open a project to run processing algorithms.</p>
+  <p class="muted pad">{t("Open a project to run processing algorithms.")}</p>
 {:else if !alg}
   <div class="stack">
-    <input placeholder="Search algorithms" bind:value={search} />
+    <input placeholder={t("Search algorithms")} bind:value={search} />
     {#each groups as [group, algs]}
-      <h3 class="group-title">{group}</h3>
+      <h3 class="group-title">{t(group)}</h3>
       <ul class="alg-list">
-        {#each algs as a}<li><button onclick={() => select(a)}><span>{a.name}</span><code>{a.id}</code></button></li>{/each}
+        {#each algs as a}<li><button onclick={() => select(a)}><span>{t(a.name)}</span><code>{a.id}</code></button></li>{/each}
       </ul>
     {/each}
-    <p class="hint">Geometry runs in GEOS (the library behind QGIS's native algorithms) and attributes and expressions in QGIS. Results are saved to data/processing.gpkg.</p>
+    <p class="hint">{t("Geometry runs in GEOS (the library behind QGIS's native algorithms) and attributes and expressions in QGIS. Results are saved to data/processing.gpkg.")}</p>
     {#if ui.processingHistory.length}
-      <h3 class="group-title">History</h3>
+      <h3 class="group-title">{t("History")}</h3>
       <ul class="history">
         {#each ui.processingHistory as h}
           <li>
-            <div><b>{h.name}</b> <span class="muted">{new Date(h.at).toLocaleTimeString()} · {h.features.toLocaleString()} features · {h.ms} ms</span></div>
+            <div><b>{t(h.name)}</b> <span class="muted">{new Date(h.at).toLocaleTimeString()} · {t("{n} features", { n: h.features.toLocaleString() })} · {h.ms} ms</span></div>
             <div class="muted small-params">{Object.entries(h.params).map(([k, v]) => `${k}=${typeof v === "string" && v.includes("_") ? layerName(v) : Array.isArray(v) ? v.map(layerName).join("+") : v}`).join(", ")}</div>
-            <button class="link" onclick={() => { const a = ALGORITHMS.find((x) => x.id === h.id); if (a) { select(a, h.params); onlySelected = h.onlySelected; } }}>Run again…</button>
+            <button class="link" onclick={() => { const a = ALGORITHMS.find((x) => x.id === h.id); if (a) { select(a, h.params); onlySelected = h.onlySelected; } }}>{t("Run again…")}</button>
           </li>
         {/each}
       </ul>
@@ -87,49 +88,49 @@
   </div>
 {:else}
   <div class="stack">
-    <button class="ghost back" onclick={() => (alg = null)}><span class="flip"><Icon name="chevron" size={14} /></span> All algorithms</button>
-    <h3>{alg.name} <code class="muted">{alg.id}</code></h3>
-    <p class="muted">{alg.description}</p>
+    <button class="ghost back" onclick={() => (alg = null)}><span class="flip"><Icon name="chevron" size={14} /></span> {t("All algorithms")}</button>
+    <h3>{t(alg.name)} <code class="muted">{alg.id}</code></h3>
+    <p class="muted">{t(alg.description)}</p>
     {#each alg.params as p (p.name)}
       {#if p.type === "layer"}
-        <label class="field">{p.label}
+        <label class="field">{t(p.label)}
           <select bind:value={values[p.name]}>
             {#each layers.filter((l) => !p.geometry || symbolKind(l.layerId!) === KIND[p.geometry]) as l}<option value={l.layerId}>{l.name}</option>{/each}
           </select>
         </label>
       {:else if p.type === "layers"}
-        <fieldset class="field layers-param"><legend>{p.label}</legend>
+        <fieldset class="field layers-param"><legend>{t(p.label)}</legend>
           {#each layers as l}
             <label class="row-inline"><input type="checkbox" checked={(values[p.name] as string[]).includes(l.layerId!)} onchange={(e) => (values[p.name] = e.currentTarget.checked ? [...(values[p.name] as string[]), l.layerId!] : (values[p.name] as string[]).filter((x) => x !== l.layerId))} /> {l.name}</label>
           {/each}
         </fieldset>
       {:else if p.type === "string"}
-        <label class="field">{p.label}<input bind:value={values[p.name]} /></label>
+        <label class="field">{t(p.label)}<input bind:value={values[p.name]} /></label>
       {:else if p.type === "number"}
-        <label class="field">{p.label}<input type="number" step="any" bind:value={values[p.name]} /></label>
+        <label class="field">{t(p.label)}<input type="number" step="any" bind:value={values[p.name]} /></label>
       {:else if p.type === "enum"}
-        <label class="field">{p.label}<select bind:value={values[p.name]}>{#each p.options ?? [] as o, i}<option value={i}>{o}</option>{/each}</select></label>
+        <label class="field">{t(p.label)}<select bind:value={values[p.name]}>{#each p.options ?? [] as o, i}<option value={i}>{t(o)}</option>{/each}</select></label>
       {:else if p.type === "bool"}
-        <label class="field row-inline"><input type="checkbox" bind:checked={values[p.name] as boolean} /> {p.label}</label>
+        <label class="field row-inline"><input type="checkbox" bind:checked={values[p.name] as boolean} /> {t(p.label)}</label>
       {:else if p.type === "field"}
-        <label class="field">{p.label}
+        <label class="field">{t(p.label)}
           <select bind:value={values[p.name]}>
-            {#if p.optional}<option value="">(none)</option>{/if}
+            {#if p.optional}<option value="">{t("(none)")}</option>{/if}
             {#each fieldsOf(values[p.parent ?? "INPUT"]) as f}<option>{f}</option>{/each}
           </select>
         </label>
       {:else if p.type === "crs"}
-        <label class="field">{p.label}<input list="crs-common" bind:value={values[p.name]} /></label>
+        <label class="field">{t(p.label)}<input list="crs-common" bind:value={values[p.name]} /></label>
         <datalist id="crs-common">{#each ["EPSG:4326", "EPSG:3857", "EPSG:8857", "EPSG:3035", "EPSG:2056", "EPSG:27700", "EPSG:32633"] as c}<option value={c}></option>{/each}</datalist>
       {:else if p.type === "expression"}
-        <label class="field">{p.label}
+        <label class="field">{t(p.label)}
           <ExpressionInput layerId={values[p.parent ?? "INPUT"] as string} value={values[p.name] as string} fields={fieldsOf(values[p.parent ?? "INPUT"])} onchange={(v) => (values[p.name] = v)} />
         </label>
       {/if}
     {/each}
     {#if ui.selection[values.INPUT as string]?.length}
-      <label class="field row-inline"><input type="checkbox" bind:checked={onlySelected} /> Selected features only ({ui.selection[values.INPUT as string].length})</label>
+      <label class="field row-inline"><input type="checkbox" bind:checked={onlySelected} /> {t("Selected features only ({n})", { n: ui.selection[values.INPUT as string].length })}</label>
     {/if}
-    <button class="primary" disabled={running || !layers.length} onclick={run}>{running ? "Running…" : "Run"}</button>
+    <button class="primary" disabled={running || !layers.length} onclick={run}>{running ? t("Running…") : t("Run")}</button>
   </div>
 {/if}

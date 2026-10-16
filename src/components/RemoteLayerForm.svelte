@@ -6,21 +6,22 @@
   /** Form choices: the layer kinds, plus services stored as one of them. */
   type Choice = RemoteKind | "ogctiles" | "arcgisvt";
   import { toast } from "../lib/state.svelte";
+  import { t, N_ } from "../lib/i18n";
 
   const KINDS: [Choice, string, string][] = [
-    ["xyz", "XYZ tiles", "https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+    ["xyz", N_("XYZ tiles"), "https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
     ["wms", "WMS", "https://ows.terrestris.de/osm/service"],
     ["wmts", "WMTS", "https://…/WMTSCapabilities.xml"],
     ["wfs", "WFS", "https://…/wfs"],
-    ["vectortile", "Vector tiles (MVT)", "https://…/{z}/{x}/{y}.pbf"],
-    ["pmtiles", "PMTiles archive", "https://…/tiles.pmtiles"],
-    ["ogctiles", "OGC API Tiles", "https://…/collections/<id> or …/tiles/WebMercatorQuad"],
-    ["oapif", "OGC API Features", "https://…/ogcapi (landing page)"],
+    ["vectortile", N_("Vector tiles (MVT)"), "https://…/{z}/{x}/{y}.pbf"],
+    ["pmtiles", N_("PMTiles archive"), "https://…/tiles.pmtiles"],
+    ["ogctiles", "OGC API Tiles", N_("https://…/collections/<id> or …/tiles/WebMercatorQuad")],
+    ["oapif", "OGC API Features", N_("https://…/ogcapi (landing page)")],
     ["arcgisfeature", "ArcGIS FeatureServer", "https://…/FeatureServer/0"],
-    ["arcgismap", "ArcGIS MapServer / ImageServer", "https://…/MapServer or …/ImageServer"],
+    ["arcgismap", "ArcGIS MapServer / ImageServer", N_("https://…/MapServer or …/ImageServer")],
     ["arcgisvt", "ArcGIS VectorTileServer", "https://…/VectorTileServer"],
-    ["cog", "Cloud Optimized GeoTIFF", "https://…/image.tif"],
-    ["file", "Vector file by URL", "https://…/data.fgb (FlatGeobuf, GeoJSON, GeoPackage)"],
+    ["cog", N_("Cloud Optimized GeoTIFF"), "https://…/image.tif"],
+    ["file", N_("Vector file by URL"), N_("https://…/data.fgb (FlatGeobuf, GeoJSON, GeoPackage)")],
   ];
 
   let kind = $state<Choice>("xyz");
@@ -41,7 +42,7 @@
       if (kind === "ogctiles") {
         layers = await ogcTilesets(url);
         layer = layers[0]?.name ?? "";
-        if (!layers.length) toast("No map or vector tiles found at this address.");
+        if (!layers.length) toast(t("No map or vector tiles found at this address."));
         loading = false;
         return;
       }
@@ -79,9 +80,9 @@
         }));
       }
       layer = layers[0]?.name ?? "";
-      if (!layers.length) toast("No layers found in the capabilities document.");
+      if (!layers.length) toast(t("No layers found in the capabilities document."));
     } catch (e) {
-      toast(`Could not read capabilities: ${(e as Error).message}. The server must allow CORS.`);
+      toast(t("Could not read capabilities: {message}. The server must allow CORS.", { message: (e as Error).message }));
     }
     loading = false;
   }
@@ -96,8 +97,8 @@
     const title = name || layers.find((l) => l.name === layer)?.title || new URL(url).hostname;
     // A FeatureServer layer is addressed by its URL (…/FeatureServer/<id>).
     const full = kind === "arcgisfeature" && layer && !/\/\d+\/?$/.test(url) ? `${url.replace(/\/$/, "")}/${layer}` : url;
-    if (kind === "ogctiles") await addRemote({ kind: layer.includes(".mvt") || /vector/i.test(layers.find((l) => l.name === layer)?.title ?? "") ? "vectortile" : "xyz", name: name || new URL(url).pathname.split("/").filter((p) => !/^(tiles|map|WebMercatorQuad)$/.test(p)).pop() || "OGC tiles", url: layer });
-    else if (kind === "arcgisvt") await addRemote({ kind: "vectortile", name: name || url.split("/").at(-2) || "Vector tiles", url: url.replace(/\/$/, "") });
+    if (kind === "ogctiles") await addRemote({ kind: layer.includes(".mvt") || /vector/i.test(layers.find((l) => l.name === layer)?.title ?? "") ? "vectortile" : "xyz", name: name || new URL(url).pathname.split("/").filter((p) => !/^(tiles|map|WebMercatorQuad)$/.test(p)).pop() || t("OGC tiles"), url: layer });
+    else if (kind === "arcgisvt") await addRemote({ kind: "vectortile", name: name || url.split("/").at(-2) || t("Vector tiles"), url: url.replace(/\/$/, "") });
     else await addRemote({ kind, name: title, url: full, layer: kind === "arcgisfeature" ? undefined : needsCaps ? layer : "", matrixSet });
     url = name = layer = "";
     layers = [];
@@ -105,21 +106,21 @@
 </script>
 
 <form class="stack-tight" onsubmit={add}>
-  <label class="field">Type
-    <select bind:value={kind} onchange={() => (layers = [])}>{#each KINDS as [k, label]}<option value={k}>{label}</option>{/each}</select>
+  <label class="field">{t("Type")}
+    <select bind:value={kind} onchange={() => (layers = [])}>{#each KINDS as [k, label]}<option value={k}>{t(label)}</option>{/each}</select>
   </label>
   <label class="field">URL
-    <input type="url" required bind:value={url} placeholder={KINDS.find((k) => k[0] === kind)?.[2]} />
+    <input type="url" required bind:value={url} placeholder={t(KINDS.find((k) => k[0] === kind)?.[2] ?? "")} />
   </label>
   {#if needsCaps}
-    <button type="button" onclick={loadCaps} disabled={!url || loading}>{loading ? "Loading…" : "Load layers"}</button>
+    <button type="button" onclick={loadCaps} disabled={!url || loading}>{loading ? t("Loading…") : t("Load layers")}</button>
     {#if layers.length}
-      <label class="field">Layer
+      <label class="field">{t("Layer")}
         <select bind:value={layer}>{#each layers as l}<option value={l.name}>{l.title}</option>{/each}</select>
       </label>
     {/if}
   {/if}
-  <label class="field">Name<input bind:value={name} placeholder="Layer name (optional)" /></label>
-  <button class="primary" type="submit" disabled={!url || (needsCaps && !layer)}>Add layer</button>
+  <label class="field">{t("Name")}<input bind:value={name} placeholder={t("Layer name (optional)")} /></label>
+  <button class="primary" type="submit" disabled={!url || (needsCaps && !layer)}>{t("Add layer")}</button>
 </form>
-<p class="hint">Tiles and images are drawn by the browser; remote vector files, WFS, OGC API Features and ArcGIS feature layers are downloaded and drawn by QGIS. The QGIS engine can't fetch over the network yet (QEP #294), but the layers are saved as regular QGIS layers.</p>
+<p class="hint">{t("Tiles and images are drawn by the browser; remote vector files, WFS, OGC API Features and ArcGIS feature layers are downloaded and drawn by QGIS. The QGIS engine can't fetch over the network yet (QEP #294), but the layers are saved as regular QGIS layers.")}</p>

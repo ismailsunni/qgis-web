@@ -1,6 +1,7 @@
 import { project, reload, serialize, setXml } from "./doc";
 import { redraw } from "./map";
 import { ui, changed, toast } from "./state.svelte";
+import { t, N_ } from "./i18n";
 
 /**
  * Undo/redo for project changes (styles, layer tree, layers, bookmarks…). Every change goes
@@ -18,7 +19,7 @@ function sync() {
 }
 
 /** Records the document before a change. */
-export function snapshot(label = "change") {
+export function snapshot(label = N_("change")) {
   past.push({ xml: serialize(), label });
   if (past.length > LIMIT) past.shift();
   future = [];
@@ -46,7 +47,7 @@ export function undoProject() {
   future.push({ xml: serialize(), label: step.label });
   restore(step.xml);
   sync();
-  toast(`Undid ${step.label}`);
+  toast(t("Undid {label}", { label: t(step.label) }));
 }
 
 export function redoProject() {
@@ -55,5 +56,5 @@ export function redoProject() {
   past.push({ xml: serialize(), label: step.label });
   restore(step.xml);
   sync();
-  toast(`Redid ${step.label}`);
+  toast(t("Redid {label}", { label: t(step.label) }));
 }

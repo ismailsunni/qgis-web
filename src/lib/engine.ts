@@ -1,5 +1,6 @@
 import { qgis, type QgisApi } from "qgis-js";
 import { unzipSync, strFromU8 } from "fflate";
+import { t } from "./i18n";
 
 export type EmFS = Awaited<ReturnType<typeof qgis>>["fs"];
 
@@ -78,7 +79,7 @@ export async function fetchProject(url: string) {
   const abs = new URL(url, location.href);
   const name = decodeURIComponent(abs.pathname.split("/").pop()!);
   const res = await fetch(abs);
-  if (!res.ok) throw new Error(`Could not fetch ${abs} (${res.status})`);
+  if (!res.ok) throw new Error(t("Could not fetch {url} ({status})", { url: String(abs), status: res.status }));
   const data = new Uint8Array(await res.arrayBuffer());
   // Nest the project a few folders deep so "../" sources still land inside the session root.
   const local = (src: string) => decodeURIComponent(new URL(src, `http://v/a/b/c/${encodeURIComponent(name)}`).pathname);

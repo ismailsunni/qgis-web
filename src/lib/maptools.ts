@@ -19,6 +19,7 @@ import { olMap, overlays, mapProjection, hitBox, srid, layerStack, createRemoteL
 import { flatLayers, snapshotTree } from "./tree";
 import { attributionFor } from "./remote";
 import { ui } from "./state.svelte";
+import { t } from "./i18n";
 
 /** Map tools: measuring, search, legend, map tips and image export. */
 
@@ -60,10 +61,11 @@ export function measureText(g: Geometry) {
     const area = sphere ? getArea(g, { projection }) : (g as never as { getArea(): number }).getArea() * mpu * mpu;
     const ring = (g as never as { getLinearRing(i: number): Geometry }).getLinearRing(0);
     const perimeter = sphere ? getLength(ring, { projection }) : (ring as never as { getLength(): number }).getLength() * mpu;
-    return `${fmtArea(area)} · perimeter ${fmtLength(perimeter)}${sphere ? "" : " (planar)"}`;
+    const vars = { area: fmtArea(area), perimeter: fmtLength(perimeter) };
+    return sphere ? t("{area} · perimeter {perimeter}", vars) : t("{area} · perimeter {perimeter} (planar)", vars);
   }
   const length = sphere ? getLength(g, { projection }) : (g as never as { getLength(): number }).getLength() * mpu;
-  return `${fmtLength(length)}${sphere ? "" : " (planar)"}`;
+  return sphere ? fmtLength(length) : t("{length} (planar)", { length: fmtLength(length) });
 }
 
 export function startMeasure(kind: "line" | "area") {
@@ -76,7 +78,7 @@ export function startMeasure(kind: "line" | "area") {
   });
   draw.on("drawend", (e) => (ui.measure = measureText(e.feature.getGeometry()!)));
   olMap().addInteraction(draw);
-  ui.measure = kind === "line" ? "Click to start measuring; double-click to finish." : "Click to draw an area; double-click to finish.";
+  ui.measure = kind === "line" ? t("Click to start measuring; double-click to finish.") : t("Click to draw an area; double-click to finish.");
 }
 
 let box: DragBox | null = null;
@@ -155,7 +157,7 @@ export function parseCoordinate(q: string): { lonlat?: [number, number]; xy?: [n
 export async function searchPlaces(q: string): Promise<Place[]> {
   const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&q=${encodeURIComponent(q)}`;
   const res = await fetch(url, { headers: { "Accept-Language": navigator.language } });
-  if (!res.ok) throw new Error(`Search failed (${res.status})`);
+  if (!res.ok) throw new Error(t("Search failed ({status})", { status: res.status }));
   return (await res.json()).map((r: { display_name: string; lon: string; lat: string; boundingbox: string[] }) => ({
     label: r.display_name,
     lon: +r.lon,
@@ -312,5 +314,5 @@ export async function exportImage(o: ExportOptions): Promise<Blob> {
     ctx.fillStyle = "#1f2421";
     ctx.fillText(o.title, 20 * o.scale, 10 * o.scale + size * 1.2);
   }
-  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Export failed"))), "image/png"));
+  return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error(t("Export failed")))), "image/png"));
 }

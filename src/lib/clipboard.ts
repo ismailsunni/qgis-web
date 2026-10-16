@@ -5,6 +5,7 @@ import type { QgsVectorLayer } from "qgis-js";
 import { engine, findMapLayer, free } from "./engine";
 import { srid } from "./map";
 import { ui, toast, featureAttributes } from "./state.svelte";
+import { t } from "./i18n";
 
 /** Copy/paste of layer styles, as QML (also put on the system clipboard, like QGIS does). */
 let copied: { qml: string; from: string } | null = null;
@@ -14,7 +15,7 @@ export const hasCopiedStyle = () => !!copied;
 export function copyStyle(layerId: string) {
   copied = { qml: exportQml(layerId), from: findMapLayer(layerId)?.name ?? "" };
   navigator.clipboard?.writeText(copied.qml).catch(() => {});
-  toast(`Copied the style of ${copied.from}`);
+  toast(t("Copied the style of {layer}", { layer: copied.from }));
 }
 
 export function pasteStyle(layerId: string) {
@@ -41,18 +42,18 @@ export function copyFeatures(layerId: string, fids: number[]) {
   free(it);
   free(req);
   ui.copiedFeatures = features.length;
-  toast(`Copied ${features.length} feature${features.length === 1 ? "" : "s"}`);
+  toast(features.length === 1 ? t("Copied {n} feature", { n: 1 }) : t("Copied {n} features", { n: features.length }));
 }
 
 /** Pastes the copied features into the layer being edited. */
 export async function pasteFeatures() {
-  if (!ui.editing) return toast("Start editing a layer to paste features into it.");
-  if (!features.length) return toast("Copy features first (select them, then Ctrl+C).");
+  if (!ui.editing) return toast(t("Start editing a layer to paste features into it."));
+  if (!features.length) return toast(t("Copy features first (select them, then Ctrl+C)."));
   const { insertFeatures } = await import("./editing");
   const geojson = new GeoJSON();
   try {
-    const n = await insertFeatures(`paste ${features.length} features`, features.map((f) => ({ geometry: geojson.readGeometry(f.geometry)!, attributes: f.attributes })));
-    toast(`Pasted ${n} feature${n === 1 ? "" : "s"}`);
+    const n = await insertFeatures(t("paste {n} features", { n: features.length }), features.map((f) => ({ geometry: geojson.readGeometry(f.geometry)!, attributes: f.attributes })));
+    toast(n === 1 ? t("Pasted {n} feature", { n }) : t("Pasted {n} features", { n }));
   } catch (e) {
     toast((e as Error).message);
   }

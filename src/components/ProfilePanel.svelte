@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "../lib/i18n";
   import { ui } from "../lib/state.svelte";
   import { setMarker } from "../lib/maptools";
   import Icon from "./Icon.svelte";
@@ -26,13 +27,13 @@
   }
 </script>
 
-<section class="drawer profile" aria-label="Elevation profile">
+<section class="drawer profile" aria-label={t("Elevation profile")}>
   <header>
-    <h3><Icon name="profile" size={16} /> Profile of {p.layer}</h3>
-    <span class="muted">length {fmtD(p.length)} · min {fmtZ(p.min)} · max {fmtZ(p.max)} · climb {fmtZ(p.gain)} · descent {fmtZ(p.loss)}</span>
-    <button class="icon" aria-label="Close profile" onclick={() => { ui.profile = null; setMarker(null); }}><Icon name="close" size={18} /></button>
+    <h3><Icon name="profile" size={16} /> {t("Profile of {layer}", { layer: p.layer })}</h3>
+    <span class="muted">{t("length {length} · min {min} · max {max} · climb {gain} · descent {loss}", { length: fmtD(p.length), min: fmtZ(p.min), max: fmtZ(p.max), gain: fmtZ(p.gain), loss: fmtZ(p.loss) })}</span>
+    <button class="icon" aria-label={t("Close profile")} onclick={() => { ui.profile = null; setMarker(null); }}><Icon name="close" size={18} /></button>
   </header>
-  <svg viewBox="0 0 {W} {H}" preserveAspectRatio="none" role="img" aria-label="Elevation along the line" onpointermove={move} onpointerleave={() => { hover = null; setMarker(null); }}>
+  <svg viewBox="0 0 {W} {H}" preserveAspectRatio="none" role="img" aria-label={t("Elevation along the line")} onpointermove={move} onpointerleave={() => { hover = null; setMarker(null); }}>
     <path d={area} class="area" />
     <path d={path} class="line" />
     <text x="2" y={sy(p.max) + 4}>{fmtZ(p.max)}</text>

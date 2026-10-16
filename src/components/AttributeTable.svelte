@@ -12,6 +12,7 @@
   import { setAttribute, editSession, deleteFeatures } from "../lib/editing";
   import * as Sel from "../lib/selection";
   import { readForm, displayValue, parseInput, validate } from "../lib/forms";
+  import { t } from "../lib/i18n";
 
   let props: { layerId: string } = $props();
   // Re-created per layer ({#key} in App), so reading the prop once is intended.
@@ -140,7 +141,7 @@
 
   async function deleteSelected() {
     const n = selection.size;
-    if (n && confirm(`Delete ${n} selected feature${n === 1 ? "" : "s"}?`)) {
+    if (n && confirm(n === 1 ? t("Delete {n} selected feature?", { n }) : t("Delete {n} selected features?", { n }))) {
       deleteFeatures([...selection]);
       Sel.clearSelection(layerId);
     }
@@ -153,7 +154,7 @@
   <ExpressionBuilder
     {layerId}
     initial={dialog === "filter" ? filter : ""}
-    title={dialog === "filter" ? "Filter" : "Select by expression"}
+    title={dialog === "filter" ? t("Filter") : t("Select by expression")}
     onclose={() => (dialog = null)}
     onapply={(v) => {
       if (dialog === "filter") {
@@ -173,38 +174,38 @@
   <StatisticsDialog
     title={layer.name}
     {fields}
-    scope={selectedOnly ? "selected features" : filter ? "filtered features" : "all features"}
+    scope={selectedOnly ? t("selected features") : filter ? t("filtered features") : t("all features")}
     column={(f) => { const c = fields.indexOf(f); return order.map((i) => rows[i][c]); }}
     onclose={() => (dialog = null)}
   />
 {/if}
 
-<section class="drawer" aria-label="Attribute table">
+<section class="drawer" aria-label={t("Attribute table")}>
   <header>
     <h3>
       <Icon name="table" size={16} /> {layer?.name}
-      <small class="muted">{fids.length.toLocaleString()}{loading ? "…" : ""} features{selection.size ? `, ${selection.size.toLocaleString()} selected` : ""}{editable ? " · double-click a cell to edit" : ""}</small>
+      <small class="muted">{t("{n} features", { n: fids.length.toLocaleString() + (loading ? "…" : "") })}{selection.size ? ", " + t("{n} selected", { n: selection.size.toLocaleString() }) : ""}{editable ? " · " + t("double-click a cell to edit") : ""}</small>
     </h3>
     <div class="table-tools">
-      <button class="icon" title="Select by expression" aria-label="Select by expression" onclick={() => (dialog = "select")}><Icon name="expr" size={16} /></button>
-      <button class="icon" title="Invert selection" aria-label="Invert selection" onclick={() => Sel.invertSelection(layerId)}><Icon name="selectbox" size={16} /></button>
-      <button class="icon" title="Clear selection" aria-label="Clear selection" disabled={!selection.size} onclick={() => Sel.clearSelection(layerId)}><Icon name="close" size={16} /></button>
-      <button class="icon" title="Zoom to selection" aria-label="Zoom to selection" disabled={!selection.size} onclick={() => Sel.zoomToSelection()}><Icon name="zoom" size={16} /></button>
-      <button class="icon" class:active={selectedOnly} title="Show selected features only" aria-label="Show selected only" onclick={() => (selectedOnly = !selectedOnly)}><Icon name="select" size={16} /></button>
+      <button class="icon" title={t("Select by expression")} aria-label={t("Select by expression")} onclick={() => (dialog = "select")}><Icon name="expr" size={16} /></button>
+      <button class="icon" title={t("Invert selection")} aria-label={t("Invert selection")} onclick={() => Sel.invertSelection(layerId)}><Icon name="selectbox" size={16} /></button>
+      <button class="icon" title={t("Clear selection")} aria-label={t("Clear selection")} disabled={!selection.size} onclick={() => Sel.clearSelection(layerId)}><Icon name="close" size={16} /></button>
+      <button class="icon" title={t("Zoom to selection")} aria-label={t("Zoom to selection")} disabled={!selection.size} onclick={() => Sel.zoomToSelection()}><Icon name="zoom" size={16} /></button>
+      <button class="icon" class:active={selectedOnly} title={t("Show selected features only")} aria-label={t("Show selected only")} onclick={() => (selectedOnly = !selectedOnly)}><Icon name="select" size={16} /></button>
       <span class="sep"></span>
-      <button class="icon" title="Field calculator" aria-label="Field calculator" onclick={() => (dialog = "calc")}><Icon name="calc" size={16} /></button>
-      <button class="icon" title="Fields (add, rename, delete)" aria-label="Fields" onclick={() => (dialog = "fields")}><Icon name="columns" size={16} /></button>
-      <button class="icon" title="Statistics" aria-label="Statistics" onclick={() => (dialog = "stats")}><Icon name="chart" size={16} /></button>
-      <button class="icon" title="Export layer" aria-label="Export layer" onclick={() => (dialog = "export")}><Icon name="download" size={16} /></button>
-      {#if editable}<button class="icon" title="Delete selected features" aria-label="Delete selected features" disabled={!selection.size} onclick={deleteSelected}><Icon name="trash" size={16} /></button>{/if}
+      <button class="icon" title={t("Field calculator")} aria-label={t("Field calculator")} onclick={() => (dialog = "calc")}><Icon name="calc" size={16} /></button>
+      <button class="icon" title={t("Fields (add, rename, delete)")} aria-label={t("Fields")} onclick={() => (dialog = "fields")}><Icon name="columns" size={16} /></button>
+      <button class="icon" title={t("Statistics")} aria-label={t("Statistics")} onclick={() => (dialog = "stats")}><Icon name="chart" size={16} /></button>
+      <button class="icon" title={t("Export layer")} aria-label={t("Export layer")} onclick={() => (dialog = "export")}><Icon name="download" size={16} /></button>
+      {#if editable}<button class="icon" title={t("Delete selected features")} aria-label={t("Delete selected features")} disabled={!selection.size} onclick={deleteSelected}><Icon name="trash" size={16} /></button>{/if}
     </div>
     <form class="row filter" onsubmit={(e) => { e.preventDefault(); load(); }}>
-      <input placeholder={`Filter, e.g. "${fields[1] ?? fields[0] ?? "field"}" > 10`} bind:value={filter} class:invalid={!!error} title={error} />
-      <button type="button" class="icon" title="Expression builder" onclick={() => (dialog = "filter")}><Icon name="expr" size={16} /></button>
-      <button type="submit">Filter</button>
-      {#if filter}<button type="button" onclick={() => { filter = ""; load(); }}>Clear</button>{/if}
+      <input placeholder={t('Filter, e.g. "{field}" > 10', { field: fields[1] ?? fields[0] ?? t("field") })} bind:value={filter} class:invalid={!!error} title={error} />
+      <button type="button" class="icon" title={t("Expression builder")} onclick={() => (dialog = "filter")}><Icon name="expr" size={16} /></button>
+      <button type="submit">{t("Filter")}</button>
+      {#if filter}<button type="button" onclick={() => { filter = ""; load(); }}>{t("Clear")}</button>{/if}
     </form>
-    <button class="icon" aria-label="Close table" onclick={() => (ui.tableLayerId = null)}><Icon name="close" size={18} /></button>
+    <button class="icon" aria-label={t("Close table")} onclick={() => (ui.tableLayerId = null)}><Icon name="close" size={18} /></button>
   </header>
   {#if error}<p class="error small">{error}</p>{/if}
   <div class="table-scroll" bind:clientHeight={height} onscroll={(e) => (scrollTop = e.currentTarget.scrollTop)}>

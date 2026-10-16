@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "../lib/i18n";
   import { onMount } from "svelte";
   import { createMap, scaleDenominator, srid } from "../lib/map";
   import { clearIdentify, identifyAt } from "../lib/actions";
@@ -110,7 +111,7 @@
     style:clip-path={ui.compare.mode === "swipe" ? `inset(0 0 0 ${ui.compare.x}%)` : undefined}
   ></div>
   {#if ui.compare.mode === "swipe"}
-    <div class="swipe-divider" style:left="{ui.compare.x}%" role="separator" aria-label="Swipe divider" onpointerdown={dragDivider}><span></span></div>
+    <div class="swipe-divider" style:left="{ui.compare.x}%" role="separator" aria-label={t("Swipe divider")} onpointerdown={dragDivider}><span></span></div>
   {/if}
   <ComparePanel />
 {/if}
@@ -122,7 +123,7 @@
 
 {#if tip}
   <!-- Map tips are project HTML: shown in a sandboxed frame, so scripts never run. -->
-  <iframe class="map-tip" title="Map tip" sandbox="" srcdoc={`<style>body{margin:6px;font:12px system-ui}</style>${tip.html}`} style:left="{tip.x + 14}px" style:top="{tip.y + 14}px"></iframe>
+  <iframe class="map-tip" title={t("Map tip")} sandbox="" srcdoc={`<style>body{margin:6px;font:12px system-ui}</style>${tip.html}`} style:left="{tip.x + 14}px" style:top="{tip.y + 14}px"></iframe>
 {/if}
 
 {#if ui.time.active && ui.phase === "ready"}<TimeSlider />{/if}
@@ -137,11 +138,11 @@
 
 {#if ui.phase === "ready" && !view.mapOnly}
   <div class="statusbar">
-    <button class="coord" title="{FORMAT_LABELS[coordFormat]}: click for another format" onclick={() => {
+    <button class="coord" title={t("{format}: click for another format", { format: t(FORMAT_LABELS[coordFormat]) })} onclick={() => {
       coordFormat = FORMATS[(FORMATS.indexOf(coordFormat) + 1) % FORMATS.length];
       saveSettings({ coords: coordFormat });
       coord = formatCoord(coordFormat, lastCoord, coordFormat === "project" ? null : projectToLonLat(lastCoord));
-    }}>{coord || FORMAT_LABELS[coordFormat]}</button>
+    }}>{coord || t(FORMAT_LABELS[coordFormat])}</button>
     <span>1:{Math.round(scale).toLocaleString()}</span>
     <span>{crs}</span>
   </div>

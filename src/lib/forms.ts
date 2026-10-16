@@ -1,6 +1,7 @@
 import { FeatureRequestFlag, type QgsVectorLayer } from "qgis-js";
 import { mapLayerEl } from "./doc";
 import { engine, findMapLayer, free } from "./engine";
+import { t } from "./i18n";
 
 /**
  * Attribute forms as configured in the project (QGIS's Attributes Form): widgets, aliases,
@@ -100,7 +101,7 @@ export function parseInput(form: FieldForm | undefined, text: string, old: unkno
 export function validate(layerId: string, fid: number, form: FieldForm | undefined, value: unknown): { error?: string; warning?: string } {
   if (!form) return {};
   const problems: [number, string][] = [];
-  if (form.notNull && (value === null || value === "")) problems.push([form.notNull, `${form.alias || form.name} can't be empty`]);
+  if (form.notNull && (value === null || value === "")) problems.push([form.notNull, t("{field} can't be empty", { field: form.alias || form.name })]);
   const api = engine();
   const layer = findMapLayer(layerId) as QgsVectorLayer;
   if (form.unique && value !== null) {
@@ -109,7 +110,7 @@ export function validate(layerId: string, fid: number, form: FieldForm | undefin
     req.setFlags(FeatureRequestFlag.NoGeometry);
     const it = layer.getFeatures(req);
     for (let f = it.nextFeature(); f; f = it.nextFeature()) {
-      if (f.id() !== fid) problems.push([form.unique, `${form.alias || form.name} must be unique`]);
+      if (f.id() !== fid) problems.push([form.unique, t("{field} must be unique", { field: form.alias || form.name })]);
       free(f);
       if (problems.length) break;
     }
@@ -126,7 +127,7 @@ export function validate(layerId: string, fid: number, form: FieldForm | undefin
       const ctx = layer.createExpressionContext();
       ctx.setFeature(f);
       const e = new api.QgsExpression(form.expression);
-      if (!e.evaluate(ctx)) problems.push([form.expressionStrength || 1, form.expressionDesc || `Constraint not met: ${form.expression}`]);
+      if (!e.evaluate(ctx)) problems.push([form.expressionStrength || 1, form.expressionDesc || t("Constraint not met: {expression}", { expression: form.expression })]);
       free(e);
       free(ctx);
       free(f);

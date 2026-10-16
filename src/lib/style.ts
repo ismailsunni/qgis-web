@@ -3,6 +3,7 @@ import templatesXml from "../templates/style.xml?raw";
 import renderersXml from "../templates/renderers.xml?raw";
 import { child, findChild, mapLayerEl, project } from "./doc";
 import { engine, findMapLayer, free } from "./engine";
+import { t, N_ } from "./i18n";
 
 /** Style editing on the layer's XML, in the exact format QGIS reads and writes. */
 
@@ -332,12 +333,12 @@ export function uniqueCategories(id: string, attr: string, ramp: string): Catego
 }
 
 export const MODES: Record<string, string> = {
-  EqualInterval: "Equal interval",
-  Quantile: "Equal count (quantile)",
-  Jenks: "Natural breaks (Jenks)",
-  Pretty: "Pretty breaks",
-  StdDev: "Standard deviation",
-  Custom: "Manual (edit the breaks below)",
+  EqualInterval: N_("Equal interval"),
+  Quantile: N_("Equal count (quantile)"),
+  Jenks: N_("Natural breaks (Jenks)"),
+  Pretty: N_("Pretty breaks"),
+  StdDev: N_("Standard deviation"),
+  Custom: N_("Manual (edit the breaks below)"),
 };
 
 function jenks(data: number[], k: number) {
@@ -520,9 +521,9 @@ export function writeLabels(id: string, p: LabelProps) {
 
 /** Qgis::LabelPlacement values that make sense per geometry. */
 export const PLACEMENTS: Record<SymbolKind, [number, string][]> = {
-  marker: [[6, "Cartographic"], [0, "Around point"], [1, "Offset from point"]],
-  line: [[2, "Parallel"], [3, "Curved"], [4, "Horizontal"]],
-  fill: [[0, "Around centroid"], [1, "Offset from centroid"], [4, "Horizontal"], [5, "Free (angled)"], [7, "Using perimeter (curved)"], [8, "Outside polygons"]],
+  marker: [[6, N_("Cartographic")], [0, N_("Around point")], [1, N_("Offset from point")]],
+  line: [[2, N_("Parallel")], [3, N_("Curved")], [4, N_("Horizontal")]],
+  fill: [[0, N_("Around centroid")], [1, N_("Offset from centroid")], [4, N_("Horizontal")], [5, N_("Free (angled)")], [7, N_("Using perimeter (curved)")], [8, N_("Outside polygons")]],
 };
 
 // ---- QML -------------------------------------------------------------------------------
@@ -549,7 +550,7 @@ export function exportQml(id: string): string {
 export function importQml(id: string, text: string) {
   const qml = new DOMParser().parseFromString(text, "application/xml");
   const root = qml.querySelector("qgis");
-  if (!root || qml.querySelector("parsererror")) throw new Error("Not a QGIS style (.qml) file");
+  if (!root || qml.querySelector("parsererror")) throw new Error(t("Not a QGIS style (.qml) file"));
   const el = layerEl(id);
   for (const a of STYLE_ATTRS) if (root.hasAttribute(a)) el.setAttribute(a, root.getAttribute(a)!);
   for (const c of [...root.children]) {

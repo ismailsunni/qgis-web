@@ -6,6 +6,7 @@ import { project, findChild } from "./doc";
 import { apply } from "./commit";
 import { olMap, srid } from "./map";
 import { engine } from "./engine";
+import { N_ } from "./i18n";
 
 /** Spatial bookmarks, stored in the project as QGIS does (<Bookmarks>), so Desktop shows them too. */
 
@@ -44,17 +45,17 @@ export function addBookmark(name: string, group = "") {
     const crs = xml.querySelector("qgis > projectCrs > spatialrefsys");
     if (crs) b.appendChild(crs.cloneNode(true));
     r.appendChild(b);
-  }, "add bookmark");
+  }, N_("add bookmark"));
 }
 
 const bookmarkEl = (id: string) => [...(root()?.children ?? [])].find((b) => b.getAttribute("id") === id);
 
 export function renameBookmark(id: string, name: string) {
-  apply(() => bookmarkEl(id)?.setAttribute("name", name), "rename bookmark");
+  apply(() => bookmarkEl(id)?.setAttribute("name", name), N_("rename bookmark"));
 }
 
 export function removeBookmark(id: string) {
-  apply(() => bookmarkEl(id)?.remove(), "remove bookmark");
+  apply(() => bookmarkEl(id)?.remove(), N_("remove bookmark"));
 }
 
 /** The bookmark's extent in the project CRS (bookmarks keep the CRS they were made in). */

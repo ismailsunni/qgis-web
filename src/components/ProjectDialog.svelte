@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t } from "../lib/i18n";
   import { project, child } from "../lib/doc";
   import { engine } from "../lib/engine";
   import { apply } from "../lib/commit";
@@ -38,16 +39,16 @@
 </script>
 
 <div class="overlay modal" role="presentation" onclick={(e) => e.target === e.currentTarget && onclose()}>
-  <div class="dialog card" role="dialog" aria-modal="true" aria-label="Project properties">
+  <div class="dialog card" role="dialog" aria-modal="true" aria-label={t("Project properties")}>
     <header>
-      <h2>Project properties</h2>
-      <button class="icon" aria-label="Close" onclick={onclose}><Icon name="close" size={18} /></button>
+      <h2>{t("Project properties")}</h2>
+      <button class="icon" aria-label={t("Close")} onclick={onclose}><Icon name="close" size={18} /></button>
     </header>
-    <label class="field">Title<input bind:value={title} /></label>
+    <label class="field">{t("Title")}<input bind:value={title} /></label>
     <div class="field">
-      <span>Coordinate reference system</span>
+      <span>{t("Coordinate reference system")}</span>
       <p>{picked ? `${picked.authid} – ${picked.description}` : `${current} – ${currentName}`}</p>
-      <input placeholder="Search by name or code, e.g. 2056 or Lambert" bind:value={query} />
+      <input placeholder={t("Search by name or code, e.g. 2056 or Lambert")} bind:value={query} />
       {#if results.length}
         <ul class="crs-list">
           {#each results as r (r.authid)}
@@ -55,11 +56,11 @@
           {/each}
         </ul>
       {/if}
-      <p class="hint">Layers are reprojected on the fly by QGIS; web tiles are reprojected by the browser.</p>
+      <p class="hint">{t("Layers are reprojected on the fly by QGIS; web tiles are reprojected by the browser.")}</p>
     </div>
     <footer>
-      <button onclick={onclose}>Cancel</button>
-      <button class="primary" onclick={save}>Apply</button>
+      <button onclick={onclose}>{t("Cancel")}</button>
+      <button class="primary" onclick={save}>{t("Apply")}</button>
     </footer>
   </div>
 </div>

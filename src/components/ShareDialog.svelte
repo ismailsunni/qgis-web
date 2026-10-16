@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { t, N_ } from "../lib/i18n";
   import { ui, toast } from "../lib/state.svelte";
   import * as P from "../lib/publish";
   import Icon from "./Icon.svelte";
@@ -44,7 +45,7 @@
       P.setPublishedRef(ref);
       ui.dirty = true;
       versions = await P.history(r.id).catch(() => []);
-      toast(versions.length > 1 ? "Republished: the link now shows this version" : "Published");
+      toast(versions.length > 1 ? t("Republished: the link now shows this version") : t("Published"));
     } catch (e) {
       toast((e as Error).message);
     }
@@ -56,7 +57,7 @@
     try {
       await P.restore(ref!.id, v);
       versions = await P.history(ref!.id);
-      toast("Restored: the link shows that version again");
+      toast(t("Restored: the link shows that version again"));
     } catch (e) {
       toast((e as Error).message);
     }
@@ -65,75 +66,75 @@
 </script>
 
 <div class="overlay modal" role="presentation" onclick={(e) => e.target === e.currentTarget && onclose()}>
-  <div class="dialog card share" role="dialog" aria-modal="true" aria-label="Share">
+  <div class="dialog card share" role="dialog" aria-modal="true" aria-label={t("Share")}>
     <header>
-      <h2>Share</h2>
-      <button class="icon" aria-label="Close" onclick={onclose}><Icon name="close" size={18} /></button>
+      <h2>{t("Share")}</h2>
+      <button class="icon" aria-label={t("Close")} onclick={onclose}><Icon name="close" size={18} /></button>
     </header>
 
     {#if ui.sourceUrl}
       <section class="share-section">
-        <h3>Link to the project URL</h3>
-        {#each [["Full app", `${base}?url=${encodeURIComponent(ui.sourceUrl)}`], ["Map only", `${base}?url=${encodeURIComponent(ui.sourceUrl)}&maponly`]] as [label, text]}
-          <div class="row"><span class="share-label">{label}</span><input readonly value={text} /><button onclick={() => copy(text, label)}>{copied === label ? "Copied" : "Copy"}</button></div>
+        <h3>{t("Link to the project URL")}</h3>
+        {#each [[N_("Full app"), `${base}?url=${encodeURIComponent(ui.sourceUrl)}`], [N_("Map only"), `${base}?url=${encodeURIComponent(ui.sourceUrl)}&maponly`]] as [label, text]}
+          <div class="row"><span class="share-label">{t(label)}</span><input readonly value={text} /><button onclick={() => copy(text, label)}>{copied === label ? t("Copied") : t("Copy")}</button></div>
         {/each}
       </section>
     {/if}
 
     <section class="share-section">
-      <h3>Publish a share link</h3>
-      <p class="hint">Only the project file is published (as a GitHub gist). Layers must read their data from the web, so your data is never uploaded.</p>
+      <h3>{t("Publish a share link")}</h3>
+      <p class="hint">{t("Only the project file is published (as a GitHub gist). Layers must read their data from the web, so your data is never uploaded.")}</p>
       {#if blockers.length}
         <div class="check error">
-          <strong>Can't publish: these layers use local data</strong>
+          <strong>{t("Can't publish: these layers use local data")}</strong>
           <ul>{#each blockers as b}<li><b>{b.name}</b> {b.detail}</li>{/each}</ul>
-          <p class="hint">Use remote sources (XYZ, WMS, WMTS, WFS, vector tiles, or files by URL), or remove these layers.</p>
+          <p class="hint">{t("Use remote sources (XYZ, WMS, WMTS, WFS, vector tiles, or files by URL), or remove these layers.")}</p>
         </div>
       {:else}
-        {#if warnings === null}<p class="hint">Checking remote layers…</p>{/if}
+        {#if warnings === null}<p class="hint">{t("Checking remote layers…")}</p>{/if}
         {#if warnings?.length}
           <div class="check warn">
-            <strong>Viewers may see errors for:</strong>
+            <strong>{t("Viewers may see errors for:")}</strong>
             <ul>{#each warnings as w}<li><b>{w.name}</b>: {w.detail}</li>{/each}</ul>
           </div>
         {/if}
-        {#if resources.embedded}<p class="hint">{resources.embedded} local SVG/image file(s) will be embedded in the project.</p>{/if}
-        {#if resources.missing.length}<p class="hint">Missing local images: {resources.missing.join(", ")}</p>{/if}
+        {#if resources.embedded}<p class="hint">{t("{n} local SVG/image file(s) will be embedded in the project.", { n: resources.embedded })}</p>{/if}
+        {#if resources.missing.length}<p class="hint">{t("Missing local images: {list}", { list: resources.missing.join(", ") })}</p>{/if}
         <div class="grid2">
-          <label class="field">Visibility
-            <select bind:value={isPublic} disabled={!!ref}><option value={false}>Unlisted (link only)</option><option value={true}>Public</option></select>
+          <label class="field">{t("Visibility")}
+            <select bind:value={isPublic} disabled={!!ref}><option value={false}>{t("Unlisted (link only)")}</option><option value={true}>{t("Public")}</option></select>
           </label>
-          <label class="field">Opens as
-            <select bind:value={mode}><option value="compact">Compact app</option><option value="maponly">Map only</option></select>
+          <label class="field">{t("Opens as")}
+            <select bind:value={mode}><option value="compact">{t("Compact app")}</option><option value="maponly">{t("Map only")}</option></select>
           </label>
         </div>
-        <label class="field">Embedding allowed on (domains, empty for any)
+        <label class="field">{t("Embedding allowed on (domains, empty for any)")}
           <input bind:value={domains} placeholder="example.org, intranet.example.com" />
         </label>
-        <label class="field">GitHub token (gist scope, stored only in this browser)
+        <label class="field">{t("GitHub token (gist scope, stored only in this browser)")}
           <input type="password" bind:value={token} placeholder="ghp_…" />
         </label>
-        <a class="hint" href="https://github.com/settings/tokens/new?scopes=gist&description=QGIS%20Web" target="_blank" rel="noopener">Create a token with the “gist” scope</a>
-        <button class="primary" disabled={busy || !token} onclick={doPublish}>{busy ? "Publishing…" : ref ? "Republish (same link)" : "Publish"}</button>
+        <a class="hint" href="https://github.com/settings/tokens/new?scopes=gist&description=QGIS%20Web" target="_blank" rel="noopener">{t("Create a token with the “gist” scope")}</a>
+        <button class="primary" disabled={busy || !token} onclick={doPublish}>{busy ? t("Publishing…") : ref ? t("Republish (same link)") : t("Publish")}</button>
       {/if}
     </section>
 
     {#if ref}
       <section class="share-section">
-        <h3>Links</h3>
-        {#each [["App", shareLink(mode === "compact" ? "&layout=compact" : "&maponly")], ["Map only", shareLink("&maponly")], ["Embed", embed()]] as [label, text]}
-          <div class="row"><span class="share-label">{label}</span><input readonly value={text} onfocus={(e) => e.currentTarget.select()} /><button onclick={() => copy(text, label)}>{copied === label ? "Copied" : "Copy"}</button></div>
+        <h3>{t("Links")}</h3>
+        {#each [[N_("App"), shareLink(mode === "compact" ? "&layout=compact" : "&maponly")], [N_("Map only"), shareLink("&maponly")], [N_("Embed"), embed()]] as [label, text]}
+          <div class="row"><span class="share-label">{t(label)}</span><input readonly value={text} onfocus={(e) => e.currentTarget.select()} /><button onclick={() => copy(text, label)}>{copied === label ? t("Copied") : t("Copy")}</button></div>
         {/each}
         {#if versions.length}
           <details>
-            <summary>Version history ({versions.length})</summary>
+            <summary>{t("Version history ({n})", { n: versions.length })}</summary>
             <ul class="versions">
               {#each versions as v, i}
                 <li>
                   <span>{new Date(v.committedAt).toLocaleString()}</span>
-                  {#if i === 0}<span class="muted">current</span>{:else}
-                    <a href={shareLink(`&rev=${v.version}`)} target="_blank" rel="noopener">view</a>
-                    <button disabled={busy} onclick={() => restore(v.version)}>Restore</button>
+                  {#if i === 0}<span class="muted">{t("current")}</span>{:else}
+                    <a href={shareLink(`&rev=${v.version}`)} target="_blank" rel="noopener">{t("view")}</a>
+                    <button disabled={busy} onclick={() => restore(v.version)}>{t("Restore")}</button>
                   {/if}
                 </li>
               {/each}
