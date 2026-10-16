@@ -12,6 +12,7 @@
   import { selectAt, modeFrom } from "../lib/selection";
   import { createCompareMap, refreshCompare, updateCompareSize } from "../lib/compare";
   import ComparePanel from "./ComparePanel.svelte";
+  import { viewChanged } from "../lib/embed";
 
   let target: HTMLDivElement;
   let coord = $state("");
@@ -79,6 +80,7 @@
     });
     map.on("moveend", () => {
       if (ui.phase !== "ready") return;
+      viewChanged();
       scale = scaleDenominator();
       crs = srid();
     });

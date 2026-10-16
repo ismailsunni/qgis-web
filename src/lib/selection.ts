@@ -10,6 +10,7 @@ import { engine, findMapLayer, free } from "./engine";
 import { olMap, overlays, hitBox, srid } from "./map";
 import { hooks } from "./doc";
 import { ui, toast } from "./state.svelte";
+import { emit } from "./embed";
 
 /**
  * Feature selection, per layer, as in QGIS: yellow on the map, highlighted in the attribute table,
@@ -48,6 +49,7 @@ function setSelection(layerId: string, fids: number[], mode: SelectMode) {
     ui.selection = rest;
   }
   refresh();
+  emit("selectionChanged", { layer: layerId, ids: next });
 }
 
 /** Re-reads selected geometries from QGIS (in the project CRS) for the highlight. */

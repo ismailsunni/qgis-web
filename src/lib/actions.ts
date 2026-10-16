@@ -11,6 +11,7 @@ import { ALGORITHMS } from "./processing";
 import { resetHistory, undoProject, redoProject } from "./history";
 import { readBookmarks, zoomToBookmark } from "./bookmarks";
 import { discardAutosave } from "./autosave";
+import { emit, setAllowedDomains } from "./embed";
 import { readAutosave, loadAutosaveFiles } from "./storage";
 import { getSettings, lastProject, rememberLast, type ProjectRef } from "./settings";
 import { listProjects } from "./storage";
@@ -32,6 +33,7 @@ function opened(name: string, storedId: string | null) {
   showProject();
   const broken = flatLayers(snapshotTree()).filter((l) => !l.valid && !l.remote);
   if (broken.length) toast(`Missing data for: ${broken.map((l) => l.name).join(", ")}`);
+  emit("projectLoaded", { name: ui.projectName, layers: flatLayers(snapshotTree()).map((l) => ({ id: l.layerId, name: l.name })) });
 }
 
 export async function newProject() {
@@ -154,6 +156,7 @@ export async function openPublished(ref: string, rev: string | null) {
   await open("shared map", async () => {
     const { qgs, meta } = await loadPublished(ref, rev);
     if (!embedAllowed(meta)) ui.embedBlocked = meta!.allowedDomains.join(", ");
+    setAllowedDomains(meta?.allowedDomains ?? []);
     const root = await mountFiles([{ path: "project.qgs", data: qgs }]);
     return { root, path: `${root}/project.qgs` };
   });
@@ -259,6 +262,7 @@ export function identifyAt(coord: Coordinate) {
   }
   ui.hits = hits;
   ui.hitAt = hits.length ? [coord[0], coord[1]] : null;
+  emit("featuresIdentified", hits.map((h) => ({ layer: h.layerId, layerName: h.layerName, id: h.fid, title: h.title, attributes: Object.fromEntries(h.attributes) })));
   setHighlight(geoms);
 }
 
