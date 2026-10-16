@@ -22,6 +22,8 @@ export interface IdentifyHit {
   attributes: [string, unknown][];
   /** The layer's map tip (HTML) evaluated for this feature, if it has one. */
   tip?: string;
+  /** Pixel values of a raster layer rather than a feature. */
+  raster?: boolean;
 }
 
 export const ui = $state({

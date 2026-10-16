@@ -48,6 +48,16 @@
         <label class="field row-inline"><input type="checkbox" checked={style.multidirectional} onchange={(e) => set(type, { multidirectional: e.currentTarget.checked })} /> Multidirectional</label>
       {/if}
     </div>
+    {#if info?.stats[style.band - 1]?.histogram}
+      {@const b = info.stats[style.band - 1]}
+      {@const peak = Math.max(...b.histogram!)}
+      {@const at = (v: number) => ((v - b.min) / (b.max - b.min || 1)) * 64}
+      <svg class="histogram" viewBox="0 0 64 30" preserveAspectRatio="none" role="img" aria-label="Histogram of band {style.band}">
+        {#each b.histogram! as n, i}<rect x={i} width="1" y={30 - (n / peak) * 30} height={(n / peak) * 30} />{/each}
+        {#if type !== "hillshade"}<line class="range" x1={at(style.min)} x2={at(style.min)} y1="0" y2="30" /><line class="range" x1={at(style.max)} x2={at(style.max)} y1="0" y2="30" />{/if}
+      </svg>
+      <p class="hint histogram-axis"><span>{+b.min.toPrecision(5)}</span><span>Histogram of band {style.band}</span><span>{+b.max.toPrecision(5)}</span></p>
+    {/if}
     {#if info && type !== "hillshade"}<button class="link" onclick={() => set(type, { ...info!.stats[style.band - 1] })}>Reset to the band's range ({+info.stats[style.band - 1].min.toPrecision(5)} – {+info.stats[style.band - 1].max.toPrecision(5)})</button>{/if}
   {:else if type === "multibandcolor"}
     <div class="grid2">

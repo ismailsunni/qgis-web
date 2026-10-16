@@ -18,6 +18,7 @@ import { listProjects } from "./storage";
 import { showProject, hitBox, srid, setHighlight, zoomToFull, olMap as olMapRef } from "./map";
 import { setVisible, snapshotTree, flatLayers } from "./tree";
 import { resetViews, savedExtent, previousView, nextView, toggleGrid } from "./navigation";
+import { isGeoTiff, pixelSampler } from "./raster";
 import { ui, changed, toast, featureAttributes, type IdentifyHit } from "./state.svelte";
 
 function opened(name: string, storedId: string | null) {
@@ -266,8 +267,19 @@ export function identifyAt(coord: Coordinate) {
   }
   ui.hits = hits;
   ui.hitAt = hits.length ? [coord[0], coord[1]] : null;
+  identifyRasters(coord);
   emit("featuresIdentified", hits.map((h) => ({ layer: h.layerId, layerName: h.layerName, id: h.fid, title: h.title, attributes: Object.fromEntries(h.attributes) })));
   setHighlight(geoms);
+}
+
+/** Adds pixel values of visible GeoTIFF layers under the click (QGIS's raster identify). */
+async function identifyRasters(coord: Coordinate) {
+  for (const l of flatLayers(snapshotTree()).filter((l) => l.visible && l.layerType === LayerType.Raster && isGeoTiff(l.layerId!))) {
+    const values = await (await pixelSampler(l.layerId!))?.(coord);
+    if (!values || values.every((v) => v === null)) continue;
+    ui.hits = [...ui.hits, { layerId: l.layerId!, layerName: l.name, fid: -1, title: values.length === 1 ? `Value ${values[0] === null ? "NULL" : +values[0].toPrecision(6)}` : "Pixel", attributes: values.map((v, i) => [`Band ${i + 1}`, v]), raster: true }];
+    ui.hitAt = [coord[0], coord[1]];
+  }
 }
 
 /** Shows one feature in the identify panel (e.g. a feature just digitized). */

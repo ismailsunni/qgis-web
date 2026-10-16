@@ -11,7 +11,7 @@
 
 <section class="identify card" aria-label="Identify results">
   <header>
-    <h3>Identify <small>{ui.hits.length} feature{ui.hits.length === 1 ? "" : "s"}</small></h3>
+    <h3>Identify <small>{ui.hits.length} result{ui.hits.length === 1 ? "" : "s"}</small></h3>
     <button class="icon" aria-label="Close" onclick={onclose}><Icon name="close" size={16} /></button>
   </header>
   <div class="identify-body">
@@ -25,8 +25,12 @@
           {#if hit.tip}
             <iframe class="tip-frame" title="Map tip" sandbox="" srcdoc={`<style>body{margin:8px 12px;font:13px system-ui}img{max-width:100%}</style>${hit.tip}`}></iframe>
           {/if}
-          <FeatureForm layerId={hit.layerId} fid={hit.fid} attributes={hit.attributes} />
-          <button class="link" onclick={() => { ui.current = hit.layerId; ui.tableLayerId = hit.layerId; }}>Open attribute table</button>
+          {#if hit.raster}
+            <table class="pixel"><tbody>{#each hit.attributes as [band, v]}<tr><th>{band}</th><td>{fmt(v)}</td></tr>{/each}</tbody></table>
+          {:else}
+            <FeatureForm layerId={hit.layerId} fid={hit.fid} attributes={hit.attributes} />
+            <button class="link" onclick={() => { ui.current = hit.layerId; ui.tableLayerId = hit.layerId; }}>Open attribute table</button>
+          {/if}
         {/if}
       </div>
     {/each}
