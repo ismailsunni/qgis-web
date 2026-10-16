@@ -27,10 +27,11 @@ import * as autosave from "./lib/autosave";
 import * as editops from "./lib/editops";
 import * as editmap from "./lib/editmap";
 import LineString from "ol/geom/LineString";
+import Polygon from "ol/geom/Polygon";
 import { ui } from "./lib/state.svelte";
 
 // Scripted access for end-to-end tests (see tests/).
-Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish, gpkg, PointGeometry: Point, settings, storage, history, maptools, clipboard, bookmarks, selection, exporter, autosave, editops, editmap, LineString } });
+Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish, gpkg, PointGeometry: Point, settings, storage, history, maptools, clipboard, bookmarks, selection, exporter, autosave, editops, editmap, LineString, Polygon } });
 
 settings.applyTheme();
 mount(App, { target: document.getElementById("app")! });

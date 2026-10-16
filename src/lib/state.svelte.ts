@@ -54,7 +54,7 @@ export const ui = $state({
   /** Snap to vertices and edges of visible layers while editing. */
   snapping: true,
   /** What a click on the map does. */
-  mapTool: "identify" as "identify" | "measure-line" | "measure-area" | "select" | "select-box",
+  mapTool: "identify" as "identify" | "measure-line" | "measure-area" | "select" | "select-box" | "select-polygon" | "select-freehand" | "profile",
   /** A CSV waiting for its import options (see CsvDialog). */
   csvPrompt: null as (import("./csv").CsvPreview & { resolve: (o: import("./csv").CsvOptions | null) => void }) | null,
   /** Compare view: a second map with its own set of layers (swipe or side by side). */

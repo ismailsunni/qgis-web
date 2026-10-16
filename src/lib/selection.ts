@@ -113,6 +113,36 @@ export function selectInExtent(extent: Extent, mode: SelectMode) {
   setSelection(layer.id(), fids, mode);
 }
 
+/** Polygon or freehand selection (geometry in the project CRS), exact intersection by GEOS. */
+export async function selectInPolygon(polygon: import("ol/geom/Geometry").default, mode: SelectMode) {
+  const layer = targetLayer();
+  if (!layer) return toast("Select a vector layer in the Layers panel first.");
+  const [{ geosOps }, { default: WKB }] = await Promise.all([import("./processing"), import("ol/format/WKB")]);
+  const g = await geosOps();
+  const shape = g.read(new Uint8Array(new WKB({ hex: false }).writeGeometry(polygon) as ArrayBuffer));
+  const prepared = g.geos.GEOSPrepare(shape);
+  const api = engine();
+  const [x0, y0, x1, y1] = polygon.getExtent();
+  const req = new api.QgsFeatureRequest();
+  req.setDestinationCrs(srid());
+  req.setFilterRect(new api.QgsRectangle(x0, y0, x1, y1));
+  const it = layer.getFeatures(req);
+  const fids: number[] = [];
+  for (let f = it.nextFeature(); f; f = it.nextFeature()) {
+    if (f.hasGeometry()) {
+      const x = g.read(f.geometry().asWkb());
+      if (g.geos.GEOSPreparedIntersects(prepared, x) === 1) fids.push(f.id());
+      g.geos.GEOSGeom_destroy(x);
+    }
+    free(f);
+  }
+  free(it);
+  free(req);
+  g.geos.GEOSPreparedGeom_destroy(prepared);
+  g.geos.GEOSGeom_destroy(shape);
+  setSelection(layer.id(), fids, mode);
+}
+
 function collect(layer: QgsVectorLayer, req: InstanceType<ReturnType<typeof engine>["QgsFeatureRequest"]>) {
   const it = layer.getFeatures(req);
   const fids: number[] = [];

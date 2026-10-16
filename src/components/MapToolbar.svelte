@@ -1,6 +1,23 @@
 <script lang="ts">
-  import { startMeasure, stopTool, legendImage, startBoxTool } from "../lib/maptools";
-  import { selectInExtent, modeFrom, clearSelection } from "../lib/selection";
+  import { startMeasure, stopTool, legendImage, startBoxTool, startShapeTool } from "../lib/maptools";
+  import { selectInExtent, selectInPolygon, modeFrom, clearSelection } from "../lib/selection";
+
+  let selectMenu = $state(false);
+  const SELECT_TOOLS = [
+    ["select", "Click", "select"],
+    ["select-box", "Rectangle", "selectbox"],
+    ["select-polygon", "Polygon", "area"],
+    ["select-freehand", "Freehand", "lasso"],
+  ] as const;
+  const activeSelect = $derived(SELECT_TOOLS.find(([t]) => t === ui.mapTool));
+
+  function startSelect(tool: (typeof SELECT_TOOLS)[number][0]) {
+    selectMenu = false;
+    if (ui.mapTool === tool) return stopTool();
+    if (tool === "select") (stopTool(), (ui.mapTool = "select"));
+    else if (tool === "select-box") startBoxTool((extent, e) => selectInExtent(extent, modeFrom(e)));
+    else startShapeTool(tool === "select-freehand", (g, e) => selectInPolygon(g, modeFrom(e)));
+  }
   import { ui } from "../lib/state.svelte";
   import Icon from "./Icon.svelte";
 
@@ -9,8 +26,17 @@
 </script>
 
 <div class="map-toolbar" role="toolbar" aria-label="Map tools">
-  <button class:active={ui.mapTool === "select"} title="Select features by clicking (Shift adds, Ctrl removes)" aria-label="Select features" onclick={() => { const on = ui.mapTool !== "select"; stopTool(); if (on) ui.mapTool = "select"; }}><Icon name="select" size={17} /></button>
-  <button class:active={ui.mapTool === "select-box"} title="Select features with a rectangle (Shift adds, Ctrl removes)" aria-label="Select with rectangle" onclick={() => (ui.mapTool === "select-box" ? stopTool() : startBoxTool((extent, e) => selectInExtent(extent, modeFrom(e))))}><Icon name="selectbox" size={17} /></button>
+  <div class="tool-group">
+    <button class:active={!!activeSelect} title="Select features (Shift adds, Ctrl removes)" aria-label="Select features" onclick={() => (activeSelect ? stopTool() : startSelect("select"))}><Icon name={activeSelect?.[2] ?? "select"} size={17} /></button>
+    <button class="more" title="Selection tools" aria-label="Selection tools" onclick={() => (selectMenu = !selectMenu)}>▾</button>
+    {#if selectMenu}
+      <div class="menu card tool-menu" role="menu">
+        {#each SELECT_TOOLS as [tool, label, icon]}
+          <button role="menuitem" class:active={ui.mapTool === tool} onclick={() => startSelect(tool)}><Icon name={icon} size={15} /> Select by {label.toLowerCase()}</button>
+        {/each}
+      </div>
+    {/if}
+  </div>
   {#if Object.keys(ui.selection).length}
     <button title="Clear selection" aria-label="Clear selection" onclick={() => clearSelection()}><Icon name="close" size={17} /></button>
   {/if}

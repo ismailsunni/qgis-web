@@ -44,6 +44,8 @@
     split: "M4 20 20 4M7 4h-3v3M17 20h3v-3M5 12h3M16 12h3",
     merge: "M5 5h6v6H5V5Zm8 8h6v6h-6v-6ZM8 11v5h5M16 13V8h-5",
     magnet: "M6 3v9a6 6 0 0 0 12 0V3h-4v9a2 2 0 0 1-4 0V3H6Zm0 4h4m4 0h4",
+    lasso: "M7 21c1-2 0-4-2-4a2 2 0 0 1 0-4C3 9 6 4 12 4s10 3 9 7-6 6-11 6",
+    profile: "M3 19l5-8 4 4 4-9 5 13H3Z",
     warn: "M12 3 2 20h20L12 3Zm0 6v5m0 3v.5",
   };
   let { name, size = 20 }: { name: keyof typeof paths; size?: number } = $props();

@@ -177,7 +177,8 @@ test("export map image", async ({ page }) => {
 test("rectangle selection syncs with the attribute table", async ({ page }) => {
   await demo(page);
   await page.locator(".node", { hasText: "Countries" }).locator(".name").click();
-  await page.locator('button[aria-label="Select with rectangle"]').click();
+  await page.locator('button[aria-label="Selection tools"]').click();
+  await page.locator(".tool-menu button", { hasText: "rectangle" }).click();
   const box = (await page.locator(".map").boundingBox())!;
   await page.mouse.move(box.x + box.width * 0.45, box.y + box.height * 0.35);
   await page.mouse.down();

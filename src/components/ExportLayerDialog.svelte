@@ -36,6 +36,9 @@
         <option value="gpkg">GeoPackage (.gpkg), in the layer's CRS</option>
         <option value="geojson">GeoJSON (.geojson), in WGS 84</option>
         <option value="csv">CSV with WKT geometry (.csv), in the layer's CRS</option>
+        <option value="fgb">FlatGeobuf (.fgb), in the layer's CRS</option>
+        <option value="shp">Shapefile (.zip), in WGS 84</option>
+        <option value="kml">KML (.kml), in WGS 84</option>
       </select>
     </label>
     {#if count}<label class="field row-inline"><input type="checkbox" bind:checked={onlySelected} /> Selected features only ({count})</label>{/if}

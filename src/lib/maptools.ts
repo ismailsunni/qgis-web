@@ -85,6 +85,19 @@ export function startBoxTool(onBox: (extent: Extent, e: MouseEvent) => void) {
   olMap().addInteraction(box);
 }
 
+/** Polygon (click vertices) or freehand (drag) shape tool used by selection. */
+export function startShapeTool(freehand: boolean, onShape: (g: Geometry, e: MouseEvent) => void) {
+  stopTool();
+  ui.mapTool = freehand ? "select-freehand" : "select-polygon";
+  let last: MouseEvent = new MouseEvent("click");
+  draw = new Draw({ source: measureSource, type: "Polygon", freehand, condition: (e) => ((last = e.originalEvent as MouseEvent), true) });
+  draw.on("drawend", (e) => {
+    onShape(e.feature.getGeometry()!, last);
+    setTimeout(() => measureSource.clear());
+  });
+  olMap().addInteraction(draw);
+}
+
 export function stopTool() {
   if (draw) olMap().removeInteraction(draw);
   if (box) olMap().removeInteraction(box);
