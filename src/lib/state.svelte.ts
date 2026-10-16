@@ -71,6 +71,8 @@ export const ui = $state({
   /** Project-level undo/redo (styles, tree, layers). */
   canUndoProject: false,
   canRedoProject: false,
+  /** Processing runs of this session, newest first. */
+  processingHistory: [] as import("./processing").HistoryEntry[],
   /** Algorithm to open in the Tools panel (from the command palette). */
   pendingAlgorithm: null as string | null,
   /** Open modal dialog, if any. */

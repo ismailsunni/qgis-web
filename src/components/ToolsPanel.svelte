@@ -26,11 +26,14 @@
     return Object.entries(out);
   });
 
-  function select(a: Algorithm) {
+  function select(a: Algorithm, preset?: Record<string, unknown>) {
     alg = a;
-    values = Object.fromEntries(a.params.map((p) => [p.name, p.type === "layer" ? (layers.find((l) => !p.geometry || symbolKind(l.layerId!) === KIND[p.geometry]) ?? layers[0])?.layerId ?? "" : p.default ?? ""]));
+    values = Object.fromEntries(a.params.map((p) => [p.name, p.type === "layer" ? (layers.find((l) => !p.geometry || symbolKind(l.layerId!) === KIND[p.geometry]) ?? layers[0])?.layerId ?? "" : p.type === "layers" ? [] : p.default ?? ""]));
     if ("INPUT" in values && ui.current && layers.some((l) => l.layerId === ui.current)) values.INPUT = ui.current;
+    if (preset) values = { ...values, ...structuredClone(preset) };
   }
+
+  const layerName = (id: unknown) => layers.find((l) => l.layerId === id)?.name ?? "(removed layer)";
 
   const fieldsOf = (layerId: unknown) => {
     const l = layerId ? (findMapLayer(layerId as string) as QgsVectorLayer | null) : null;
@@ -69,6 +72,18 @@
       </ul>
     {/each}
     <p class="hint">Geometry runs in GEOS (the library behind QGIS's native algorithms) and attributes and expressions in QGIS. Results are saved to data/processing.gpkg.</p>
+    {#if ui.processingHistory.length}
+      <h3 class="group-title">History</h3>
+      <ul class="history">
+        {#each ui.processingHistory as h}
+          <li>
+            <div><b>{h.name}</b> <span class="muted">{new Date(h.at).toLocaleTimeString()} · {h.features.toLocaleString()} features · {h.ms} ms</span></div>
+            <div class="muted small-params">{Object.entries(h.params).map(([k, v]) => `${k}=${typeof v === "string" && v.includes("_") ? layerName(v) : Array.isArray(v) ? v.map(layerName).join("+") : v}`).join(", ")}</div>
+            <button class="link" onclick={() => { const a = ALGORITHMS.find((x) => x.id === h.id); if (a) { select(a, h.params); onlySelected = h.onlySelected; } }}>Run again…</button>
+          </li>
+        {/each}
+      </ul>
+    {/if}
   </div>
 {:else}
   <div class="stack">
@@ -82,6 +97,14 @@
             {#each layers.filter((l) => !p.geometry || symbolKind(l.layerId!) === KIND[p.geometry]) as l}<option value={l.layerId}>{l.name}</option>{/each}
           </select>
         </label>
+      {:else if p.type === "layers"}
+        <fieldset class="field layers-param"><legend>{p.label}</legend>
+          {#each layers as l}
+            <label class="row-inline"><input type="checkbox" checked={(values[p.name] as string[]).includes(l.layerId!)} onchange={(e) => (values[p.name] = e.currentTarget.checked ? [...(values[p.name] as string[]), l.layerId!] : (values[p.name] as string[]).filter((x) => x !== l.layerId))} /> {l.name}</label>
+          {/each}
+        </fieldset>
+      {:else if p.type === "string"}
+        <label class="field">{p.label}<input bind:value={values[p.name]} /></label>
       {:else if p.type === "number"}
         <label class="field">{p.label}<input type="number" step="any" bind:value={values[p.name]} /></label>
       {:else if p.type === "enum"}

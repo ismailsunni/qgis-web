@@ -37,6 +37,15 @@ CASES = {
 }
 
 
+w = lambda t: f"{web}|layername={t}"
+CASES.update({
+    "union_extract_by_expression_countries": ("native:union", {"INPUT": w("extractbyexpression_countries"), "OVERLAY": w("buffer_extract_by_expression_places")}),
+    "joinattributesbylocation_places": ("native:joinattributesbylocation", {"INPUT": src["places"], "JOIN": src["countries"], "PREDICATE": [0], "METHOD": 1, "DISCARD_NONMATCHING": False, "PREFIX": ""}),
+    "mergevectorlayers_merged": ("native:mergevectorlayers", {"LAYERS": [src["countries"], w("extractbyexpression_countries")]}),
+    "pointsalonglines_rivers": ("native:pointsalonglines", {"INPUT": src["rivers"], "DISTANCE": 2, "START_OFFSET": 0, "END_OFFSET": 0}),
+})
+
+
 def measure(layer):
     total = sum((f.geometry().area() or f.geometry().length()) for f in layer.getFeatures())
     union = QgsGeometry.unaryUnion([f.geometry() for f in layer.getFeatures()])
