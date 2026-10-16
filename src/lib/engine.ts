@@ -34,7 +34,11 @@ export function listFiles(dir: string): string[] {
     });
 }
 
+/** Files written since the last autosave took them (see autosave.ts). */
+export const modifiedFiles = new Set<string>();
+
 export function writeFile(path: string, data: Uint8Array | string) {
+  modifiedFiles.add(path);
   const parts = path.split("/").filter(Boolean);
   let dir = "";
   for (const p of parts.slice(0, -1)) {

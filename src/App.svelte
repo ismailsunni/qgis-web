@@ -3,6 +3,7 @@
   import { undo, redo } from "./lib/editing";
   import { undoProject, redoProject } from "./lib/history";
   import { addData } from "./lib/adddata";
+  import { scheduleAutosave } from "./lib/autosave";
   import { boot } from "./lib/engine";
   import { ui, view, type Panel } from "./lib/state.svelte";
   import { droppedFiles, openFiles, openUrl, openPublished, runStartup, pickedFiles, saveInBrowser, downloadProject, downloadBundle } from "./lib/actions";
@@ -21,6 +22,12 @@
   import ProjectDialog from "./components/ProjectDialog.svelte";
   import SettingsDialog from "./components/SettingsDialog.svelte";
   import ExportDialog from "./components/ExportDialog.svelte";
+  import SelectByLocation from "./components/SelectByLocation.svelte";
+  import ExportLayerDialog from "./components/ExportLayerDialog.svelte";
+  import ExpressionBuilder from "./components/ExpressionBuilder.svelte";
+  import FieldCalculator from "./components/FieldCalculator.svelte";
+  import CsvDialog from "./components/CsvDialog.svelte";
+  import { selectByExpression } from "./lib/selection";
 
   const rail: { id: Panel | "table"; icon: "layers" | "add" | "style" | "table" | "tools" | "hub" | "bookmark"; label: string; planned?: string }[] = [
     { id: "layers", icon: "layers", label: "Layers" },
@@ -36,6 +43,13 @@
   let dragging = $state(false);
   let menuOpen = $state(false);
   let saveMenu = $state(false);
+
+  // Autosave a few seconds after each change (project or data).
+  $effect(() => {
+    ui.version;
+    ui.dataVersion;
+    if (ui.dirty) scheduleAutosave();
+  });
 
   function railClick(id: Panel | "table") {
     if (id === "table") ui.tableLayerId = ui.tableLayerId ? null : ui.current;
@@ -192,6 +206,15 @@
   {#if ui.dialog === "project"}<ProjectDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "settings"}<SettingsDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "export"}<ExportDialog onclose={() => (ui.dialog = null)} />{/if}
+  {#if ui.csvPrompt}{#key ui.csvPrompt}<CsvDialog />{/key}{/if}
+  {#if ui.current && ui.phase === "ready"}
+    {#if ui.dialog === "select-location"}<SelectByLocation layerId={ui.current} onclose={() => (ui.dialog = null)} />{/if}
+    {#if ui.dialog === "export-layer"}<ExportLayerDialog layerId={ui.current} onclose={() => (ui.dialog = null)} />{/if}
+    {#if ui.dialog === "field-calc"}<FieldCalculator layerId={ui.current} onclose={() => (ui.dialog = null)} />{/if}
+    {#if ui.dialog === "select-expression"}
+      <ExpressionBuilder layerId={ui.current} title="Select by expression" onclose={() => (ui.dialog = null)} onapply={(v) => { selectByExpression(ui.current!, v, "new"); ui.dialog = null; }} />
+    {/if}
+  {/if}
   {#if ui.toast}<div class="toast" role="status">{ui.toast}</div>{/if}
   {#if ui.embedBlocked}
     <div class="embed-blocked">

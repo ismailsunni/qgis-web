@@ -3,7 +3,7 @@ import type Geometry from "ol/geom/Geometry";
 import type { QgsVectorLayer } from "qgis-js";
 import { layerSource, mapLayerEl, project, child, reload } from "./doc";
 import { engine, exists, findMapLayer, free, readFile, writeFile } from "./engine";
-import { encodeBlob, openGpkg, tableInfo, writeGpkgTable } from "./gpkg";
+import { encodeBlob, openGpkg, tableInfo } from "./gpkg";
 import { rows, type Db } from "./sqlite";
 import { apply } from "./commit";
 import { srid, redraw } from "./map";
@@ -75,7 +75,18 @@ function run(stmts: Stmt[]) {
   const s = session!;
   s.db.run("begin");
   try {
-    for (const [sql, params] of stmts) s.db.run(sql, params);
+    // Consecutive statements with the same SQL (bulk updates) share one prepared statement.
+    for (let i = 0; i < stmts.length; ) {
+      let j = i;
+      while (j < stmts.length && stmts[j][0] === stmts[i][0]) j++;
+      if (j - i === 1) s.db.run(stmts[i][0], stmts[i][1]);
+      else {
+        const p = s.db.prepare(stmts[i][0]);
+        for (let k = i; k < j; k++) p.run(stmts[k][1]);
+        p.finalize();
+      }
+      i = j;
+    }
     s.db.run("commit");
   } catch (e) {
     s.db.run("rollback");
@@ -91,6 +102,7 @@ function flush() {
   ui.dirty = true;
   ui.canUndo = s.undo.length > 0;
   ui.canRedo = s.redo.length > 0;
+  ui.dataVersion++;
   changed();
   redraw();
 }
@@ -140,14 +152,71 @@ export function setAttribute(fid: number, field: string, value: unknown) {
 }
 
 export function deleteFeature(fid: number) {
+  deleteFeatures([fid]);
+}
+
+export function deleteFeatures(fids: number[]) {
   const s = session!;
-  const r = row(fid);
-  if (!r) return;
-  const cols = Object.keys(r);
+  const doSql: Stmt[] = [];
+  const undoSql: Stmt[] = [];
+  for (const fid of fids) {
+    const r = row(fid);
+    if (!r) continue;
+    const cols = Object.keys(r);
+    doSql.push([`delete from ${q(s.table)} where ${q(s.info.fid)} = ?`, [fid]]);
+    undoSql.push([`insert into ${q(s.table)} (${cols.map(q).join(",")}) values (${cols.map(() => "?").join(",")})`, cols.map((c) => r[c])]);
+  }
+  if (doSql.length) commit({ label: fids.length === 1 ? "delete feature" : `delete ${doSql.length} features`, doSql, undoSql });
+}
+
+// ---- Fields ----------------------------------------------------------------------------------
+
+export type FieldType = "TEXT" | "INTEGER" | "REAL" | "DATE" | "DATETIME" | "BOOLEAN";
+
+/** Starts editing the layer, converting it to GeoPackage first if needed (asks). */
+export async function ensureEditing(layerId: string) {
+  if (session?.layerId === layerId) return true;
+  if (!canEdit(layerId)) {
+    if (!confirm("This layer isn't a GeoPackage. Copy it into a GeoPackage in the project's data folder so it can be changed?")) return false;
+    await convertToGpkg(layerId);
+  }
+  await startEditing(layerId);
+  return session?.layerId === layerId;
+}
+
+const columnType = (name: string) => rows<{ name: string; type: string }>(session!.db, `pragma table_info(${q(session!.table)})`).find((c) => c.name === name)?.type ?? "TEXT";
+
+export function addField(name: string, type: FieldType) {
+  const s = session!;
+  commit({ label: `add field ${name}`, doSql: [[`alter table ${q(s.table)} add column ${q(name)} ${type}`, []]], undoSql: [[`alter table ${q(s.table)} drop column ${q(name)}`, []]] });
+}
+
+export function renameField(from: string, to: string) {
+  const s = session!;
+  commit({ label: `rename field ${from}`, doSql: [[`alter table ${q(s.table)} rename column ${q(from)} to ${q(to)}`, []]], undoSql: [[`alter table ${q(s.table)} rename column ${q(to)} to ${q(from)}`, []]] });
+}
+
+export function deleteField(name: string) {
+  const s = session!;
+  const type = columnType(name);
+  const values = rows<Record<string, unknown>>(s.db, `select ${q(s.info.fid)} as fid, ${q(name)} as v from ${q(s.table)} where ${q(name)} is not null`);
   commit({
-    label: "delete feature",
-    doSql: [[`delete from ${q(s.table)} where ${q(s.info.fid)} = ?`, [fid]]],
-    undoSql: [[`insert into ${q(s.table)} (${cols.map(q).join(",")}) values (${cols.map(() => "?").join(",")})`, cols.map((c) => r[c])]],
+    label: `delete field ${name}`,
+    doSql: [[`alter table ${q(s.table)} drop column ${q(name)}`, []]],
+    undoSql: [[`alter table ${q(s.table)} add column ${q(name)} ${type}`, []], ...values.map((r): Stmt => [`update ${q(s.table)} set ${q(name)} = ? where ${q(s.info.fid)} = ?`, [r.v, r.fid]])],
+  });
+}
+
+/** Writes calculated values (fid → value) into a field, creating it first if `create` is set. */
+export function writeField(name: string, values: Map<number, unknown>, create?: FieldType) {
+  const s = session!;
+  const set = `update ${q(s.table)} set ${q(name)} = ? where ${q(s.info.fid)} = ?`;
+  const old = create ? [] : rows<Record<string, unknown>>(s.db, `select ${q(s.info.fid)} as fid, ${q(name)} as v from ${q(s.table)}`);
+  const norm = (v: unknown) => (typeof v === "boolean" ? Number(v) : v instanceof Date ? v.toISOString() : v === undefined ? null : typeof v === "object" && v !== null ? JSON.stringify(v) : v);
+  commit({
+    label: `calculate ${name}`,
+    doSql: [...(create ? [[`alter table ${q(s.table)} add column ${q(name)} ${create}`, []] as Stmt] : []), ...[...values].map(([fid, v]): Stmt => [set, [norm(v), fid]])],
+    undoSql: create ? [[`alter table ${q(s.table)} drop column ${q(name)}`, []]] : old.filter((r) => values.has(r.fid as number)).map((r): Stmt => [set, [r.v, r.fid]]),
   });
 }
 
@@ -231,35 +300,11 @@ export function featureGeometry(fid: number) {
 
 // ---- Converting other formats ---------------------------------------------------------------
 
-const SQL_TYPES: Record<number, "INTEGER" | "REAL" | "TEXT" | "BOOLEAN" | "DATE" | "DATETIME"> = { 1: "BOOLEAN", 2: "INTEGER", 4: "INTEGER", 6: "REAL", 14: "DATE", 16: "DATETIME" };
-
 /** Copies a layer into a new GeoPackage in data/ and points the layer at it, so it can be edited. */
 export async function convertToGpkg(layerId: string) {
-  const api = engine();
-  const layer = findMapLayer(layerId) as QgsVectorLayer;
-  const fields = Array.from({ length: layer.fields().count() }, (_, i) => layer.fields().at(i)).filter((f) => f.name().toLowerCase() !== "fid");
-  const req = new api.QgsFeatureRequest();
-  const it = layer.getFeatures(req);
-  const features = [];
-  let geomType = "GEOMETRY";
-  for (let f = it.nextFeature(); f; f = it.nextFeature()) {
-    const g = f.hasGeometry() ? f.geometry() : null;
-    if (g && geomType === "GEOMETRY") geomType = api.QgsWkbTypes.displayString(api.QgsWkbTypes.flatType(g.wkbType())).toUpperCase();
-    features.push({ geometry: g ? g.asWkb() : null, attributes: fields.map((fd) => f.attribute(fd.name())) });
-    free(f);
-  }
-  free(it);
-  free(req);
-  const authid = layer.crs() || "EPSG:4326";
-  const [org, code] = authid.split(":");
-  const name = layer.name.replace(/[^\w]+/g, "_") || "layer";
-  const bytes = await writeGpkgTable(null, {
-    name,
-    geometryType: geomType,
-    srs: { organization: org, code: Number(code), definition: "undefined" },
-    fields: fields.map((f) => ({ name: f.name(), type: SQL_TYPES[f.type()] ?? "TEXT" })),
-    features,
-  });
+  const { layerToGpkg } = await import("./export");
+  const { bytes, table: name } = await layerToGpkg(layerId);
+  const layer = findMapLayer(layerId)!;
   const d = project();
   let path = `${d.dir}/data/${name}.gpkg`;
   for (let i = 2; exists(path); i++) path = `${d.dir}/data/${name}_${i}.gpkg`;

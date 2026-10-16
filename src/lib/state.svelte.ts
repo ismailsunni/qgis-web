@@ -38,6 +38,8 @@ export const ui = $state({
   tableLayerId: null as string | null,
   /** Bumped after every engine mutation; views re-read the engine when it changes. */
   version: 0,
+  /** Bumped when layer data changes (edits, field calculator, undo); tables re-read. */
+  dataVersion: 0,
   palette: false,
   hits: [] as IdentifyHit[],
   hitAt: null as [number, number] | null,
@@ -51,6 +53,10 @@ export const ui = $state({
   editTool: null as "add" | "modify" | "delete" | null,
   /** What a click on the map does. */
   mapTool: "identify" as "identify" | "measure-line" | "measure-area" | "select" | "select-box",
+  /** A CSV waiting for its import options (see CsvDialog). */
+  csvPrompt: null as (import("./csv").CsvPreview & { resolve: (o: import("./csv").CsvOptions | null) => void }) | null,
+  /** Selected feature ids per layer. */
+  selection: {} as Record<string, number[]>,
   /** Live measurement readout. */
   measure: "",
   /** Show the legend on the map; hover map tips. */
@@ -64,7 +70,7 @@ export const ui = $state({
   /** Algorithm to open in the Tools panel (from the command palette). */
   pendingAlgorithm: null as string | null,
   /** Open modal dialog, if any. */
-  dialog: null as "project" | "share" | "settings" | "export" | null,
+  dialog: null as "project" | "share" | "settings" | "export" | "select-location" | "select-expression" | "export-layer" | "field-calc" | null,
   /** OPFS slot of the open project, once saved in the browser. */
   storedId: null as string | null,
 });

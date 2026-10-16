@@ -13,6 +13,7 @@
   import Self from "./LayerNode.svelte";
   import { canEdit, startEditing, stopEditing, convertToGpkg } from "../lib/editing";
   import { copyStyle, pasteStyle, hasCopiedStyle } from "../lib/clipboard";
+  import { zoomToSelection, selectAll, clearSelection } from "../lib/selection";
 
   let { node }: { node: TreeNode } = $props();
   let showLegend = $state(false);
@@ -97,6 +98,7 @@
       <span class="warn" title="Layer data not found"><Icon name="warn" size={16} /></span>
     {/if}
     {#if node.editing}<span class="badge">editing</span>{/if}
+    {#if node.selected}<button class="badge sel" title="Selected features: zoom to them" onclick={() => { ui.current = node.layerId!; zoomToSelection(); }}>{node.selected}</button>{/if}
     <span class="node-actions">
       {#if !node.isGroup && (node.valid || node.remote)}
         <button class="icon" title="Zoom to layer" onclick={zoomTo}><Icon name="zoom" size={16} /></button>
@@ -115,6 +117,10 @@
           {#if hasCopiedStyle()}<button role="menuitem" onclick={run(() => pasteStyle(node.layerId!))}>Paste style</button>{/if}
         {/if}
         {#if !node.isGroup && node.layerType === LayerType.Vector && node.valid}
+          <button role="menuitem" onclick={run(() => { ui.current = node.layerId!; ui.dialog = "select-location"; })}>Select by location…</button>
+          <button role="menuitem" onclick={run(() => selectAll(node.layerId!))}>Select all</button>
+          {#if node.selected}<button role="menuitem" onclick={run(() => clearSelection(node.layerId!))}>Clear selection</button>{/if}
+          <button role="menuitem" onclick={run(() => { ui.current = node.layerId!; ui.dialog = "export-layer"; })}>Export…</button>
           {#if node.editing}
             <button role="menuitem" onclick={run(() => stopEditing())}>Stop editing</button>
           {:else if canEdit(node.layerId!)}

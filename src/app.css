@@ -343,3 +343,16 @@ textarea.code { font: 12px/1.45 ui-monospace, monospace; width: 100%; min-height
 .bookmarks input { flex: 1; }
 textarea.code.small { min-height: 90px; }
 .tip-frame { width: calc(100% - 16px); margin: 0 8px; height: 140px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
+.table-tools { display: flex; align-items: center; gap: 1px; }
+.table-tools .icon.active { background: var(--accent-bg); color: var(--green-dark); }
+.field-list { list-style: none; margin: 0; padding: 0; max-height: 40vh; overflow: auto; border: 1px solid var(--line); border-radius: 6px; }
+.field-list li { display: flex; align-items: center; gap: 8px; padding: 2px 6px 2px 10px; border-bottom: 1px solid var(--bg-2); }
+.field-list .fname, .field-list input { flex: 1; }
+.field-list .muted { font-size: 12px; }
+.badge.sel { background: #fff59d; border-color: #f9a825; padding: 0 5px; cursor: pointer; font: 11px system-ui; color: #5d4500; }
+.dialog.csv { width: min(720px, 94vw); }
+.csv-preview { overflow: auto; max-height: 180px; border: 1px solid var(--line); border-radius: 6px; }
+.csv-preview table { border-collapse: collapse; font-size: 12px; }
+.csv-preview th, .csv-preview td { padding: 3px 8px; border-bottom: 1px solid var(--bg-2); white-space: nowrap; text-align: left; }
+.recover { width: 100%; text-align: left; border: 1px solid #f3e0a1; background: #fff8e1; border-radius: 6px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+:root[data-theme="dark"] .recover { background: #3a3320; border-color: #6b5c31; }

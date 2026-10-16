@@ -19,6 +19,8 @@ export interface TreeNode {
   /** Read from the network by the browser rather than by QGIS (XYZ, WMS, COG…). */
   remote?: boolean;
   editing?: boolean;
+  /** Number of selected features. */
+  selected?: number;
   opacity?: number;
   children: TreeNode[];
   node: QgsLayerTreeNode;
@@ -41,6 +43,7 @@ export function snapshotTree(): TreeNode[] {
       valid: !!layer?.isValid(),
       remote: isRemote((n as QgsLayerTreeLayer).layerId()),
       editing: ui.editing === (n as QgsLayerTreeLayer).layerId(),
+      selected: ui.selection[(n as QgsLayerTreeLayer).layerId()]?.length ?? 0,
       opacity: layer?.opacity ?? xmlOpacity((n as QgsLayerTreeLayer).layerId()),
       children: [],
     };

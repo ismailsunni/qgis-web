@@ -5,9 +5,10 @@ import { crsByAuthid, spatialRefSys, type CrsDef } from "./crs";
 import { openDb, rows } from "./sqlite";
 import { apply } from "./commit";
 import { ui, toast } from "./state.svelte";
+import { previewCsv, delimitedTextUri, toCsv, type CsvOptions, type CsvPreview } from "./csv";
 
 /** Formats QGIS (GDAL/OGR) reads in the browser engine. */
-export const DATA_EXT = /\.(gpkg|geojson|json|fgb|shp|zip|tif|tiff|kml|gpx|gml|parquet|geoparquet|csv)$/i;
+export const DATA_EXT = /\.(gpkg|geojson|json|fgb|shp|zip|tif|tiff|kml|gpx|gml|parquet|geoparquet|csv|tsv|txt|xlsx)$/i;
 const SIDECAR_EXT = /\.(shx|dbf|prj|cpg|qix|sbn|sbx|qmd|aux\.xml)$/i;
 
 interface Source {
@@ -15,8 +16,23 @@ interface Source {
   /** Path relative to the project folder, as stored in the project. */
   datasource: string;
   type: "vector" | "raster";
-  provider: "ogr" | "gdal";
+  provider: "ogr" | "gdal" | "delimitedtext";
   crs: CrsDef | null;
+}
+
+/** Asks how to read a CSV (geometry columns, CRS); resolved by the CSV dialog. */
+function askCsv(preview: CsvPreview): Promise<CsvOptions | null> {
+  return new Promise((resolve) => (ui.csvPrompt = { ...preview, resolve }));
+}
+
+/** Adds a delimited text file as a QGIS delimitedtext layer, after asking how to read it. */
+async function csvSource(name: string, text: string, dataDir: string, rel: (p: string) => string): Promise<Source | null> {
+  const opts = await askCsv(previewCsv(name, text));
+  if (!opts) return null;
+  const target = uniquePath(dataDir, name.endsWith(".csv") || name.endsWith(".tsv") || name.endsWith(".txt") ? name : `${name}.csv`);
+  writeFile(target, strToU8(text));
+  const crs = opts.geometry === "none" ? null : await authCrs(opts.crs || "EPSG:4326");
+  return { name: baseName(name), datasource: delimitedTextUri(rel(target), opts), type: "vector", provider: "delimitedtext", crs };
 }
 
 const xmlEsc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -108,6 +124,21 @@ async function prepare(files: DataFile[]): Promise<Source[]> {
     if (ext === "zip") {
       const entries = unzipSync(f.data);
       out.push(...(await prepare(Object.entries(entries).filter(([n]) => !n.endsWith("/")).map(([n, data]) => ({ path: `${baseName(name)}/${n}`, data })))));
+      continue;
+    }
+    if (ext === "csv" || ext === "tsv" || ext === "txt") {
+      const src = await csvSource(name, strFromU8(f.data), dataDir, rel);
+      if (src) out.push(src);
+      continue;
+    }
+    if (ext === "xlsx") {
+      // The engine's GDAL has no Excel driver: each sheet becomes a CSV next to the project.
+      const { default: readXlsx } = await import("read-excel-file/browser");
+      for (const sheet of await readXlsx(new Blob([f.data as BlobPart]))) {
+        if (!sheet.data.length) continue;
+        const src = await csvSource(`${baseName(name)}_${sheet.sheet}.csv`.replace(/[^\w.-]+/g, "_"), toCsv(sheet.data), dataDir, rel);
+        if (src) out.push(src);
+      }
       continue;
     }
     if (ext === "parquet" || ext === "geoparquet") {

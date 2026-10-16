@@ -16,7 +16,7 @@
 
 <section class="stack">
   <h3>Add layers</h3>
-  <p class="muted">GeoPackage, GeoJSON, Shapefile (.shp with its files, or .zip), FlatGeobuf, GeoTIFF, GeoParquet, KML, GPX.</p>
+  <p class="muted">GeoPackage, GeoJSON, Shapefile (.shp with its files, or .zip), FlatGeobuf, GeoTIFF, GeoParquet, KML, GPX, CSV and Excel.</p>
   <label class="button-like primary-like"><Icon name="add" size={18} /> Add data files…<input type="file" multiple hidden onchange={pickData} /></label>
   <p class="hint">Data is copied into the project's data/ folder and stays in this browser. You can also drop files on the map.</p>
 </section>

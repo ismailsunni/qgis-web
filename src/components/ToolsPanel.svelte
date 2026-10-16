@@ -12,6 +12,7 @@
   let alg = $state<Algorithm | null>(null);
   let values = $state<Record<string, unknown>>({});
   let running = $state(false);
+  let onlySelected = $state(false);
 
   const KIND = { point: "marker", line: "line", polygon: "fill" } as const;
   const layers = $derived.by(() => {
@@ -39,7 +40,7 @@
   async function run() {
     running = true;
     try {
-      const r = await runAlgorithm(alg!, $state.snapshot(values));
+      const r = await runAlgorithm(alg!, $state.snapshot(values), onlySelected && !!ui.selection[values.INPUT as string]?.length);
       toast(`${alg!.name}: ${r.features.toLocaleString()} features in ${r.ms} ms`);
     } catch (e) {
       toast(`${alg!.name} failed: ${(e as Error).message}`);
@@ -103,6 +104,9 @@
         </label>
       {/if}
     {/each}
+    {#if ui.selection[values.INPUT as string]?.length}
+      <label class="field row-inline"><input type="checkbox" bind:checked={onlySelected} /> Selected features only ({ui.selection[values.INPUT as string].length})</label>
+    {/if}
     <button class="primary" disabled={running || !layers.length} onclick={run}>{running ? "Running…" : "Run"}</button>
   </div>
 {/if}

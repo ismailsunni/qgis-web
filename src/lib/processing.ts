@@ -32,7 +32,7 @@ export interface Param {
   parent?: string;
 }
 
-interface Feature { wkb: Uint8Array | null; attrs: unknown[] }
+interface Feature { wkb: Uint8Array | null; attrs: unknown[]; fid?: number }
 interface Input { name: string; crs: string; fields: { name: string; type: number }[]; features: Feature[] }
 
 export interface Algorithm {
@@ -345,8 +345,11 @@ export const ALGORITHMS: Algorithm[] = [
 
 const SQL_TYPES: Record<number, NewTable["fields"][number]["type"]> = { 1: "BOOLEAN", 2: "INTEGER", 3: "INTEGER", 4: "INTEGER", 5: "INTEGER", 6: "REAL", 14: "DATE", 16: "DATETIME" };
 
+/** Selected-only runs: the input layer's selection limits the features read (QGIS's checkbox). */
+let selectedOnly = false;
+
 /** Reads a layer's features from QGIS (WKB in the layer CRS, or reprojected by QGIS to `crs`). */
-function readLayer(id: string, opts: { crs?: string; expression?: string } = {}): Input {
+function readLayer(id: string, opts: { crs?: string; expression?: string; fids?: number[] } = {}): Input {
   const api = engine();
   const layer = findMapLayer(id) as QgsVectorLayer | null;
   if (!layer) throw new Error("Input layer not found");
@@ -355,11 +358,13 @@ function readLayer(id: string, opts: { crs?: string; expression?: string } = {})
   const req = new api.QgsFeatureRequest();
   if (opts.crs && opts.crs !== layer.crs()) req.setDestinationCrs(opts.crs);
   if (opts.expression) req.setFilterExpression(opts.expression);
+  const fids = opts.fids ?? (selectedOnly && ui.selection[id]?.length ? ui.selection[id] : null);
+  if (fids) req.setFilterFids(fids);
   const it = layer.getFeatures(req);
   const features: Feature[] = [];
   for (let f = it.nextFeature(); f; f = it.nextFeature()) {
     const attrs = f.attributes();
-    features.push({ wkb: f.hasGeometry() ? f.geometry().asWkb() : null, attrs: keep.map(([, i]) => attrs[i]) });
+    features.push({ wkb: f.hasGeometry() ? f.geometry().asWkb() : null, attrs: keep.map(([, i]) => attrs[i]), fid: f.id() });
     free(f);
   }
   free(it);
@@ -367,10 +372,16 @@ function readLayer(id: string, opts: { crs?: string; expression?: string } = {})
   return { name: layer.name, crs: opts.crs || layer.crs(), fields: keep.map(([f]) => ({ name: f.name(), type: f.type() })), features };
 }
 
-export async function runAlgorithm(alg: Algorithm, params: Record<string, unknown>) {
+export async function runAlgorithm(alg: Algorithm, params: Record<string, unknown>, onlySelected = false) {
   const ops = new GeosOps(await getGeos());
   const t0 = performance.now();
-  const out = await alg.run(params, ops, readLayer);
+  selectedOnly = onlySelected;
+  let out: Output;
+  try {
+    out = await alg.run(params, ops, readLayer);
+  } finally {
+    selectedOnly = false;
+  }
   const [org, code] = (out.crs || "EPSG:4326").split(":");
   const d = project();
   const path = `${d.dir}/data/processing.gpkg`;
@@ -398,4 +409,24 @@ export async function runAlgorithm(alg: Algorithm, params: Record<string, unknow
   apply(() => (id = insertLayerXml(mapLayerXml({ name, datasource: `./data/processing.gpkg|layername=${table}`, type: "vector", provider: "ogr", crs }), name)));
   ui.current = id;
   return { features: out.features.length, ms: Math.round(performance.now() - t0), layerId: id };
+}
+
+/** Feature ids of `layerId` that intersect any feature of `otherId` (select by location). */
+export async function intersectingFids(layerId: string, otherId: string) {
+  const g = new GeosOps(await getGeos());
+  const r = readLayer(layerId);
+  const mask = g.union(readLayer(otherId, { crs: r.crs }).features.map((f) => f.wkb));
+  if (!mask) return [];
+  const m = g.read(mask);
+  const prepared = g.geos.GEOSPrepare(m);
+  const fids = r.features.filter((f) => {
+    if (!f.wkb) return false;
+    const x = g.read(f.wkb);
+    const hit = g.geos.GEOSPreparedIntersects(prepared, x);
+    g.geos.GEOSGeom_destroy(x);
+    return hit === 1;
+  }).map((f) => f.fid!);
+  g.geos.GEOSPreparedGeom_destroy(prepared);
+  g.geos.GEOSGeom_destroy(m);
+  return fids;
 }

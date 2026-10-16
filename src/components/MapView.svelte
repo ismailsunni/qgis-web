@@ -9,6 +9,7 @@
   import MapToolbar from "./MapToolbar.svelte";
   import SearchBox from "./SearchBox.svelte";
   import { mapTipAt, projectToLonLat } from "../lib/maptools";
+  import { selectAt, modeFrom } from "../lib/selection";
 
   let target: HTMLDivElement;
   let coord = $state("");
@@ -21,7 +22,9 @@
   onMount(() => {
     const map = createMap(target, true);
     map.on("singleclick", (e) => {
-      if (ui.phase !== "ready" || ui.mapTool !== "identify") return;
+      if (ui.phase !== "ready") return;
+      if (ui.mapTool === "select") return selectAt(e.coordinate, modeFrom(e.originalEvent as MouseEvent));
+      if (ui.mapTool !== "identify") return;
       if (ui.editing && editClick(e.coordinate)) return;
       identifyAt(e.coordinate);
     });

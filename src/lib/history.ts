@@ -35,6 +35,7 @@ function restore(xml: string) {
   setXml(xml);
   reload();
   ui.dirty = true;
+  ui.dataVersion++;
   changed();
   redraw();
 }

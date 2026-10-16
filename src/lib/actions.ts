@@ -10,6 +10,8 @@ import { hydrateAll } from "./remote";
 import { ALGORITHMS } from "./processing";
 import { resetHistory, undoProject, redoProject } from "./history";
 import { readBookmarks, zoomToBookmark } from "./bookmarks";
+import { discardAutosave } from "./autosave";
+import { readAutosave, loadAutosaveFiles } from "./storage";
 import { getSettings, lastProject, rememberLast, type ProjectRef } from "./settings";
 import { listProjects } from "./storage";
 import { showProject, hitBox, srid, setHighlight, zoomToFull, olMap as olMapRef } from "./map";
@@ -111,6 +113,7 @@ export async function saveInBrowser() {
   );
   ui.storedId = id;
   ui.dirty = false;
+  discardAutosave();
   rememberLast({ kind: "stored", id, name: ui.projectName });
   toast(`Saved “${ui.projectName}” in this browser`);
 }
@@ -169,8 +172,24 @@ export async function openRef(ref: ProjectRef): Promise<boolean> {
   return ui.phase === "ready";
 }
 
+/** Reopens the work found in the autosave slot (unsaved changes from a previous session). */
+export async function recoverAutosave() {
+  const meta = await readAutosave();
+  if (!meta) return;
+  const files = await loadAutosaveFiles();
+  await open(meta.name, async () => {
+    const root = await mountFiles(files);
+    return { root, path: `${root}/${meta.projectPath}` };
+  }, meta.storedId);
+  ui.projectName = meta.name;
+  ui.sourceUrl = meta.sourceUrl ?? null;
+  ui.dirty = true;
+}
+
 /** Applies the "open project on launch" setting (when the URL doesn't name a project). */
 export async function runStartup() {
+  // Unsaved work from a previous session comes first: the welcome page offers to recover it.
+  if (await readAutosave()) return;
   const { startup, specific } = getSettings();
   if (startup === "blank") await newProject();
   else if (startup === "last") {
@@ -309,6 +328,9 @@ export function commands(): Command[] {
     { id: "measure-line", label: "Measure distance", run: () => import("./maptools").then((m) => m.startMeasure("line")) },
     { id: "measure-area", label: "Measure area", run: () => import("./maptools").then((m) => m.startMeasure("area")) },
     { id: "legend", label: "Show/hide legend on map", run: () => (ui.showLegend = !ui.showLegend) },
+    { id: "select-tool", label: "Select features (click)", run: () => (ui.mapTool = "select") },
+    { id: "clear-selection", label: "Clear all selections", run: () => import("./selection").then((m) => m.clearSelection()) },
+    { id: "zoom-selection", label: "Zoom to selection", run: () => import("./selection").then((m) => m.zoomToSelection()) },
     { id: "maptips", label: "Toggle map tips", run: () => (ui.mapTips = !ui.mapTips) },
     ...(ui.editing
       ? [
@@ -329,6 +351,10 @@ export function commands(): Command[] {
       ...(l.layerType === LayerType.Vector && l.valid
         ? [
             { id: `table-${l.layerId}`, label: `Open attribute table: ${l.name}`, run: () => (ui.tableLayerId = l.layerId!) },
+            { id: `selexpr-${l.layerId}`, label: `Select by expression: ${l.name}`, run: () => ((ui.current = l.layerId!), (ui.dialog = "select-expression")) },
+            { id: `selloc-${l.layerId}`, label: `Select by location: ${l.name}`, run: () => ((ui.current = l.layerId!), (ui.dialog = "select-location")) },
+            { id: `calc-${l.layerId}`, label: `Field calculator: ${l.name}`, run: () => ((ui.current = l.layerId!), (ui.dialog = "field-calc")) },
+            { id: `export-${l.layerId}`, label: `Export layer: ${l.name}`, run: () => ((ui.current = l.layerId!), (ui.dialog = "export-layer")) },
             { id: `edit-${l.layerId}`, label: `Start editing: ${l.name}`, run: () => import("./editing").then((m) => (m.canEdit(l.layerId!) ? m.startEditing(l.layerId!) : m.convertToGpkg(l.layerId!).then(() => m.startEditing(l.layerId!)))) },
           ]
         : []),

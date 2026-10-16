@@ -1,10 +1,12 @@
 <script lang="ts">
-  import { openDemo, openStored, newProject } from "../lib/actions";
-  import { listProjects, deleteProject, type StoredProject } from "../lib/storage";
+  import { openDemo, openStored, newProject, recoverAutosave } from "../lib/actions";
+  import { listProjects, deleteProject, readAutosave, clearAutosave, type StoredProject, type AutosaveMeta } from "../lib/storage";
   import { ui } from "../lib/state.svelte";
   import Icon from "./Icon.svelte";
 
   let recent = $state<StoredProject[]>([]);
+  let autosave = $state<AutosaveMeta | null>(null);
+  readAutosave().then((a) => (autosave = a)).catch(() => {});
   const refresh = () => listProjects().then((r) => (recent = r)).catch(() => {});
   refresh();
 </script>
@@ -18,6 +20,15 @@
     {:else}
       <h1><span class="logo big"></span>QGIS Web</h1>
       <p class="lead">Open real QGIS projects in your browser, rendered by QGIS itself.</p>
+      {#if autosave && ui.phase !== "error"}
+        <div class="recover">
+          <p><b>Unsaved changes found</b> in “{autosave.name}” ({new Date(autosave.savedAt).toLocaleString()}).</p>
+          <div class="row">
+            <button class="primary" onclick={() => recoverAutosave()}>Recover</button>
+            <button onclick={async () => { if (confirm("Discard the unsaved changes?")) { await clearAutosave(); autosave = null; } }}>Discard</button>
+          </div>
+        </div>
+      {/if}
       {#if ui.phase === "error"}
         <p class="error">{ui.error}</p>
         {#if window.top !== window}<a href={location.href} target="_blank" rel="noopener">Open the map in a new tab</a>{/if}

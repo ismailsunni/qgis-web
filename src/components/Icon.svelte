@@ -39,6 +39,8 @@
     compare: "M12 3v18M4 6h5v12H4zM15 6h5v12h-5z",
     copy: "M8 8h11v13H8V8Zm-3 8H4V3h11v1",
     paste: "M9 4h6v3H9V4ZM6 6H5v15h14V6h-1M9 12h6M9 16h4",
+    calc: "M6 3h12v18H6V3Zm2 3h8v3H8V6Zm1 7h.01M12 13h.01M15 13h.01M9 16h.01M12 16h.01M15 16h.01",
+    columns: "M4 4h16v16H4V4Zm6 0v16m6-16v16",
     warn: "M12 3 2 20h20L12 3Zm0 6v5m0 3v.5",
   };
   let { name, size = 20 }: { name: keyof typeof paths; size?: number } = $props();

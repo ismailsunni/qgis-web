@@ -21,10 +21,13 @@ import * as history from "./lib/history";
 import * as maptools from "./lib/maptools";
 import * as clipboard from "./lib/clipboard";
 import * as bookmarks from "./lib/bookmarks";
+import * as selection from "./lib/selection";
+import * as exporter from "./lib/export";
+import * as autosave from "./lib/autosave";
 import { ui } from "./lib/state.svelte";
 
 // Scripted access for end-to-end tests (see tests/).
-Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish, gpkg, PointGeometry: Point, settings, storage, history, maptools, clipboard, bookmarks } });
+Object.assign(globalThis, { qgisWebApp: { actions, doc, tree, ui, adddata, remote, style, engine, apply, editing, map, publish, gpkg, PointGeometry: Point, settings, storage, history, maptools, clipboard, bookmarks, selection, exporter, autosave } });
 
 settings.applyTheme();
 mount(App, { target: document.getElementById("app")! });

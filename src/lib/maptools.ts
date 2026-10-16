@@ -77,11 +77,11 @@ export function startMeasure(kind: "line" | "area") {
 
 let box: DragBox | null = null;
 /** Rectangle tool used by selection: calls back with the dragged extent (project CRS). */
-export function startBoxTool(onBox: (extent: Extent) => void) {
+export function startBoxTool(onBox: (extent: Extent, e: MouseEvent) => void) {
   stopTool();
   ui.mapTool = "select-box";
   box = new DragBox();
-  box.on("boxend", () => onBox(box!.getGeometry().getExtent()));
+  box.on("boxend", (e) => onBox(box!.getGeometry().getExtent(), (e.mapBrowserEvent?.originalEvent ?? {}) as MouseEvent));
   olMap().addInteraction(box);
 }
 

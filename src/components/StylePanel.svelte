@@ -23,7 +23,8 @@
       type: LayerType[layer.type()],
       vector: !!vector,
       kind: vector ? S.symbolKind(id) : null,
-      features: vector?.featureCount(),
+      // Some providers (delimited text) report an unknown count as an out-of-range value.
+      features: vector && vector.featureCount() >= 0 && vector.featureCount() < 2 ** 40 ? vector.featureCount() : undefined,
       fields: fields.map((f) => f.name()),
       numeric: fields.filter((f) => [2, 4, 6, 3, 5, 32, 33, 34, 35, 36, 38].includes(f.type())).map((f) => f.name()),
       renderer: vector ? S.readRenderer(id) : null,

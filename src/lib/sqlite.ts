@@ -19,6 +19,19 @@ export class Db {
     return this.db.exec({ sql, bind: params.length ? (params as never) : undefined, rowMode: "object", returnValue: "resultRows" }) as T[];
   }
 
+  /** A prepared statement, for running the same SQL many times. */
+  prepare(sql: string) {
+    const stmt = this.db.prepare(sql);
+    return {
+      run: (params: unknown[]) => {
+        if (params.length) stmt.bind(params as never);
+        stmt.stepReset();
+        stmt.clearBindings();
+      },
+      finalize: () => stmt.finalize(),
+    };
+  }
+
   /** Registers a JavaScript function as a deterministic SQL scalar function. */
   fn(name: string, f: (...args: never[]) => unknown) {
     this.db.createFunction({ name, xFunc: (_ctx: number, ...args: unknown[]) => f(...(args as never[])) as never, arity: f.length, deterministic: true });

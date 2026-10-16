@@ -22,7 +22,8 @@
     "hyparquet-compressors": "^1.1.2",
     "ol": "^10.11.0",
     "proj4": "^2.22.0",
-    "qgis-js": "4.2.3"
+    "qgis-js": "4.2.3",
+    "read-excel-file": "^9.3.12"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
