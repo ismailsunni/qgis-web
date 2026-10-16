@@ -34,7 +34,7 @@ jobs:
         continue-on-error: true
       # Reference projects open and render within tolerance of QGIS Desktop; scripted edits are saved.
       - run: npx playwright test
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-results
@@ -49,7 +49,7 @@ jobs:
     container: qgis/qgis:latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: test-results
       - run: QT_QPA_PLATFORM=offscreen python3 scripts/check_roundtrip.py test-results/roundtrip
