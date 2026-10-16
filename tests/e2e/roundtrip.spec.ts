@@ -37,8 +37,12 @@ for (const ref of manifest) {
         apply(() => style.setAllSymbols(vector.layerId, { color: "#ff0000" }));
         const field = (globalThis as any).qgisWeb.api.layerTreeRoot().findLayer(vector.layerId).layer().fields().at(1)?.name() ?? "fid";
         apply(() => style.writeLabels(vector.layerId, { ...style.readLabels(vector.layerId), enabled: true, field, isExpression: false }));
+        apply(() => style.writePopup(vector.layerId, { display: `"${field}"`, mapTip: `<b>[% "${field}" %]</b>` }));
       }
+      // A spatial bookmark of the current view.
+      (globalThis as any).qgisWebApp.bookmarks.addBookmark("Round-trip view");
       const expected = {
+        bookmarks: ["Round-trip view"],
         order: top().map((n: any) => n.name),
         layers: Object.fromEntries(
           tree.flatLayers(top()).map((l: any) => [
@@ -46,7 +50,7 @@ for (const ref of manifest) {
             {
               visible: l.visible,
               opacity: Math.round(l.opacity * 1000) / 1000,
-              ...(l.layerId === vector?.layerId ? { renderer: "singleSymbol", labels: true } : {}),
+              ...(l.layerId === vector?.layerId ? { renderer: "singleSymbol", labels: true, mapTip: true } : {}),
             },
           ]),
         ),

@@ -28,7 +28,15 @@ Everything runs client-side: projects and data stay in your browser unless you o
 | F16 | QGIS Hub browser: apply styles, open projects, add layer definitions | ✅ | One-click style apply |
 | F17–F23 | Publishing (M5): local-data blockers, CORS/credential warnings, secret stripping, embedded SVGs, share links, embed domain allowlist, versions | ✅* | Secret stripping unit-tested; see notes |
 
-Also: a command palette (Ctrl/Cmd+K) with every action, keyboard shortcuts (Ctrl+S, Ctrl+O, Ctrl+Z), project properties (title, CRS search), and a phone layout (bottom tab bar, view and identify).
+Also:
+
+- **Navigation and output:** place search (OpenStreetMap Nominatim) and coordinate search, measuring distance and area, spatial bookmarks (saved in the project), an on-map QGIS legend, swipe and side-by-side compare, and map export as PNG up to 384 dpi with title and legend.
+- **Data work:** feature selection (click, rectangle, expression, location) synced with the attribute table, field calculator and field management, layer export (GeoPackage, GeoJSON, CSV), CSV and Excel import.
+- **Styling:** rule-based, heatmap and point cluster renderers; raster pseudocolor, grayscale, hillshade and RGB; popups (display name and HTML map tips, shown in Identify and on hover); copy/paste style.
+- **Editing:** snapping to visible layers, merge and split, and QGIS attribute forms (widgets, aliases, constraints, default values).
+- **App:** undo/redo for every project change, autosave with crash recovery, dark mode, "open project on launch" setting, an [embed API](docs/embed-api.md), a command palette (Ctrl/Cmd+K) with every action, keyboard shortcuts, project properties (title, CRS), and a phone layout.
+
+See [docs/feature-comparison.md](docs/feature-comparison.md) for how this compares with GeoLibre and RustGIS.
 
 ## How it works
 

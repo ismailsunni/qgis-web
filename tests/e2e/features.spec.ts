@@ -147,3 +147,95 @@ test("open project on launch: blank, most recent, specific", async ({ page }) =>
   await page.reload();
   await expect.poll(phase).toEqual(["ready", "World (Natural Earth 1:110m)"]);
 });
+
+
+test("undo and redo project changes", async ({ page }) => {
+  await demo(page);
+  await page.evaluate(() => { const { tree } = (globalThis as any).qgisWebApp; tree.rename(tree.snapshotTree()[0], "Renamed"); });
+  await page.keyboard.press("Control+z");
+  await expect.poll(() => page.evaluate(() => (globalThis as any).qgisWebApp.tree.snapshotTree()[0].name)).toBe("Places");
+  await page.keyboard.press("Control+Shift+z");
+  await expect.poll(() => page.evaluate(() => (globalThis as any).qgisWebApp.tree.snapshotTree()[0].name)).toBe("Renamed");
+});
+
+test("measure distance", async ({ page }) => {
+  await demo(page);
+  await page.locator('button[aria-label="Measure distance"]').click();
+  const box = (await page.locator(".map").boundingBox())!;
+  await page.mouse.click(box.x + box.width * 0.4, box.y + box.height * 0.4);
+  await page.mouse.dblclick(box.x + box.width * 0.6, box.y + box.height * 0.4);
+  await expect(page.locator(".measure-readout")).toContainText("km");
+});
+
+test("export map image", async ({ page }) => {
+  await demo(page);
+  await page.locator('button[aria-label="Export map image"]').click();
+  const [download] = await Promise.all([page.waitForEvent("download"), page.locator(".dialog button.primary").click()]);
+  expect(download.suggestedFilename()).toMatch(/\.png$/);
+});
+
+test("rectangle selection syncs with the attribute table", async ({ page }) => {
+  await demo(page);
+  await page.locator(".node", { hasText: "Countries" }).locator(".name").click();
+  await page.locator('button[aria-label="Select with rectangle"]').click();
+  const box = (await page.locator(".map").boundingBox())!;
+  await page.mouse.move(box.x + box.width * 0.45, box.y + box.height * 0.35);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.55, { steps: 5 });
+  await page.mouse.up();
+  await page.locator('.rail-btn[aria-label="Attribute table"]').click();
+  await expect(page.locator(".drawer h3")).toContainText("selected");
+});
+
+test("field calculator creates a field from an expression", async ({ page }) => {
+  await demo(page);
+  page.on("dialog", (d) => d.accept());
+  await page.evaluate(() => { const A = (globalThis as any).qgisWebApp; A.ui.current = A.tree.flatLayers(A.tree.snapshotTree()).find((l: any) => l.name === "Countries").layerId; A.ui.dialog = "field-calc"; });
+  await page.locator(".dialog input").first().fill("name_upper");
+  await page.locator(".dialog select").first().selectOption("TEXT");
+  await page.locator(".dialog .expr-input input").fill('upper("NAME")');
+  await page.locator(".dialog .expr-input input").press("Tab");
+  await page.locator(".dialog button.primary").click();
+  await expect.poll(() => page.evaluate(() => { const A = (globalThis as any).qgisWebApp; const id = A.tree.flatLayers(A.tree.snapshotTree()).find((l: any) => l.name === "Countries").layerId; const api = (globalThis as any).qgisWeb.api; const r = new api.QgsFeatureRequest(); r.setFilterFid(16); return A.engine.findMapLayer(id).getFeatures(r).nextFeature()?.attribute("name_upper"); })).toBe("CHAD");
+});
+
+test("CSV with coordinates becomes a delimited text layer", async ({ page }) => {
+  await demo(page);
+  const added = page.evaluate(() => (globalThis as any).qgisWebApp.adddata.addData([{ path: "pts.csv", data: new TextEncoder().encode("name,lon,lat\nParis,2.35,48.85\nRome,12.5,41.9\n") }]));
+  await page.locator(".dialog.csv button.primary").click();
+  await added;
+  const n = await page.evaluate(() => { const A = (globalThis as any).qgisWebApp; const l = A.tree.flatLayers(A.tree.snapshotTree()).find((x: any) => x.name === "pts"); const it = A.engine.findMapLayer(l.layerId).getFeatures(); let k = 0; while (it.nextFeature()) k++; return k; });
+  expect(n).toBe(2);
+});
+
+test("rule-based style from categories", async ({ page }) => {
+  await demo(page);
+  const rules = await page.evaluate(() => { const A = (globalThis as any).qgisWebApp; const id = A.tree.flatLayers(A.tree.snapshotTree()).find((l: any) => l.name === "Countries").layerId; A.apply(() => A.style.setRuleBased(id)); return A.style.readRules(id).length; });
+  expect(rules).toBe(8);
+});
+
+test("compare view shows a second map", async ({ page }) => {
+  await demo(page);
+  await page.locator('button[aria-label="Compare"]').click();
+  await expect(page.locator(".compare-map")).toBeVisible();
+  await expect(page.locator(".swipe-divider")).toBeVisible();
+});
+
+test("embed API answers the parent page", async ({ page, baseURL }) => {
+  // A host page on the same origin, served cross-origin isolated like the app.
+  await page.route("**/embed-host.html", (route) =>
+    route.fulfill({
+      contentType: "text/html",
+      headers: { "Cross-Origin-Opener-Policy": "same-origin", "Cross-Origin-Embedder-Policy": "require-corp" },
+      body: `<iframe id="m" src="${baseURL}?url=projects/world/world.qgz&maponly" width="800" height="500" allow="cross-origin-isolated"></iframe>
+<script>let n=0;const p=new Map();addEventListener("message",e=>{if(e.data?.qgisweb===1&&!e.data.event)p.get(e.data.id)?.(e.data)});
+window.call=(command,args)=>new Promise(r=>{const id=++n;p.set(id,r);document.getElementById("m").contentWindow.postMessage({qgisweb:1,id,command,args},location.origin)});</script>`,
+    }),
+  );
+  await page.goto("embed-host.html");
+  await expect.poll(async () => (await page.evaluate(() => (window as any).call("hello"))).result?.ready, { timeout: 150_000 }).toBe(true);
+  const layers = await page.evaluate(() => (window as any).call("getLayers"));
+  expect(layers.result.map((l: { name: string }) => l.name)).toEqual(["Places", "Rivers", "Countries"]);
+  const n = await page.evaluate(() => (window as any).call("selectByExpression", { layer: "Countries", expression: `"CONTINENT" = 'Africa'` }));
+  expect(n.result).toBe(51);
+});

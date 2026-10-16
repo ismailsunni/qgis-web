@@ -23,6 +23,9 @@ for name in sorted(os.listdir(root)):
     problems = []
     if not project.read(os.path.join(root, name, f"{name}.qgz")):
         problems.append("does not load")
+    bookmarks = [b.name() for b in project.bookmarkManager().bookmarks()]
+    if bookmarks != expected.get("bookmarks", bookmarks):
+        problems.append(f"bookmarks {bookmarks}")
     tree = project.layerTreeRoot()
     order = [n.name() for n in tree.children()]
     if order != expected["order"]:
@@ -42,6 +45,8 @@ for name in sorted(os.listdir(root)):
             problems.append(f"{node.name()} opacity={layer.opacity()}")
         if "renderer" in exp and layer.renderer().type() != exp["renderer"]:
             problems.append(f"{node.name()} renderer={layer.renderer().type()}")
+        if exp.get("mapTip") and "[%" not in layer.mapTipTemplate():
+            problems.append(f"{node.name()} map tip missing")
         if exp.get("labels") and not layer.labelsEnabled():
             problems.append(f"{node.name()} labels disabled")
         if exp.get("renderer") == "singleSymbol" and layer.renderer().symbol().color().name() != "#ff0000":

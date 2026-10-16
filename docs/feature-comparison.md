@@ -1,6 +1,6 @@
 # Feature comparison: GeoLibre, RustGIS and QGIS Web
 
-October 2026. Sources: the GeoLibre repository ([README](https://github.com/opengeos/GeoLibre), `docs/features.md`, user guide) and the RustGIS repository ([README](https://github.com/opengeos/RustGIS), `ROADMAP.md`, user guide), compared with QGIS Web as of commit `545ac3d`.
+October 2026. Sources: the GeoLibre repository ([README](https://github.com/opengeos/GeoLibre), `docs/features.md`, user guide) and the RustGIS repository ([README](https://github.com/opengeos/RustGIS), `ROADMAP.md`, user guide), compared with QGIS Web as of commit `545ac3d` (inventory updated after the "worth adding" items were built).
 
 The goal is a list to decide from, not a plan: part 1 inventories what the two apps do, part 2 sorts what QGIS Web lacks into worth adding, maybe later, and not needed, judged against the [PRD](PRD.md).
 
@@ -20,8 +20,8 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | --- | --- | --- | --- |
 | Command palette (Ctrl/Cmd+K) | ✅ | ✅ | ✅ |
 | Keyboard shortcuts, shortcut cheat sheet | ✅ | ✅ | ◐ (no cheat sheet) |
-| Undo/redo for layer and style changes | ✅ | ✅ (everything) | ◐ (feature edits only) |
-| Dark mode | ✅ | ✅ | — |
+| Undo/redo for layer and style changes | ✅ | ✅ (everything) | ✅ |
+| Dark mode | ✅ | ✅ | ✅ |
 | Translations (i18n) | ✅ 20 languages, RTL | ✅ 16 languages | — |
 | Accessibility pass (axe, screen readers) | ✅ | — | ◐ |
 | Phone layout | ✅ | — | ✅ |
@@ -43,16 +43,16 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | 3D terrain, 3D Tiles, I3S, point clouds, Gaussian splats | ✅ | ◐ (2.5D extrusion) | — |
 | Multiple rendering engines (MapLibre, Mapbox, Cesium, ArcGIS) | ✅ | — | — (QGIS renders) |
 | Planetary basemaps (Moon, Mars…) | ✅ | — | — |
-| Split / side-by-side linked views | ✅ | ✅ | — |
-| Swipe compare | ✅ | ✅ | — |
+| Split / side-by-side linked views | ✅ | ✅ | ✅ |
+| Swipe compare | ✅ | ✅ | ✅ |
 | Scale bar, coordinates readout | ✅ | ✅ | ✅ |
-| Coordinates in DMS / UTM / MGRS, grid overlays | ✅ | ◐ | — |
-| Go to coordinate / place search (geocoding) | ✅ | ✅ (Go To XY, locators) | — |
-| Bookmarks | ✅ | ✅ | — |
+| Coordinates in DMS / UTM / MGRS, grid overlays | ✅ | ◐ | ◐ (lat/lon and project CRS; search accepts DMS) |
+| Go to coordinate / place search (geocoding) | ✅ | ✅ (Go To XY, locators) | ✅ |
+| Bookmarks | ✅ | ✅ | ✅ (saved in the project) |
 | Extent history (back/forward) | ✅ | ✅ | — |
-| Measure distance and area | ✅ | ✅ | — |
+| Measure distance and area | ✅ | ✅ | ✅ |
 | Right-click map context menu (copy coordinate, quick analysis) | ✅ | — | — |
-| On-map legend | ✅ | ✅ | ◐ (legend in layer tree) |
+| On-map legend | ✅ | ✅ | ✅ (QGIS legend) |
 | Annotations / graphics layer (text, arrows, shapes) | ✅ | ✅ | — |
 | Time slider (temporal data) | ✅ | — | — |
 | Timelapse, weather overlays, sun simulation, Wikipedia cards | ✅ | — | — |
@@ -64,8 +64,8 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | --- | --- | --- | --- |
 | GeoPackage, GeoJSON, Shapefile (+zip), FlatGeobuf, GeoParquet, KML, GPX, GeoTIFF/COG | ✅ | ✅ | ✅ |
 | KMZ, GML, TopoJSON, MapInfo MIF | ◐ | ✅ | — (KML/GML via GDAL may work, untested) |
-| CSV/TSV with X/Y or WKT columns | ✅ | ✅ | — |
-| Excel / OpenDocument spreadsheets | ✅ | ✅ | — |
+| CSV/TSV with X/Y or WKT columns | ✅ | ✅ | ✅ |
+| Excel / OpenDocument spreadsheets | ✅ | ✅ | ◐ (Excel) |
 | DXF / DWG (CAD) | ✅ | ✅ (DXF) | — |
 | OpenStreetMap PBF | ✅ | ✅ | — |
 | LiDAR (LAS, LAZ, COPC) | ✅ | ✅ | — |
@@ -90,22 +90,22 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | Layer tree: groups, visibility, opacity, reorder, rename | ✅ | ✅ | ✅ |
 | Group opacity, multi-select, sort A–Z | ✅ | — | — |
 | Single, categorized, graduated | ✅ | ✅ | ✅ |
-| Rule-based renderer (form) | ✅ | — | ◐ (renders; edit via QML) |
+| Rule-based renderer (form) | ✅ | — | ✅ |
 | Proportional symbols | ✅ | ✅ | ◐ (via QML) |
-| Heatmap, point clustering renderers | ✅ | ✅ (aggregation bins) | ◐ (via QML) |
+| Heatmap, point clustering renderers | ✅ | ✅ (aggregation bins) | ✅ |
 | More classification modes (std dev, manual breaks) | ✅ | — | ◐ (4 modes) |
 | Custom color ramps (import QGIS/GDAL/GMT ramps) | ◐ | ✅ | — |
 | Marker library, SVG/image markers, fill patterns | ✅ | ◐ | ◐ (Hub styles, QML) |
 | Blend modes | ✅ | ✅ | ◐ (via QML) |
 | Scale-dependent visibility | ✅ | ✅ | ◐ (respected, not editable) |
-| Raster styling forms (stretch, pseudocolor, hillshade, RGB) | ✅ | ✅ | ◐ (via QML) |
+| Raster styling forms (stretch, pseudocolor, hillshade, RGB) | ✅ | ✅ | ✅ |
 | Raster histogram, pixel value identify | ✅ | — | — |
 | Label placement, buffer, expressions | ✅ | ✅ | ✅ |
 | Label-to-annotation conversion | — | ✅ | — |
-| Copy/paste style between layers | ✅ | ✅ | ◐ (QML file round-trip) |
+| Copy/paste style between layers | ✅ | ✅ | ✅ |
 | Style library / presets | ✅ | ✅ | ◐ (QGIS Hub) |
 | Style interchange (SLD, Mapbox GL style) | ✅ | ✅ (MapLibre out) | ◐ (QML only) |
-| Popup / map tip designer | ✅ | ✅ | — |
+| Popup / map tip designer | ✅ | ✅ | ✅ (QGIS map tips) |
 | Smart default styling on add | ✅ | — | ◐ (QGIS random default) |
 | Masking, extrusion (2.5D) | ✅ | ✅ | ◐ (via QML; QGIS renders it) |
 
@@ -114,15 +114,15 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | Feature | GeoLibre | RustGIS | QGIS Web |
 | --- | --- | --- | --- |
 | Attribute table: sort, filter, zoom to row, virtual scrolling | ✅ | ✅ | ✅ |
-| Multi-row selection synced with the map | ✅ | ✅ | — |
-| Select on map (click, rectangle, polygon) | ✅ | ✅ | — |
-| Select by expression / attributes | ✅ | ✅ | ◐ (filter only; extract tool) |
-| Select by location | ✅ | ✅ | ◐ (extract tool) |
-| Field calculator, add/delete/rename fields | ✅ | ✅ | — |
+| Multi-row selection synced with the map | ✅ | ✅ | ✅ |
+| Select on map (click, rectangle, polygon) | ✅ | ✅ | ◐ (click, rectangle) |
+| Select by expression / attributes | ✅ | ✅ | ✅ |
+| Select by location | ✅ | ✅ | ✅ |
+| Field calculator, add/delete/rename fields | ✅ | ✅ | ✅ |
 | Virtual fields, joins | ✅ | ✅ (relationships) | — |
-| Attribute forms (widgets, constraints) | ✅ | ✅ (domains, subtypes, rules) | — |
+| Attribute forms (widgets, constraints) | ✅ | ✅ (domains, subtypes, rules) | ✅ (from the project) |
 | Field statistics, charts | ✅ | ✅ | — |
-| Export layer (GeoJSON, GPKG, CSV, Shapefile…) | ✅ | ✅ | — |
+| Export layer (GeoJSON, GPKG, CSV, Shapefile…) | ✅ | ✅ | ◐ (GeoPackage, GeoJSON, CSV) |
 | Expression builder with live preview | ✅ | ◐ | ✅ (QGIS functions) |
 | SQL workspace (DuckDB, PGlite) | ✅ | ◐ (where clauses) | — |
 
@@ -133,8 +133,8 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | Add / delete features, edit attributes | ✅ | ✅ | ✅ |
 | Move vertices | ✅ | ◐ (planned) | ✅ |
 | Undo/redo | ✅ | ✅ | ✅ |
-| Snapping to other layers | ✅ | ✅ | ◐ (own feature only) |
-| Move, rotate, scale, merge, split, explode | ◐ | ✅ | — |
+| Snapping to other layers | ✅ | ✅ | ✅ |
+| Move, rotate, scale, merge, split, explode | ◐ | ✅ | ◐ (merge, split) |
 | Copy/paste features | — | ✅ | — |
 | Topology rules / topological digitizing | ✅ | ✅ | — |
 | Feature templates, editor tracking | ✅ | ✅ | — |
@@ -165,17 +165,17 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | Feature | GeoLibre | RustGIS | QGIS Web |
 | --- | --- | --- | --- |
 | Save project, Save As, open recent | ✅ | ✅ | ✅ |
-| Export map image (PNG at DPI) | ✅ | ✅ | — |
+| Export map image (PNG at DPI) | ✅ | ✅ | ✅ |
 | Print layout / atlas / PDF | ✅ | ✅ | — (PRD non-goal v1) |
 | Reports, presentations, story maps, dashboards | ✅ | ✅ | — |
 | Standalone HTML export | ✅ | ✅ | — |
 | Share links, embed, map-only mode | ✅ | ◐ (static files) | ✅ |
 | Share-readiness check | ✅ | — | ✅ |
 | Versions / restore published map | ✅ | — | ✅ |
-| Autosave and crash recovery | ✅ | — | — |
+| Autosave and crash recovery | ✅ | — | ✅ |
 | Project templates | ✅ | ✅ | — |
 | Real-time collaboration, comments | ✅ | — | — |
-| Embed postMessage API | ✅ | — | — |
+| Embed postMessage API | ✅ | — | ✅ |
 | Offline areas / PWA install | ✅ | ✅ | ◐ (engine cached) |
 
 ### Automation, AI and platforms
@@ -199,7 +199,7 @@ Judged against the PRD: QGIS fidelity and round-trip first, the everyday 80%, si
 
 ### Worth adding
 
-Small to medium effort, used daily, and most of them fit the existing design.
+Small to medium effort, used daily, and most of them fit the existing design. **All 20 are implemented** (October 2026; see the README).
 
 | # | Feature | Why | Effort |
 | --- | --- | --- | --- |
