@@ -445,3 +445,5 @@ a.link { color: var(--green-dark); }
 .fields-table input { width: 100%; }
 .notice { margin: 8px; padding: 10px; border: 1px solid var(--green); background: var(--accent-bg); border-radius: 6px; font-size: 13px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
 .notice p { margin: 0; }
+.dialog.unavailable { width: min(700px, calc(100vw - 32px)); }
+.unavailable .source { word-break: break-all; font-size: 12px; }

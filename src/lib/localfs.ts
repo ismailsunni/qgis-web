@@ -11,10 +11,12 @@ import { t } from "./i18n";
 
 export type PickedFile = { path: string; data: File; handle?: FileSystemFileHandle };
 export interface LocalLink { id: string; name: string; projectPath: string; dir: FileSystemDirectoryHandle | null; files: Record<string, FileSystemFileHandle> }
+/** Files located for unavailable layers (see relocate.ts), by layer id. */
+type Relocations = Record<string, { path: string; handle: FileSystemFileHandle }[]>;
 
 export const canLink = typeof window !== "undefined" && "showDirectoryPicker" in window;
 
-let link: (LocalLink & { root: string }) | null = null;
+let link: (LocalLink & { root: string; relocated: Relocations }) | null = null;
 export const linked = () => link;
 
 async function readDir(dir: FileSystemDirectoryHandle, prefix: string): Promise<PickedFile[]> {
@@ -33,8 +35,8 @@ export async function pickFolder(startIn?: FileSystemHandle) {
   return { files: await readDir(dir, `${dir.name}/`), dir };
 }
 
-export async function pickFiles() {
-  const handles = await (window as unknown as { showOpenFilePicker(o: object): Promise<FileSystemFileHandle[]> }).showOpenFilePicker({ id: "quarkgis", multiple: true });
+export async function pickFiles(startIn?: FileSystemHandle) {
+  const handles = await (window as unknown as { showOpenFilePicker(o: object): Promise<FileSystemFileHandle[]> }).showOpenFilePicker({ id: "quarkgis", multiple: true, ...(startIn && { startIn }) });
   return { files: await Promise.all(handles.map(async (h) => ({ path: h.name, data: await h.getFile(), handle: h }))), dir: null };
 }
 
@@ -51,10 +53,34 @@ export async function droppedHandles(dt: DataTransfer) {
 
 /** Links the open project (mounted at `root`) to the files it was read from. */
 export async function linkProject(root: string, projectPath: string, name: string, dir: FileSystemDirectoryHandle | null, files: PickedFile[], id: string = crypto.randomUUID()) {
-  link = { id, name, projectPath, dir, files: fileHandles(files), root };
+  const relocated = (await getRecent(id).catch(() => undefined))?.relocated ?? {};
+  link = { id, name, projectPath, dir, files: fileHandles(files), root, relocated };
   unsavedFiles.clear();
-  await putRecent({ id, name, projectPath, dir, files: link.files, openedAt: new Date().toISOString() }).catch(() => {});
-  return id;
+  await saveRecent();
+  return { id, relocated };
+}
+
+const saveRecent = () =>
+  link ? putRecent({ id: link.id, name: link.name, projectPath: link.projectPath, dir: link.dir, files: link.files, relocated: link.relocated, openedAt: new Date().toISOString() }).catch(() => {}) : Promise.resolve();
+
+/** Remembers where an unavailable layer's files were found, to find them again next time. */
+export async function rememberRelocation(id: string, files: PickedFile[]) {
+  if (!link || !files.every((f) => f.handle)) return;
+  link.relocated[id] = files.map((f) => ({ path: f.path, handle: f.handle! }));
+  await saveRecent();
+}
+
+/** The remembered located files, read again (permission is asked for if needed). */
+export async function readRelocations(r: Relocations) {
+  const out: [string, PickedFile[]][] = [];
+  for (const [id, files] of Object.entries(r)) {
+    try {
+      out.push([id, await Promise.all(files.map(async (f) => ((await writable(f.handle)) ? { path: f.path, data: await f.handle.getFile(), handle: f.handle } : Promise.reject())))]);
+    } catch {
+      // Moved or no permission: the layer stays unavailable and can be located again.
+    }
+  }
+  return out;
 }
 
 export const unlink = () => void (link = null);
@@ -94,7 +120,7 @@ export async function saveToDisk() {
 
 // ---- Recent local projects (handles kept in IndexedDB) ---------------------------------------
 
-export interface LocalRecent { id: string; name: string; projectPath: string; dir: FileSystemDirectoryHandle | null; files: Record<string, FileSystemFileHandle>; openedAt: string }
+export interface LocalRecent { id: string; name: string; projectPath: string; dir: FileSystemDirectoryHandle | null; files: Record<string, FileSystemFileHandle>; relocated?: Relocations; openedAt: string }
 
 function store<T>(mode: IDBTransactionMode, fn: (s: IDBObjectStore) => IDBRequest<T>) {
   return new Promise<T>((resolve, reject) => {

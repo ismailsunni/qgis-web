@@ -32,6 +32,7 @@
   import LayerPicker from "./components/LayerPicker.svelte";
   import { dismiss } from "./lib/dismiss";
   import LayerProperties from "./components/LayerProperties.svelte";
+  import UnavailableLayers from "./components/UnavailableLayers.svelte";
   import ShortcutsDialog from "./components/ShortcutsDialog.svelte";
   import { previousView, nextView } from "./lib/navigation";
   import { copyFeatures, pasteFeatures } from "./lib/clipboard";
@@ -234,6 +235,7 @@
   {#if ui.dialog === "share"}<ShareDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "project"}<ProjectDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "layer-properties" && ui.current}{#key ui.current}<LayerProperties layerId={ui.current} onclose={() => (ui.dialog = null)} />{/key}{/if}
+  {#if ui.dialog === "unavailable"}<UnavailableLayers onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.shortcuts}<ShortcutsDialog />{/if}
   {#if ui.dialog === "settings"}<SettingsDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "export"}<ExportDialog onclose={() => (ui.dialog = null)} />{/if}

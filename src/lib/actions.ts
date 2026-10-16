@@ -19,7 +19,8 @@ import { showProject, hitBox, srid, setHighlight, zoomToFull, olMap as olMapRef 
 import { setVisible, snapshotTree, flatLayers } from "./tree";
 import { resetViews, savedExtent, previousView, nextView, toggleGrid } from "./navigation";
 import { isGeoTiff, pixelSampler } from "./raster";
-import { canLink, linked, linkProject, saveToDisk, pickFiles, pickFolder, readRecent, getRecent, unlink, type LocalRecent, type PickedFile } from "./localfs";
+import { relocateAll } from "./relocate";
+import { canLink, linked, linkProject, saveToDisk, readRelocations, pickFiles, pickFolder, readRecent, getRecent, unlink, type LocalRecent, type PickedFile } from "./localfs";
 import { ui, changed, toast, featureAttributes, type IdentifyHit } from "./state.svelte";
 import { t, N_ } from "./i18n";
 
@@ -104,9 +105,12 @@ export async function openFiles(files: PickedFile[], dir: FileSystemDirectoryHan
   if (ui.phase !== "ready") return;
   // Opened through the File System Access API: stay linked to the files, so Save writes back to them.
   if (dir || project.handle) {
-    const id = await linkProject(root, project.path, ui.projectName, dir, files, recentId);
+    const { id, relocated } = await linkProject(root, project.path, ui.projectName, dir, files, recentId);
     ui.local = dir?.name ?? project.path;
     rememberLast({ kind: "local", name: ui.projectName, id });
+    // Data located outside the project folder last time: read it again from where it was found.
+    const again = await readRelocations(relocated);
+    if (again.length) await relocateAll(again);
   } else rememberLast({ kind: "local", name: ui.projectName });
 }
 
@@ -394,6 +398,7 @@ export function commands(): Command[] {
     { id: "shortcuts", label: t("Keyboard shortcuts"), hint: "?", run: () => (ui.shortcuts = true) },
     { id: "undo", label: t("Undo"), hint: "Ctrl+Z", run: () => (ui.editing ? import("./editing").then((m) => m.undo()) : undoProject()) },
     { id: "redo", label: t("Redo"), hint: "Ctrl+Shift+Z", run: () => (ui.editing ? import("./editing").then((m) => m.redo()) : redoProject()) },
+    { id: "unavailable", label: t("Locate unavailable layers…"), run: () => (ui.dialog = "unavailable") },
     { id: "project", label: t("Project properties (title, CRS)…"), run: () => (ui.dialog = "project") },
     ...(ui.local ? [{ id: "save-local", label: t("Save to {name}", { name: ui.local }), hint: "Ctrl+S", run: save }] : []),
     { id: "save", label: ui.local ? t("Save a copy in this browser") : t("Save in this browser"), hint: ui.local ? undefined : "Ctrl+S", run: saveInBrowser },

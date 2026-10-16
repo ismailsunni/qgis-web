@@ -16,8 +16,11 @@ interface ProjectDoc {
   /** Other entries of the original .qgz (e.g. the auxiliary .qgd storage). */
   extra: Record<string, Uint8Array>;
   innerName: string;
-  /** Engine-only overrides of a layer's source, e.g. a remote file cached locally. */
-  local: Record<string, { datasource: string; provider: string }>;
+  /**
+   * Engine-only overrides of a layer's source: a remote file cached locally, or a file the user
+   * located elsewhere (`relocated`). The project keeps the original source for QGIS Desktop.
+   */
+  local: Record<string, { datasource: string; provider: string; relocated?: boolean }>;
 }
 
 let doc: ProjectDoc | null = null;
@@ -173,6 +176,8 @@ export function insertLayerXml(maplayer: Element | string, name: string, group: 
 }
 
 export function layerSource(id: string) {
+  const moved = doc!.local[id];
+  if (moved?.relocated) return { provider: moved.provider, datasource: moved.datasource };
   const el = mapLayerEl(id);
   return { provider: (el && findChild(el, "provider")?.textContent) ?? "", datasource: (el && findChild(el, "datasource")?.textContent) ?? "" };
 }
@@ -182,7 +187,7 @@ const REMOTE_PROVIDERS = ["wms", "vectortile", "wfs", "arcgismapserver", "arcgis
 /** Layers the browser reads instead of QGIS (network sources, MBTiles). */
 export function isRemote(id: string) {
   const { provider, datasource } = layerSource(id);
-  return REMOTE_PROVIDERS.includes(provider.toLowerCase()) || datasource.startsWith("/vsicurl/") || /\.mbtiles$/i.test(datasource) || id in doc!.local;
+  return REMOTE_PROVIDERS.includes(provider.toLowerCase()) || datasource.startsWith("/vsicurl/") || /\.mbtiles$/i.test(datasource) || (id in doc!.local && !doc!.local[id].relocated);
 }
 
 /** Layer opacity as stored in the project (also for layers the engine doesn't load). */

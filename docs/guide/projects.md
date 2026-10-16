@@ -14,7 +14,12 @@ QuarkGIS works on QGIS project files. The open project is kept as its QGIS XML: 
 | Saved in this browser | Listed on the start page. |
 | Demo | **Try the demo** |
 
-Layers whose data can't be found are flagged in the layer tree with a warning icon.
+Layers whose data can't be found are flagged in the layer tree with a warning icon, and the Layers panel offers to **locate the data**, like QGIS's *Handle Unavailable Layers*:
+
+- **Search a folder…** finds every missing file by name in a folder and its subfolders (pick the parent folder when the data sits beside the project folder, e.g. `../data/`).
+- **Browse…** picks the file of one layer (for a Shapefile, select its `.dbf`, `.shx` and `.prj` too); layers reading the same file are fixed together.
+
+The project keeps its original paths, so it still opens in QGIS Desktop. For projects opened from your computer in Chrome or Edge, the located files are remembered for the next time, and edits to them are saved back to them.
 
 ## Saving
 

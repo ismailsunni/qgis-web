@@ -20,10 +20,16 @@
     <button class="icon" title={t("Add group")} onclick={() => addGroup()}><Icon name="group" size={18} /></button>
     <button class="icon" title={t("Add data")} onclick={() => (ui.panel = "add")}><Icon name="add" size={18} /></button>
   </div>
-  {#if fileOnly && missing}
+  {#if missing}
     <div class="notice">
-      <p>{missing === 1 ? t("1 layer reads a file next to the project, which the browser can only open with access to the folder.") : t("{n} layers read files next to the project, which the browser can only open with access to the folder.", { n: missing })}</p>
-      <button class="primary" onclick={() => openFolder(fileOnly)}><Icon name="folder" size={16} /> {t("Open the project folder")}</button>
+      {#if fileOnly}
+        <p>{missing === 1 ? t("1 layer reads a file next to the project, which the browser can only open with access to the folder.") : t("{n} layers read files next to the project, which the browser can only open with access to the folder.", { n: missing })}</p>
+        <button class="primary" onclick={() => openFolder(fileOnly)}><Icon name="folder" size={16} /> {t("Open the project folder")}</button>
+        <button class="link" onclick={() => (ui.dialog = "unavailable")}>{t("The data is somewhere else…")}</button>
+      {:else}
+        <p>{missing === 1 ? t("1 layer can't find its data.") : t("{n} layers can't find their data.", { n: missing })}</p>
+        <button class="primary" onclick={() => (ui.dialog = "unavailable")}><Icon name="search" size={16} /> {t("Locate the data…")}</button>
+      {/if}
     </div>
   {/if}
   {#if !tree.length}<p class="muted pad">{t("This project has no layers yet. Add data to get started.")}</p>{/if}

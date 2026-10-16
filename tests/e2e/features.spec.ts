@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { existsSync, readFileSync } from "node:fs";
+import { unzipSync, zipSync, strFromU8, strToU8 } from "fflate";
 import { boot, layers } from "./helpers";
 
 /** UI-level checks of the main features, on the demo project. */
@@ -359,4 +360,32 @@ test("a project file opened alone offers its folder for the missing data", async
   await page.getByRole("button", { name: "Open the project folder" }).click();
   await expect(page.locator(".notice")).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => { const A = (globalThis as any).quarkgisApp; return A.tree.flatLayers(A.tree.snapshotTree()).filter((l: any) => !l.valid).length; })).toBe(0);
+});
+
+test("layers whose data is outside the project folder can be located", async ({ page }) => {
+  // The demo project, pointing at ../data/world.gpkg instead of ./world.gpkg.
+  const z = unzipSync(readFileSync("public/projects/world/world.qgz"));
+  const qgs = Object.keys(z).find((n) => n.endsWith(".qgs"))!;
+  z[qgs] = strToU8(strFromU8(z[qgs]).replaceAll("./world.gpkg", "../data/world.gpkg"));
+  await boot(page);
+  await page.evaluate(async (qgz) => {
+    const root = await (await navigator.storage.getDirectory()).getDirectoryHandle("moved", { create: true });
+    const proj = await root.getDirectoryHandle("proj", { create: true });
+    const data = await root.getDirectoryHandle("data", { create: true });
+    const put = async (d: FileSystemDirectoryHandle, name: string, bytes: ArrayBuffer | Uint8Array) => {
+      const w = await (await d.getFileHandle(name, { create: true })).createWritable();
+      await w.write(bytes as ArrayBuffer);
+      await w.close();
+    };
+    await put(proj, "moved.qgz", new Uint8Array(qgz));
+    await put(data, "world.gpkg", await (await fetch(new URL("projects/world/world.gpkg", location.href))).arrayBuffer());
+    let n = 0;
+    (window as any).showDirectoryPicker = async () => (n++ === 0 ? proj : root);
+  }, [...zipSync(z)]);
+  await page.getByText("Open project folder").click();
+  await expect(page.locator(".notice")).toContainText("3 layers can't find their data");
+  await page.getByRole("button", { name: "Locate the data…" }).click();
+  await page.getByRole("button", { name: "Search a folder…" }).click();
+  await expect(page.locator(".notice")).toHaveCount(0);
+  expect(await page.evaluate(() => new XMLSerializer().serializeToString((globalThis as any).quarkgisApp.doc.project().xml).includes("../data/world.gpkg"))).toBe(true);
 });
