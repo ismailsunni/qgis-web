@@ -11,7 +11,7 @@ Go to **<https://ismailsunni.id/quarkgis/>**. The start page offers:
 ![Start page](assets/screenshots/welcome.png)
 
 - **Open project folder**: pick the folder holding your `.qgz` and its data. Use this when the project reads files next to it.
-- **Open files**: pick a `.qgs` / `.qgz` and its data files, or a GeoPackage with an embedded project.
+- **Open project file**: pick a `.qgs` / `.qgz` (select its data files too, or allow access to its folder when asked), or a GeoPackage with an embedded project.
 - **New project**: an empty project, then add data.
 - **Try the demo**: a world map from Natural Earth.
 - **Saved in this browser**: projects you saved earlier.

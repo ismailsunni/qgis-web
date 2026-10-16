@@ -7,7 +7,7 @@ QuarkGIS works on QGIS project files. The open project is kept as its QGIS XML: 
 | Source | How |
 | --- | --- |
 | Project folder | **Open project folder** on the start page, or drop the folder. Data paths relative to the project resolve as in Desktop. |
-| Files | **Open files**: the `.qgs` / `.qgz` plus its data files. |
+| Project file | **Open project file**: the `.qgs` / `.qgz`, plus its data files if you select them. If layers read files next to the project, the Layers panel offers to open the project folder. |
 | GeoPackage with a project | Open the `.gpkg`; a project stored in it (*Save to GeoPackage* in Desktop) opens with its data. |
 | URL | `?url=https://…/project.qgz`. Data is fetched next to it (needs CORS). |
 | Shared link | `?gist=owner/id` opens a published map, see [Sharing](sharing.md). |

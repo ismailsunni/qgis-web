@@ -40,8 +40,8 @@
         {#if window.top !== window}<a href={location.href} target="_blank" rel="noopener">{t("Open the map in a new tab")}</a>{/if}
       {/if}
       <div class="actions">
-        <button class="primary" onclick={openFolder}><Icon name="folder" size={18} /> {t("Open project folder")}</button>
-        <button onclick={openProjectFiles}><Icon name="file" size={18} /> {t("Open files")}</button>
+        <button class="primary" onclick={() => openFolder()}><Icon name="folder" size={18} /> {t("Open project folder")}</button>
+        <button onclick={openProjectFiles}><Icon name="file" size={18} /> {t("Open project file")}</button>
         <button onclick={newProject}><Icon name="add" size={18} /> {t("New project")}</button>
         <button onclick={openDemo}>{t("Try the demo")}</button>
       </div>

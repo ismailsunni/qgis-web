@@ -1,7 +1,7 @@
 import { t } from "./i18n";
 import { LayerType, type QgsLayerTreeNode, type QgsLayerTreeLayer } from "qgis-js";
 import { engine } from "./engine";
-import { child, mapLayerEl, removeLayerXml, treeChildren, treeEl, treeRootEl, project, isRemote, xmlOpacity } from "./doc";
+import { child, mapLayerEl, removeLayerXml, treeChildren, treeEl, treeRootEl, project, isRemote, xmlOpacity, missingData } from "./doc";
 import { apply } from "./commit";
 import { snapshot } from "./history";
 import { redraw } from "./map";
@@ -41,7 +41,7 @@ export function snapshotTree(): TreeNode[] {
       isGroup: false,
       layerId: (n as QgsLayerTreeLayer).layerId(),
       layerType: layer?.type(),
-      valid: !!layer?.isValid(),
+      valid: !!layer?.isValid() && !missingData((n as QgsLayerTreeLayer).layerId()),
       remote: isRemote((n as QgsLayerTreeLayer).layerId()),
       editing: ui.editing === (n as QgsLayerTreeLayer).layerId(),
       selected: ui.selection[(n as QgsLayerTreeLayer).layerId()]?.length ?? 0,

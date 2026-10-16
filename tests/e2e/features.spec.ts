@@ -341,3 +341,22 @@ test("layer menu on right-click, closed by clicking elsewhere; layer properties 
   await dialog.getByRole("button", { name: "Apply filter" }).click();
   await expect.poll(() => page.evaluate(() => { const A = (globalThis as any).quarkgisApp; return A.engine.findMapLayer(A.ui.current).featureCount(); })).toBe(51);
 });
+
+test("a project file opened alone offers its folder for the missing data", async ({ page }) => {
+  await boot(page);
+  await page.evaluate(async () => {
+    const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle("single", { create: true });
+    for (const f of ["world.qgz", "world.gpkg"]) {
+      const w = await (await dir.getFileHandle(f, { create: true })).createWritable();
+      await w.write(await (await fetch(new URL(`projects/world/${f}`, location.href))).arrayBuffer());
+      await w.close();
+    }
+    (window as any).showOpenFilePicker = async () => [await dir.getFileHandle("world.qgz")];
+    (window as any).showDirectoryPicker = async () => dir;
+  });
+  await page.getByRole("button", { name: "Open project file" }).click();
+  await expect(page.locator(".notice")).toContainText("3 layers");
+  await page.getByRole("button", { name: "Open the project folder" }).click();
+  await expect(page.locator(".notice")).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => { const A = (globalThis as any).quarkgisApp; return A.tree.flatLayers(A.tree.snapshotTree()).filter((l: any) => !l.valid).length; })).toBe(0);
+});

@@ -28,8 +28,8 @@ async function readDir(dir: FileSystemDirectoryHandle, prefix: string): Promise<
 
 const fileHandles = (files: PickedFile[]) => Object.fromEntries(files.filter((f) => f.handle).map((f) => [f.path, f.handle!]));
 
-export async function pickFolder() {
-  const dir = await (window as unknown as { showDirectoryPicker(o: object): Promise<FileSystemDirectoryHandle> }).showDirectoryPicker({ id: "quarkgis", mode: "readwrite" });
+export async function pickFolder(startIn?: FileSystemHandle) {
+  const dir = await (window as unknown as { showDirectoryPicker(o: object): Promise<FileSystemDirectoryHandle> }).showDirectoryPicker({ id: "quarkgis", mode: "readwrite", ...(startIn && { startIn }) });
   return { files: await readDir(dir, `${dir.name}/`), dir };
 }
 
@@ -58,6 +58,9 @@ export async function linkProject(root: string, projectPath: string, name: strin
 }
 
 export const unlink = () => void (link = null);
+
+/** The project file's handle, when the project was opened as a single file (no folder access). */
+export const projectFileHandle = () => (link && !link.dir ? link.files[link.projectPath] : undefined);
 
 async function writable(h: FileSystemHandle) {
   const p = h as FileSystemHandle & { queryPermission(o: object): Promise<string>; requestPermission(o: object): Promise<string> };

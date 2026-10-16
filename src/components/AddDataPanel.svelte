@@ -36,8 +36,8 @@
 
 <section class="stack">
   <h3>{t("Open a project")}</h3>
-  <button onclick={openFolder}><Icon name="folder" size={18} /> {t("Open project folder…")}</button>
-  <button onclick={openProjectFiles}><Icon name="file" size={18} /> {t("Open project files…")}</button>
+  <button onclick={() => openFolder()}><Icon name="folder" size={18} /> {t("Open project folder…")}</button>
+  <button onclick={openProjectFiles}><Icon name="file" size={18} /> {t("Open project file…")}</button>
   <form class="row" onsubmit={(e) => { e.preventDefault(); if (url) openUrl(url); }}>
     <input type="url" placeholder="https://…/project.qgz" bind:value={url} required />
     <button type="submit"><Icon name="link" size={16} /> {t("Open")}</button>

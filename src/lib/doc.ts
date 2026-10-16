@@ -191,3 +191,18 @@ export function xmlOpacity(id: string) {
   const v = el?.querySelector("pipe > rasterrenderer")?.getAttribute("opacity") ?? (el && findChild(el, "layerOpacity")?.textContent);
   return v ? Number(v) : 1;
 }
+
+/** The local file a layer reads (absolute, in the session folder), or null for web and database sources. */
+export function layerFile(id: string) {
+  const { provider, datasource } = layerSource(id);
+  if (isRemote(id) || !["ogr", "gdal", "delimitedtext"].includes(provider)) return null;
+  const path = provider === "delimitedtext" ? datasource.replace(/^file:(\/\/)?/, "").split("?")[0] : datasource.split("|")[0].replace(/^GPKG:(.*):[^:]+$/, "$1");
+  if (!path || /^\w{2,}:/.test(path)) return null;
+  return decodeURIComponent(path.startsWith("/") ? path : new URL(path, `file://${doc!.dir}/`).pathname);
+}
+
+/** QGIS may report a layer valid from the details stored in the project even when its file is absent. */
+export function missingData(id: string) {
+  const file = layerFile(id);
+  return !!file && !exists(file);
+}

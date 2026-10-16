@@ -120,7 +120,7 @@ const pickWith = async (pick: () => Promise<{ files: PickedFile[]; dir: FileSyst
 };
 
 /** Opens a project folder (linked to it where the browser allows, else read through a file input). */
-export const openFolder = () => (canLink ? pickWith(pickFolder) : document.getElementById("pick-folder")?.click());
+export const openFolder = (startIn?: FileSystemHandle) => (canLink ? pickWith(() => pickFolder(startIn)) : document.getElementById("pick-folder")?.click());
 export const openProjectFiles = () => (canLink ? pickWith(pickFiles) : document.getElementById("pick-files")?.click());
 export const openRecentLocal = (r: LocalRecent) => pickWith(() => readRecent(r), r.id);
 
