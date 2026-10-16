@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { canLink, pickFiles, pickFolder, projectFileHandle, linked, type PickedFile } from "../lib/localfs";
-  import { unavailableLayers, relocateAll, matchInFolder } from "../lib/relocate";
+  import { canLink, pickFiles, chooseFolder, projectHandle, type PickedFile } from "../lib/localfs";
+  import { unavailableLayers, relocateAll, matchInFolder, locateInFolder } from "../lib/relocate";
   import { pickedFiles } from "../lib/actions";
   import { ui, toast } from "../lib/state.svelte";
   import { t } from "../lib/i18n";
@@ -10,11 +10,11 @@
   let { onclose }: { onclose: () => void } = $props();
 
   const layers = $derived((ui.version, unavailableLayers()));
-  const startIn = () => linked()?.dir ?? projectFileHandle();
+  const startIn = () => projectHandle();
 
   /** Files from the File System Access pickers, or from a file input where they aren't available. */
   function choose(folder: boolean): Promise<PickedFile[]> {
-    if (canLink) return (folder ? pickFolder(startIn()) : pickFiles(startIn())).then((r) => r.files);
+    if (canLink) return pickFiles(startIn()).then((r) => r.files);
     return new Promise((resolve) => {
       const input = Object.assign(document.createElement("input"), { type: "file", multiple: true, webkitdirectory: folder });
       input.onchange = () => resolve(pickedFiles(input.files!));
@@ -40,7 +40,17 @@
       const files = await choose(false);
       return layers.filter((l) => l.path === path).map((l): [string, PickedFile[]] => [l.id, files]);
     });
-  const search = () => run(async () => matchInFolder(await choose(true)));
+  const search = async () => {
+    if (!canLink) return run(async () => matchInFolder(await choose(true)));
+    try {
+      const n = await locateInFolder(await chooseFolder(startIn()));
+      const left = unavailableLayers().length;
+      toast(left ? t("Found {n}; {left} still missing", { n, left }) : t("Found the data of {n} layers", { n }));
+      if (!left) onclose();
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") toast((e as Error).message);
+    }
+  };
 </script>
 
 <svelte:window onkeydown={(e) => e.key === "Escape" && onclose()} />

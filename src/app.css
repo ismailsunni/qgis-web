@@ -447,3 +447,4 @@ a.link { color: var(--green-dark); }
 .notice p { margin: 0; }
 .dialog.unavailable { width: min(700px, calc(100vw - 32px)); }
 .unavailable .source { word-break: break-all; font-size: 12px; }
+.missing-files { margin: 0; padding-left: 18px; font-size: 12px; word-break: break-all; }

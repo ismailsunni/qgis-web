@@ -1,7 +1,7 @@
 import { hasProject, missingData, layerSource, mapLayerEl, project, findChild, reload, layerIds } from "./doc";
 import { exists, unsavedFiles, writeFile } from "./engine";
 import { redraw } from "./map";
-import { linked, rememberRelocation, type PickedFile } from "./localfs";
+import { allowedFolders, findIn, linked, permission, readDir, rememberFolder, rememberRelocation, writable, type PickedFile } from "./localfs";
 import { changed } from "./state.svelte";
 
 /**
@@ -71,4 +71,49 @@ export function matchInFolder(files: PickedFile[]): [string, PickedFile[]][] {
     const folder = best.path.slice(0, best.path.length - base(best.path).length);
     return [[u.id, files.filter((f) => f.path.startsWith(folder) && !f.path.slice(folder.length).includes("/") && stem(base(f.path)) === stem(u.file))]];
   });
+}
+
+/** Looks for the missing data in a folder the user allowed: by the project's paths, then by name. */
+export async function locateInFolder(dir: FileSystemDirectoryHandle) {
+  await rememberFolder(dir);
+  const found: [string, PickedFile[]][] = [];
+  for (const u of unavailableLayers()) {
+    const files = await findIn(dir, u.path);
+    if (files) found.push([u.id, files]);
+  }
+  const rest = unavailableLayers().filter((u) => !found.some(([id]) => id === u.id));
+  if (rest.length) found.push(...matchInFolder(await readDir(dir, `${dir.name}/`)).filter(([id]) => rest.some((u) => u.id === id)));
+  return relocateAll(found);
+}
+
+/**
+ * Finds missing data in the folders allowed before, without asking where permission is still
+ * granted. Returns the allowed folders that need the user's permission again (one click).
+ */
+export async function locateInAllowed(folders?: FileSystemDirectoryHandle[]) {
+  const ask = !!folders;
+  const needs: FileSystemDirectoryHandle[] = [];
+  const found: [string, PickedFile[]][] = [];
+  for (const dir of folders ?? (await allowedFolders()).map((f) => f.dir)) {
+    const missing = unavailableLayers().filter((u) => !found.some(([id]) => id === u.id));
+    if (!missing.length) break;
+    if ((await permission(dir)) !== "granted" && !(ask && (await writable(dir)))) {
+      needs.push(dir);
+      continue;
+    }
+    for (const u of missing) {
+      const files = await findIn(dir, u.path);
+      if (files) found.push([u.id, files]);
+    }
+    if (found.length) await rememberFolder(dir);
+  }
+  if (found.length) await relocateAll(found);
+  return needs;
+}
+
+/** Missing files with the layers reading them, e.g. "../data/world.gpkg (Countries, Rivers)". */
+export function missingSummary(list = unavailableLayers()) {
+  const byPath = new Map<string, string[]>();
+  for (const u of list) byPath.set(u.path, [...(byPath.get(u.path) ?? []), u.name]);
+  return [...byPath].map(([path, names]) => `${path} (${names.join(", ")})`).join("; ");
 }

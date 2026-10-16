@@ -1,16 +1,46 @@
 <script lang="ts">
-  import { snapshotTree, addGroup, flatLayers } from "../lib/tree";
-  import { projectFileHandle } from "../lib/localfs";
-  import { openFolder } from "../lib/actions";
+  import { snapshotTree, addGroup } from "../lib/tree";
+  import { canLink, chooseFolder, projectHandle } from "../lib/localfs";
+  import { unavailableLayers, locateInFolder, locateInAllowed } from "../lib/relocate";
+  import { toast } from "../lib/state.svelte";
   import Icon from "./Icon.svelte";
   import { ui } from "../lib/state.svelte";
   import LayerNode from "./LayerNode.svelte";
   import { t } from "../lib/i18n";
 
   const tree = $derived.by(() => (ui.version, ui.phase === "ready" ? snapshotTree() : []));
-  // Opened as a single file, the browser can't read the data next to it: offer the folder.
-  const fileOnly = $derived((ui.version, ui.local !== null && projectFileHandle()));
-  const missing = $derived(flatLayers(tree).filter((l) => !l.valid && !l.remote).length);
+  const missing = $derived((ui.version, ui.phase === "ready" ? unavailableLayers() : []));
+
+  // What to pick: the browser can't follow a path by itself, only inside a folder the user allows.
+  const hint = $derived.by(() => {
+    const p = missing[0]?.path ?? "";
+    if (p.startsWith("/") || /^[A-Za-z]:/.test(p)) return t("Choose {folder} or a folder above it.", { folder: p.replace(/[\\/][^\\/]*$/, "") });
+    if (p.startsWith("..")) return t("Choose a folder that holds both the project and {path} (their common parent).", { path: p });
+    return t("Choose the project's folder.");
+  });
+
+  async function done(found: number) {
+    const left = unavailableLayers().length;
+    toast(left ? t("Found {n}; {left} still missing", { n: found, left }) : t("Found the data of {n} layers", { n: found }));
+  }
+
+  async function chooseRoot() {
+    try {
+      const before = missing.length;
+      await locateInFolder(await chooseFolder(projectHandle()));
+      ui.needsAccess = [];
+      done(before - unavailableLayers().length);
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") toast((e as Error).message);
+    }
+  }
+
+  async function allow(dir: FileSystemDirectoryHandle) {
+    const before = missing.length;
+    const still = await locateInAllowed([dir]);
+    ui.needsAccess = ui.needsAccess.filter((d) => d !== dir && !still.includes(d));
+    done(before - unavailableLayers().length);
+  }
 </script>
 
 {#if ui.phase !== "ready"}
@@ -20,16 +50,22 @@
     <button class="icon" title={t("Add group")} onclick={() => addGroup()}><Icon name="group" size={18} /></button>
     <button class="icon" title={t("Add data")} onclick={() => (ui.panel = "add")}><Icon name="add" size={18} /></button>
   </div>
-  {#if missing}
+  {#if missing.length}
+    {@const paths = [...new Set(missing.map((u) => u.path))]}
     <div class="notice">
-      {#if fileOnly}
-        <p>{missing === 1 ? t("1 layer reads a file next to the project, which the browser can only open with access to the folder.") : t("{n} layers read files next to the project, which the browser can only open with access to the folder.", { n: missing })}</p>
-        <button class="primary" onclick={() => openFolder(fileOnly)}><Icon name="folder" size={16} /> {t("Open the project folder")}</button>
-        <button class="link" onclick={() => (ui.dialog = "unavailable")}>{t("The data is somewhere else…")}</button>
-      {:else}
-        <p>{missing === 1 ? t("1 layer can't find its data.") : t("{n} layers can't find their data.", { n: missing })}</p>
-        <button class="primary" onclick={() => (ui.dialog = "unavailable")}><Icon name="search" size={16} /> {t("Locate the data…")}</button>
+      <p>{missing.length === 1 ? t("1 layer can't find its data:") : t("{n} layers can't find their data:", { n: missing.length })}</p>
+      <ul class="missing-files">
+        {#each paths.slice(0, 4) as p}<li><code>{p}</code></li>{/each}
+        {#if paths.length > 4}<li>…</li>{/if}
+      </ul>
+      {#if canLink}
+        {#each ui.needsAccess.slice(0, 2) as dir}
+          <button class="primary" onclick={() => allow(dir)}><Icon name="folder" size={16} /> {t("Allow access to “{name}”", { name: dir.name })}</button>
+        {/each}
+        <button class:primary={!ui.needsAccess.length} onclick={chooseRoot}><Icon name="folder" size={16} /> {t("Choose the folder with the data…")}</button>
+        <p class="hint">{hint}</p>
       {/if}
+      <button class="link" onclick={() => (ui.dialog = "unavailable")}>{t("More options…")}</button>
     </div>
   {/if}
   {#if !tree.length}<p class="muted pad">{t("This project has no layers yet. Add data to get started.")}</p>{/if}

@@ -16,6 +16,7 @@
   import { zoomToSelection, selectAll, clearSelection } from "../lib/selection";
   import { t } from "../lib/i18n";
   import { dismiss } from "../lib/dismiss";
+  import { unavailableLayers } from "../lib/relocate";
 
   let { node }: { node: TreeNode } = $props();
   let showLegend = $state(false);
@@ -99,7 +100,7 @@
       </button>
     {/if}
     {#if !node.isGroup && !node.valid && !node.remote}
-      <span class="warn" title={t("Layer data not found")}><Icon name="warn" size={16} /></span>
+      <span class="warn" title={unavailableLayers().find((u) => u.id === node.layerId) ? t("Data not found: {files}", { files: unavailableLayers().find((u) => u.id === node.layerId)!.path }) : t("Layer data not found")}><Icon name="warn" size={16} /></span>
     {/if}
     {#if node.editing}<span class="badge">{t("editing")}</span>{/if}
     {#if node.selected}<button class="badge sel" title={t("Selected features: zoom to them")} onclick={() => { ui.current = node.layerId!; zoomToSelection(); }}>{node.selected}</button>{/if}

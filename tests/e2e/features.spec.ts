@@ -356,8 +356,8 @@ test("a project file opened alone offers its folder for the missing data", async
     (window as any).showDirectoryPicker = async () => dir;
   });
   await page.getByRole("button", { name: "Open project file" }).click();
-  await expect(page.locator(".notice")).toContainText("3 layers");
-  await page.getByRole("button", { name: "Open the project folder" }).click();
+  await expect(page.locator(".notice")).toContainText("world.gpkg");
+  await page.getByRole("button", { name: "Choose the folder with the data…" }).click();
   await expect(page.locator(".notice")).toHaveCount(0);
   await expect.poll(() => page.evaluate(() => { const A = (globalThis as any).quarkgisApp; return A.tree.flatLayers(A.tree.snapshotTree()).filter((l: any) => !l.valid).length; })).toBe(0);
 });
@@ -383,9 +383,9 @@ test("layers whose data is outside the project folder can be located", async ({ 
     (window as any).showDirectoryPicker = async () => (n++ === 0 ? proj : root);
   }, [...zipSync(z)]);
   await page.getByText("Open project folder").click();
-  await expect(page.locator(".notice")).toContainText("3 layers can't find their data");
-  await page.getByRole("button", { name: "Locate the data…" }).click();
-  await page.getByRole("button", { name: "Search a folder…" }).click();
+  await expect(page.locator(".notice")).toContainText("../data/world.gpkg");
+  // Picking the common parent: the project's relative path is followed to the file.
+  await page.getByRole("button", { name: "Choose the folder with the data…" }).click();
   await expect(page.locator(".notice")).toHaveCount(0);
   expect(await page.evaluate(() => new XMLSerializer().serializeToString((globalThis as any).quarkgisApp.doc.project().xml).includes("../data/world.gpkg"))).toBe(true);
 });

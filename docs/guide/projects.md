@@ -14,10 +14,11 @@ QuarkGIS works on QGIS project files. The open project is kept as its QGIS XML: 
 | Saved in this browser | Listed on the start page. |
 | Demo | **Try the demo** |
 
-Layers whose data can't be found are flagged in the layer tree with a warning icon, and the Layers panel offers to **locate the data**, like QGIS's *Handle Unavailable Layers*:
+Layers whose data can't be found are flagged with a warning icon; the Layers panel lists the missing files as written in the project (e.g. `../data/world.gpkg`) and helps you give the browser access, like QGIS's *Handle Unavailable Layers*. A web page can't open a path by itself, only inside a folder you allow:
 
-- **Search a folder…** finds every missing file by name in a folder and its subfolders (pick the parent folder when the data sits beside the project folder, e.g. `../data/`).
-- **Browse…** picks the file of one layer (for a Shapefile, select its `.dbf`, `.shx` and `.prj` too); layers reading the same file are fixed together.
+- **Choose the folder with the data…** opens the folder picker at the project. Pick the folder the hint names, e.g. the common parent of the project and `../data/`: the project's paths are followed from there (by file name as a fallback).
+- Allowed folders are remembered. Next time, data in them is found without asking, or with one click on **Allow access to “*folder*”** when the browser asks for permission again. This also works for other projects using the same data.
+- **More options…** has **Search a folder…** (by file name, in subfolders too) and **Browse…** for one layer's file (for a Shapefile, select its `.dbf`, `.shx` and `.prj` too); layers reading the same file are fixed together.
 
 The project keeps its original paths, so it still opens in QGIS Desktop. For projects opened from your computer in Chrome or Edge, the located files are remembered for the next time, and edits to them are saved back to them.
 

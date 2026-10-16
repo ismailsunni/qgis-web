@@ -19,7 +19,7 @@ import { showProject, hitBox, srid, setHighlight, zoomToFull, olMap as olMapRef 
 import { setVisible, snapshotTree, flatLayers } from "./tree";
 import { resetViews, savedExtent, previousView, nextView, toggleGrid } from "./navigation";
 import { isGeoTiff, pixelSampler } from "./raster";
-import { relocateAll } from "./relocate";
+import { relocateAll, locateInAllowed, unavailableLayers, missingSummary } from "./relocate";
 import { canLink, linked, linkProject, saveToDisk, readRelocations, pickFiles, pickFolder, readRecent, getRecent, unlink, type LocalRecent, type PickedFile } from "./localfs";
 import { ui, changed, toast, featureAttributes, type IdentifyHit } from "./state.svelte";
 import { t, N_ } from "./i18n";
@@ -28,6 +28,7 @@ function opened(name: string, storedId: string | null) {
   resetHistory();
   unlink();
   ui.local = null;
+  ui.needsAccess = [];
   ui.storedId = storedId;
   ui.dirty = false;
   ui.editing = null;
@@ -43,7 +44,7 @@ function opened(name: string, storedId: string | null) {
   if (saved) olMapRef().getView().fit(saved);
   resetViews();
   const broken = flatLayers(snapshotTree()).filter((l) => !l.valid && !l.remote);
-  if (broken.length) toast(t("Missing data for: {names}", { names: broken.map((l) => l.name).join(", ") }));
+  if (broken.length) toast(unavailableLayers().length ? t("Data not found: {files}", { files: missingSummary() }) : t("Missing data for: {names}", { names: broken.map((l) => l.name).join(", ") }));
   emit("projectLoaded", { name: ui.projectName, layers: flatLayers(snapshotTree()).map((l) => ({ id: l.layerId, name: l.name })) });
 }
 
@@ -111,6 +112,8 @@ export async function openFiles(files: PickedFile[], dir: FileSystemDirectoryHan
     // Data located outside the project folder last time: read it again from where it was found.
     const again = await readRelocations(relocated);
     if (again.length) await relocateAll(again);
+    // Then in the folders allowed before: silently, or with one click where permission lapsed.
+    if (unavailableLayers().length) ui.needsAccess = await locateInAllowed();
   } else rememberLast({ kind: "local", name: ui.projectName });
 }
 
