@@ -24,5 +24,5 @@
 
 {#if legend}
   <!-- Rendered at device resolution, shown at CSS size. -->
-  <div class="map-legend card"><img src={legend} alt="Legend" onload={(e) => (e.currentTarget.style.width = `${e.currentTarget.naturalWidth / Math.min(2, devicePixelRatio || 1)}px`)} /></div>
+  <div class="map-legend card"><img src={legend} alt="Legend" onload={(e) => { const img = e.currentTarget as HTMLImageElement; img.style.width = `${img.naturalWidth / Math.min(2, devicePixelRatio || 1)}px`; }} /></div>
 {/if}
