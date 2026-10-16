@@ -1,5 +1,6 @@
 import { FeatureRequestFlag, GeometryType, type QgsVectorLayer } from "qgis-js";
 import templatesXml from "../templates/style.xml?raw";
+import renderersXml from "../templates/renderers.xml?raw";
 import { child, findChild, mapLayerEl, project } from "./doc";
 import { engine, findMapLayer, free } from "./engine";
 
@@ -490,3 +491,140 @@ export function writePopup(id: string, p: { display: string; mapTip: string }) {
 /** A starting map tip: every field as a small table, with QGIS [% %] placeholders. */
 export const defaultMapTip = (fields: string[]) =>
   `<table>\n${fields.map((f) => `  <tr><th align="left">${f}</th><td>[% "${f.replaceAll('"', '""')}" %]</td></tr>`).join("\n")}\n</table>`;
+
+// ---- Rule-based, heatmap and point cluster renderers ----------------------------------------
+
+const rendererTemplates = new DOMParser().parseFromString(renderersXml, "application/xml");
+const rendererTemplate = (type: string) => project().xml.importNode(rendererTemplates.querySelector(`templates > renderer-v2[type="${type}"]`)!, true) as Element;
+
+export interface Rule { label: string; filter: string; color: string; minScale: number; maxScale: number; enabled: boolean; nested: boolean }
+
+const ruleEls = (id: string) => [...(rendererEl(id)?.querySelectorAll(":scope > rules > rule") ?? [])];
+
+export function readRules(id: string): Rule[] {
+  const r = rendererEl(id)!;
+  return ruleEls(id).map((el) => {
+    const sym = r.querySelector(`:scope > symbols > symbol[name="${el.getAttribute("symbol")}"]`);
+    return {
+      label: el.getAttribute("label") ?? "",
+      filter: el.getAttribute("filter") ?? "",
+      color: sym ? readSymbol(sym).color : "#999999",
+      // QGIS: scalemaxdenom is the most zoomed-out scale shown, scalemindenom the most zoomed-in.
+      minScale: Number(el.getAttribute("scalemaxdenom") ?? 0),
+      maxScale: Number(el.getAttribute("scalemindenom") ?? 0),
+      enabled: el.getAttribute("checkstate") !== "0",
+      nested: el.querySelector(":scope > rule") !== null,
+    };
+  });
+}
+
+const quoteValue = (v: string) => (v !== "" && !Number.isNaN(Number(v)) ? v : `'${v.replaceAll("'", "''")}'`);
+/** A field name as an expression; an attribute that is already an expression is kept as is. */
+const quoteField = (f: string) => (/^"[^"]*"$/.test(f) || /[()+\-*/|]/.test(f) ? f : `"${f}"`);
+
+/** Converts the current renderer to rules (each category or class becomes a rule), as QGIS does. */
+export function setRuleBased(id: string) {
+  const cur = readRenderer(id);
+  const r = rendererTemplate("RuleRenderer");
+  const rules = r.querySelector(":scope > rules")!;
+  rules.setAttribute("key", uuid());
+  rules.replaceChildren();
+  const symbols = child(r, "symbols");
+  symbols.replaceChildren();
+  const add = (label: string, filter: string, sym: Element) => {
+    const name = String(rules.children.length);
+    const el = project().xml.createElement("rule");
+    for (const [k, v] of Object.entries({ key: uuid(), label, filter, symbol: name })) el.setAttribute(k, v);
+    rules.appendChild(el);
+    symbols.appendChild(cloneSymbol(sym, name));
+  };
+  const old = rendererEl(id);
+  const symOf = (n: string | null) => old?.querySelector(`:scope > symbols > symbol[name="${n}"]`) ?? baseSymbol(id);
+  const field = quoteField(cur.attr);
+  if (cur.type === "categorizedSymbol") old!.querySelectorAll(":scope > categories > category").forEach((c) => add(c.getAttribute("label") ?? "", c.getAttribute("value") === "" ? "ELSE" : `${field} = ${quoteValue(c.getAttribute("value") ?? "")}`, symOf(c.getAttribute("symbol"))));
+  else if (cur.type === "graduatedSymbol") old!.querySelectorAll(":scope > ranges > range").forEach((c) => add(c.getAttribute("label") ?? "", `${field} >= ${c.getAttribute("lower")} AND ${field} <= ${c.getAttribute("upper")}`, symOf(c.getAttribute("symbol"))));
+  else add("All features", "", baseSymbol(id));
+  replaceRenderer(id, r);
+}
+
+export function setRule(id: string, index: number, p: Partial<Rule>) {
+  const el = ruleEls(id)[index];
+  if (!el) return;
+  if (p.label !== undefined) el.setAttribute("label", p.label);
+  if (p.filter !== undefined) p.filter ? el.setAttribute("filter", p.filter) : el.removeAttribute("filter");
+  if (p.minScale !== undefined) p.minScale ? el.setAttribute("scalemaxdenom", String(p.minScale)) : el.removeAttribute("scalemaxdenom");
+  if (p.maxScale !== undefined) p.maxScale ? el.setAttribute("scalemindenom", String(p.maxScale)) : el.removeAttribute("scalemindenom");
+  if (p.enabled !== undefined) p.enabled ? el.removeAttribute("checkstate") : el.setAttribute("checkstate", "0");
+  if (p.color) {
+    const sym = rendererEl(id)!.querySelector(`:scope > symbols > symbol[name="${el.getAttribute("symbol")}"]`);
+    if (sym) writeSymbol(sym, { color: p.color });
+  }
+}
+
+export function addRule(id: string) {
+  const r = rendererEl(id)!;
+  const names = [...r.querySelectorAll(":scope > symbols > symbol")].map((s) => Number(s.getAttribute("name"))).filter(Number.isFinite);
+  const name = String(names.length ? Math.max(...names) + 1 : 0);
+  const el = project().xml.createElement("rule");
+  for (const [k, v] of Object.entries({ key: uuid(), label: "New rule", filter: "TRUE", symbol: name })) el.setAttribute(k, v);
+  r.querySelector(":scope > rules")!.appendChild(el);
+  child(r, "symbols").appendChild(cloneSymbol(baseSymbol(id), name, rampColors("Bold", names.length + 1).at(-1)));
+}
+
+export function removeRule(id: string, index: number) {
+  const el = ruleEls(id)[index];
+  if (!el) return;
+  rendererEl(id)!.querySelector(`:scope > symbols > symbol[name="${el.getAttribute("symbol")}"]`)?.remove();
+  el.remove();
+}
+
+export interface Heatmap { radius: number; ramp: string; weight: string; maxValue: number }
+
+export function readHeatmap(id: string): Heatmap {
+  const r = rendererEl(id)!;
+  return { radius: Number(r.getAttribute("radius") ?? 10), ramp: r.getAttribute("qgisweb_ramp") ?? "YlOrRd", weight: r.getAttribute("weight_expression") ?? "", maxValue: Number(r.getAttribute("max_value") ?? 0) };
+}
+
+/** A QGIS gradient color ramp (transparent at the low end, so sparse areas fade out). */
+function writeGradient(ramp: Element, name: string) {
+  const stops = rampColors(name, 6);
+  const opt = (k: string, v: string) => {
+    let o = ramp.querySelector(`:scope > Option > Option[name="${k}"]`);
+    if (!o) {
+      o = ramp.ownerDocument.createElement("Option");
+      o.setAttribute("name", k);
+      o.setAttribute("type", "QString");
+      ramp.querySelector(":scope > Option")!.appendChild(o);
+    }
+    o.setAttribute("value", v);
+  };
+  opt("color1", toQgis(stops[0], 0));
+  opt("color2", toQgis(stops.at(-1)!));
+  opt("stops", stops.slice(1, -1).map((c, i) => `${((i + 1) / (stops.length - 1)).toFixed(3)};${toQgis(c)}`).join(":"));
+}
+
+export function setHeatmap(id: string, h: Partial<Heatmap> = {}) {
+  const cur = rendererEl(id)?.getAttribute("type") === "heatmapRenderer" ? readHeatmap(id) : { radius: 10, ramp: "YlOrRd", weight: "", maxValue: 0 };
+  const next = { ...cur, ...h };
+  const r = rendererTemplate("heatmapRenderer");
+  r.setAttribute("radius", String(next.radius));
+  r.setAttribute("radius_unit", "0");
+  r.setAttribute("weight_expression", next.weight);
+  r.setAttribute("max_value", String(next.maxValue));
+  r.setAttribute("qgisweb_ramp", next.ramp);
+  writeGradient(r.querySelector(":scope > colorramp")!, next.ramp);
+  replaceRenderer(id, r);
+}
+
+/** Point clusters: nearby points are drawn as one counted symbol; the current renderer draws the rest. */
+export function setCluster(id: string, tolerance = 3) {
+  const old = rendererEl(id);
+  const r = rendererTemplate("pointCluster");
+  r.setAttribute("tolerance", String(tolerance));
+  const embedded = r.querySelector(":scope > renderer-v2");
+  const inner = old && !["pointCluster", "heatmapRenderer"].includes(old.getAttribute("type") ?? "") ? (old.cloneNode(true) as Element) : null;
+  if (embedded && inner) embedded.replaceWith(inner);
+  replaceRenderer(id, r);
+}
+
+export const clusterTolerance = (id: string) => Number(rendererEl(id)?.getAttribute("tolerance") ?? 3);

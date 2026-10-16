@@ -6,6 +6,7 @@
   import * as S from "../lib/style";
   import Icon from "./Icon.svelte";
   import ExpressionInput from "./ExpressionInput.svelte";
+  import RasterStyle from "./RasterStyle.svelte";
 
   const FONTS = ["Open Sans", "Noto Sans", "DejaVu Sans", "Arial", "Helvetica", "Roboto", "Liberation Sans", "Times New Roman", "Georgia"];
 
@@ -115,16 +116,25 @@
     </dl>
   </section>
 
+  {#if info.type === "Raster"}
+    {#key info.id}<RasterStyle layerId={info.id} />{/key}
+  {/if}
+
   {#if info.renderer}
     {@const r = info.renderer}
     <section class="stack">
       <h3>Symbology</h3>
-      {#if ["singleSymbol", "categorizedSymbol", "graduatedSymbol", "none"].includes(r.type)}
+      {#if ["singleSymbol", "categorizedSymbol", "graduatedSymbol", "RuleRenderer", "heatmapRenderer", "pointCluster", "none"].includes(r.type)}
         <label class="field">Type
           <select value={r.type} onchange={(e) => setType(e.currentTarget.value)}>
             <option value="singleSymbol">Single symbol</option>
             <option value="categorizedSymbol">Categorized</option>
             <option value="graduatedSymbol">Graduated</option>
+            <option value="RuleRenderer">Rule-based</option>
+            {#if info.kind === "marker"}
+              <option value="heatmapRenderer">Heatmap</option>
+              <option value="pointCluster">Point clusters</option>
+            {/if}
             {#if r.type === "none"}<option value="none">Default</option>{/if}
           </select>
         </label>
@@ -133,8 +143,45 @@
         <div class="row">
           <button onclick={() => setType("singleSymbol")}>Single</button>
           <button onclick={() => setType("categorizedSymbol")}>Categorized</button>
-          <button onclick={() => setType("graduatedSymbol")}>Graduated</button>
+          <button onclick={() => setType("RuleRenderer")}>Rule-based</button>
         </div>
+      {/if}
+
+      {#if r.type === "RuleRenderer"}
+        {@const rules = S.readRules(info.id)}
+        <ul class="rules">
+          {#each rules as rule, i}
+            <li>
+              <div class="row">
+                <input type="checkbox" checked={rule.enabled} aria-label="Show" onchange={(e) => apply(() => S.setRule(info.id, i, { enabled: e.currentTarget.checked }), "rule")} />
+                <input type="color" value={rule.color} onchange={(e) => apply(() => S.setRule(info.id, i, { color: e.currentTarget.value }), "rule color")} />
+                <input value={rule.label} aria-label="Label" onchange={(e) => apply(() => S.setRule(info.id, i, { label: e.currentTarget.value }), "rule label")} />
+                <button class="icon" title="Remove rule" aria-label="Remove rule" onclick={() => apply(() => S.removeRule(info.id, i), "remove rule")}><Icon name="trash" size={15} /></button>
+              </div>
+              <ExpressionInput layerId={info.id} value={rule.filter} fields={info.fields} placeholder="Filter (empty: all features, ELSE: the rest)" onchange={(v) => apply(() => S.setRule(info.id, i, { filter: v }), "rule filter")} />
+              <div class="row scales">
+                <label>1:<input type="number" min="0" placeholder="no limit" value={rule.minScale || ""} title="Hidden when zoomed out beyond this scale" onchange={(e) => apply(() => S.setRule(info.id, i, { minScale: e.currentTarget.valueAsNumber || 0 }), "rule scale")} /></label>
+                <span class="muted">to</span>
+                <label>1:<input type="number" min="0" placeholder="no limit" value={rule.maxScale || ""} title="Hidden when zoomed in beyond this scale" onchange={(e) => apply(() => S.setRule(info.id, i, { maxScale: e.currentTarget.valueAsNumber || 0 }), "rule scale")} /></label>
+              </div>
+              {#if rule.nested}<p class="hint">Has nested rules (edit them as QML).</p>{/if}
+            </li>
+          {/each}
+        </ul>
+        <button onclick={() => apply(() => S.addRule(info.id), "add rule")}><Icon name="add" size={16} /> Add rule</button>
+      {:else if r.type === "heatmapRenderer"}
+        {@const h = S.readHeatmap(info.id)}
+        <div class="grid2">
+          <label class="field">Radius (mm)<input type="number" min="1" step="1" value={h.radius} onchange={(e) => apply(() => S.setHeatmap(info.id, { radius: e.currentTarget.valueAsNumber }), "heatmap radius")} /></label>
+          <label class="field">Colors<select value={h.ramp} onchange={(e) => apply(() => S.setHeatmap(info.id, { ramp: e.currentTarget.value }), "heatmap colors")}>{#each Object.keys(S.RAMPS).filter((n) => !S.RAMPS[n].qualitative) as name}<option>{name}</option>{/each}</select></label>
+          <label class="field">Maximum (0 = automatic)<input type="number" min="0" value={h.maxValue} onchange={(e) => apply(() => S.setHeatmap(info.id, { maxValue: e.currentTarget.valueAsNumber || 0 }), "heatmap maximum")} /></label>
+        </div>
+        <label class="field">Weight points by
+          <ExpressionInput layerId={info.id} value={h.weight} fields={info.fields} placeholder="(equal weights)" onchange={(v) => apply(() => S.setHeatmap(info.id, { weight: v }), "heatmap weight")} />
+        </label>
+      {:else if r.type === "pointCluster"}
+        <label class="field">Cluster points closer than (mm)<input type="number" min="0.5" step="0.5" value={S.clusterTolerance(info.id)} onchange={(e) => { const t = e.currentTarget.valueAsNumber; apply(() => S.setCluster(info.id, t), "cluster distance"); }} /></label>
+        <p class="hint">Points outside clusters keep the layer's previous symbology (editable as QML).</p>
       {/if}
 
       {#if base && ["singleSymbol", "categorizedSymbol", "graduatedSymbol"].includes(r.type)}
