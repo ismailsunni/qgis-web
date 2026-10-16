@@ -47,6 +47,14 @@
     lasso: "M7 21c1-2 0-4-2-4a2 2 0 0 1 0-4C3 9 6 4 12 4s10 3 9 7-6 6-11 6",
     profile: "M3 19l5-8 4 4 4-9 5 13H3Z",
     chart: "M4 20V10m6 10V4m6 16v-7m4 7H2",
+    back: "M15 6l-6 6 6 6",
+    forward: "M9 6l6 6-6 6",
+    grid: "M3 9h18M3 15h18M9 3v18M15 3v18",
+    keyboard: "M3 6h18v12H3V6Zm4 4h.01M11 10h.01M15 10h.01M7 14h10",
+    clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 4v5l3 2",
+    move: "M12 3v18M3 12h18M12 3l-3 3m3-3 3 3M12 21l-3-3m3 3 3-3M3 12l3-3m-3 3 3 3M21 12l-3-3m3 3-3 3",
+    rotate: "M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5",
+    explode: "M4 4h6v6H4V4Zm10 10h6v6h-6v-6ZM14 4h6v6h-6V4Z",
     warn: "M12 3 2 20h20L12 3Zm0 6v5m0 3v.5",
   };
   let { name, size = 20 }: { name: keyof typeof paths; size?: number } = $props();

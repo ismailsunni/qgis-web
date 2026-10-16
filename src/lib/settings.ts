@@ -12,20 +12,22 @@ export type ProjectRef =
   | { kind: "local"; name: string };
 
 export type Theme = "system" | "light" | "dark";
-export type CoordFormat = "project" | "decimal" | "dms" | "utm";
+export type CoordFormat = "project" | "decimal" | "dms" | "utm" | "mgrs";
 
 interface Settings {
   startup: Startup;
   specific: ProjectRef | null;
   theme: Theme;
   coords: CoordFormat;
+  /** Map view when a project opens: the view saved in the project (as QGIS does) or its full extent. */
+  view: "saved" | "full";
 }
 
 const KEY = "qgisweb:settings";
 const LAST = "qgisweb:last-project";
 
 export function getSettings(): Settings {
-  return { startup: "welcome", specific: null, theme: "system", coords: "decimal", ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
+  return { startup: "welcome", specific: null, theme: "system", coords: "decimal", view: "saved", ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
 }
 
 export function saveSettings(s: Partial<Settings>) {
@@ -42,6 +44,15 @@ export function applyTheme() {
   document.documentElement.dataset.theme = dark ? "dark" : "light";
 }
 darkQuery.addEventListener("change", applyTheme);
+
+/** Settings as a file, to move them to another browser. */
+export const exportSettings = () => new Blob([JSON.stringify(getSettings(), null, 2)], { type: "application/json" });
+
+export function importSettings(text: string) {
+  const s = JSON.parse(text);
+  if (typeof s !== "object" || !s || !("startup" in s)) throw new Error("Not a QGIS Web settings file");
+  saveSettings(s);
+}
 
 export const lastProject = (): ProjectRef | null => JSON.parse(localStorage.getItem(LAST) ?? "null");
 

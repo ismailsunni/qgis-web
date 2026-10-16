@@ -15,6 +15,8 @@
   import { viewChanged } from "../lib/embed";
   import { formatCoord, FORMATS, FORMAT_LABELS } from "../lib/coords";
   import { getSettings, saveSettings } from "../lib/settings";
+  import { recordView } from "../lib/navigation";
+  import MapContextMenu from "./MapContextMenu.svelte";
 
   let target: HTMLDivElement;
   let coord = $state("");
@@ -25,6 +27,7 @@
   let tip = $state<{ html: string; x: number; y: number } | null>(null);
   let tipTimer = 0;
   let compareTarget = $state<HTMLDivElement>();
+  let menu = $state<{ pixel: number[]; coordinate: number[] } | null>(null);
 
   // The comparison map lives while compare is on, and follows layer and style changes.
   $effect(() => {
@@ -81,8 +84,15 @@
     map.on("moveend", () => {
       if (ui.phase !== "ready") return;
       viewChanged();
+      recordView();
       scale = scaleDenominator();
       crs = srid();
+    });
+    target.addEventListener("contextmenu", (e) => {
+      if (ui.phase !== "ready" || ui.mapTool !== "identify") return;
+      e.preventDefault();
+      const pixel = map.getEventPixel(e);
+      menu = { pixel, coordinate: map.getCoordinateFromPixel(pixel) };
     });
     const ro = new ResizeObserver(() => map.updateSize());
     ro.observe(target);
@@ -113,6 +123,8 @@
   <!-- Map tips are project HTML: shown in a sandboxed frame, so scripts never run. -->
   <iframe class="map-tip" title="Map tip" sandbox="" srcdoc={`<style>body{margin:6px;font:12px system-ui}</style>${tip.html}`} style:left="{tip.x + 14}px" style:top="{tip.y + 14}px"></iframe>
 {/if}
+
+{#if menu}<MapContextMenu at={menu} onclose={() => (menu = null)} />{/if}
 
 {#if ui.editing && !view.mapOnly}<EditToolbar />{/if}
 

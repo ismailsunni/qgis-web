@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getSettings, saveSettings, lastProject, type ProjectRef, type Startup, type Theme } from "../lib/settings";
+  import { getSettings, saveSettings, exportSettings, importSettings, lastProject, type ProjectRef, type Startup, type Theme } from "../lib/settings";
   import { listProjects, type StoredProject } from "../lib/storage";
   import { DEMO_URL } from "../lib/actions";
   import { ui, toast } from "../lib/state.svelte";
@@ -11,10 +11,31 @@
   let startup = $state<Startup>(initial.startup);
   let specific = $state<ProjectRef | null>(initial.specific);
   let theme = $state<Theme>(initial.theme);
+  let mapView = $state(initial.view);
   let stored = $state<StoredProject[]>([]);
   let url = $state(initial.specific?.kind === "url" ? initial.specific.url : "");
   listProjects().then((p) => (stored = p));
   const last = lastProject();
+
+  function download() {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(exportSettings());
+    a.download = "qgis-web-settings.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  async function load(e: Event) {
+    const file = (e.currentTarget as HTMLInputElement).files?.[0];
+    if (!file) return;
+    try {
+      importSettings(await file.text());
+      toast("Settings imported");
+      onclose();
+    } catch (err) {
+      toast((err as Error).message);
+    }
+  }
 
   const OPTIONS: [Startup, string, string][] = [
     ["welcome", "Welcome page", "Start screen with recent projects."],
@@ -33,7 +54,7 @@
 
   function save() {
     if (startup === "specific" && !specific) return toast("Choose the project to open on launch.");
-    saveSettings({ startup, specific, theme });
+    saveSettings({ startup, specific, theme, view: mapView });
     toast("Settings saved");
     onclose();
   }
@@ -84,6 +105,16 @@
         <option value="dark">Dark</option>
       </select>
     </label>
+    <label class="field">Map view when a project opens
+      <select bind:value={mapView}>
+        <option value="saved">The view saved in the project (as QGIS)</option>
+        <option value="full">Full extent of the project's layers</option>
+      </select>
+    </label>
+    <div class="row">
+      <button onclick={download}><Icon name="download" size={16} /> Export settings</button>
+      <label class="button-like"><Icon name="upload" size={16} /> Import settings<input type="file" accept=".json,application/json" hidden onchange={load} /></label>
+    </div>
     <footer>
       <button onclick={onclose}>Cancel</button>
       <button class="primary" onclick={save}>Save</button>

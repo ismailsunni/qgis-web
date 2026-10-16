@@ -71,6 +71,12 @@ export const ui = $state({
   /** Project-level undo/redo (styles, tree, layers). */
   canUndoProject: false,
   canRedoProject: false,
+  /** Previous/next map views available. */
+  viewHistory: [0, 0] as [number, number],
+  /** Coordinate grid shown on the map. */
+  grid: false,
+  /** Keyboard shortcut sheet. */
+  shortcuts: false,
   /** The elevation profile shown in the bottom drawer. */
   profile: null as import("./profile").Profile | null,
   /** Processing runs of this session, newest first. */

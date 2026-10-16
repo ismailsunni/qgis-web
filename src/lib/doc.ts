@@ -21,8 +21,8 @@ interface ProjectDoc {
 
 let doc: ProjectDoc | null = null;
 
-/** Called before QGIS reloads the project (the map cancels render jobs) and after each redraw. */
-export const hooks = { beforeReload: () => {}, afterRedraw: () => {} };
+/** Called before QGIS reloads the project (the map cancels render jobs), after each redraw, and before saving. */
+export const hooks = { beforeReload: () => {}, afterRedraw: () => {}, beforeSave: () => {} };
 export const project = () => doc!;
 export const hasProject = () => !!doc;
 
@@ -86,6 +86,7 @@ export function reload() {
 
 export function projectBytes(): Uint8Array {
   const d = doc!;
+  hooks.beforeSave();
   if (/\.qgs$/i.test(d.file)) return strToU8(serialize());
   return zipSync({ [d.innerName]: strToU8(serialize()), ...d.extra });
 }

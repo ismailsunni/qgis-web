@@ -2,6 +2,7 @@
   import { startMeasure, stopTool, legendImage, startBoxTool, startShapeTool } from "../lib/maptools";
   import { selectInExtent, selectInPolygon, modeFrom, clearSelection } from "../lib/selection";
   import { startProfile } from "../lib/profile";
+  import { previousView, nextView, toggleGrid } from "../lib/navigation";
 
   let selectMenu = $state(false);
   const SELECT_TOOLS = [
@@ -28,6 +29,10 @@
 
 <div class="map-toolbar" role="toolbar" aria-label="Map tools">
   <div class="tool-group">
+    <button title="Previous view (Alt+←)" aria-label="Previous view" disabled={!ui.viewHistory[0]} onclick={previousView}><Icon name="back" size={17} /></button>
+    <button title="Next view (Alt+→)" aria-label="Next view" disabled={!ui.viewHistory[1]} onclick={nextView}><Icon name="forward" size={17} /></button>
+  </div>
+  <div class="tool-group">
     <button class:active={!!activeSelect} title="Select features (Shift adds, Ctrl removes)" aria-label="Select features" onclick={() => (activeSelect ? stopTool() : startSelect("select"))}><Icon name={activeSelect?.[2] ?? "select"} size={17} /></button>
     <button class="more" title="Selection tools" aria-label="Selection tools" onclick={() => (selectMenu = !selectMenu)}>▾</button>
     {#if selectMenu}
@@ -44,6 +49,7 @@
   <button class:active={ui.mapTool === "measure-line"} title="Measure distance" aria-label="Measure distance" onclick={() => toggle("measure-line")}><Icon name="ruler" size={17} /></button>
   <button class:active={ui.mapTool === "measure-area"} title="Measure area" aria-label="Measure area" onclick={() => toggle("measure-area")}><Icon name="area" size={17} /></button>
   <button class:active={ui.mapTool === "profile"} title="Elevation profile (needs an elevation raster)" aria-label="Elevation profile" onclick={() => (ui.mapTool === "profile" ? stopTool() : startProfile())}><Icon name="profile" size={17} /></button>
+  <button class:active={ui.grid} title="Coordinate grid" aria-label="Coordinate grid" onclick={() => toggleGrid()}><Icon name="grid" size={17} /></button>
   <button class:active={ui.showLegend} title="Legend" aria-label="Legend" onclick={() => (ui.showLegend = !ui.showLegend)}><Icon name="legend" size={17} /></button>
   <button class:active={ui.mapTips} title="Map tips on hover" aria-label="Map tips" onclick={() => (ui.mapTips = !ui.mapTips)}><Icon name="tip" size={17} /></button>
   <button class:active={ui.compare.active} title="Compare (swipe or side by side)" aria-label="Compare" onclick={() => (ui.compare.active = !ui.compare.active)}><Icon name="compare" size={17} /></button>

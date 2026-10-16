@@ -28,6 +28,8 @@
   import FieldCalculator from "./components/FieldCalculator.svelte";
   import CsvDialog from "./components/CsvDialog.svelte";
   import ProfilePanel from "./components/ProfilePanel.svelte";
+  import ShortcutsDialog from "./components/ShortcutsDialog.svelte";
+  import { previousView, nextView } from "./lib/navigation";
   import { selectByExpression } from "./lib/selection";
 
   const rail: { id: Panel | "table"; icon: "layers" | "add" | "style" | "table" | "tools" | "hub" | "bookmark"; label: string; planned?: string }[] = [
@@ -78,10 +80,15 @@
 
   function onKey(e: KeyboardEvent) {
     const mod = e.ctrlKey || e.metaKey;
-    if (mod && e.key.toLowerCase() === "k") {
+    const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement;
+    if (!typing && e.key === "?") ui.shortcuts = true;
+    else if (e.altKey && ui.phase === "ready" && !typing && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {
+      e.preventDefault();
+      (e.key === "ArrowLeft" ? previousView : nextView)();
+    } else if (mod && e.key.toLowerCase() === "k") {
       e.preventDefault();
       ui.palette = !ui.palette;
-    } else if (mod && ui.phase === "ready" && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) && (e.key.toLowerCase() === "z" || e.key.toLowerCase() === "y")) {
+    } else if (mod && ui.phase === "ready" && !typing && (e.key.toLowerCase() === "z" || e.key.toLowerCase() === "y")) {
       e.preventDefault();
       const again = e.shiftKey || e.key.toLowerCase() === "y";
       // While editing, undo applies to feature edits; otherwise to project changes.
@@ -206,6 +213,7 @@
   {#if ui.palette}<CommandPalette />{/if}
   {#if ui.dialog === "share"}<ShareDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "project"}<ProjectDialog onclose={() => (ui.dialog = null)} />{/if}
+  {#if ui.shortcuts}<ShortcutsDialog />{/if}
   {#if ui.dialog === "settings"}<SettingsDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "export"}<ExportDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.csvPrompt}{#key ui.csvPrompt}<CsvDialog />{/key}{/if}

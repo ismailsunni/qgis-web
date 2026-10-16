@@ -17,6 +17,7 @@ import { getSettings, lastProject, rememberLast, type ProjectRef } from "./setti
 import { listProjects } from "./storage";
 import { showProject, hitBox, srid, setHighlight, zoomToFull, olMap as olMapRef } from "./map";
 import { setVisible, snapshotTree, flatLayers } from "./tree";
+import { resetViews, savedExtent, previousView, nextView, toggleGrid } from "./navigation";
 import { ui, changed, toast, featureAttributes, type IdentifyHit } from "./state.svelte";
 
 function opened(name: string, storedId: string | null) {
@@ -31,6 +32,9 @@ function opened(name: string, storedId: string | null) {
   ui.phase = "ready";
   changed();
   showProject();
+  const saved = getSettings().view === "saved" && savedExtent();
+  if (saved) olMapRef().getView().fit(saved);
+  resetViews();
   const broken = flatLayers(snapshotTree()).filter((l) => !l.valid && !l.remote);
   if (broken.length) toast(`Missing data for: ${broken.map((l) => l.name).join(", ")}`);
   emit("projectLoaded", { name: ui.projectName, layers: flatLayers(snapshotTree()).map((l) => ({ id: l.layerId, name: l.name })) });
@@ -317,6 +321,10 @@ export function commands(): Command[] {
   return [
     ...base,
     { id: "full", label: "Zoom to full extent", run: zoomToFull },
+    { id: "view-back", label: "Previous map view", hint: "Alt+←", run: previousView },
+    { id: "view-next", label: "Next map view", hint: "Alt+→", run: nextView },
+    { id: "grid", label: "Show/hide coordinate grid", run: () => toggleGrid() },
+    { id: "shortcuts", label: "Keyboard shortcuts", hint: "?", run: () => (ui.shortcuts = true) },
     { id: "undo", label: "Undo", hint: "Ctrl+Z", run: () => (ui.editing ? import("./editing").then((m) => m.undo()) : undoProject()) },
     { id: "redo", label: "Redo", hint: "Ctrl+Shift+Z", run: () => (ui.editing ? import("./editing").then((m) => m.redo()) : redoProject()) },
     { id: "project", label: "Project properties (title, CRS)…", run: () => (ui.dialog = "project") },
