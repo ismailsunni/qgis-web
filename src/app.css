@@ -422,3 +422,6 @@ textarea.code.small { min-height: 90px; }
 .context-menu hr { border: none; border-top: 1px solid var(--line); margin: 4px 0; }
 .shortcuts td { padding: 4px 8px; font-size: 13px; }
 .shortcuts kbd { white-space: nowrap; }
+.picker-list { display: flex; flex-direction: column; gap: 4px; max-height: 50vh; overflow: auto; }
+.scales .row input { min-width: 0; flex: 1; }
+.classes input.break { width: 80px; }

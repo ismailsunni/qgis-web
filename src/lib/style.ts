@@ -258,9 +258,38 @@ export function setClassColor(id: string, index: number, color: string) {
   if (sym) writeSymbol(sym, { color });
 }
 
+/** Moves the break between class `index` and the next one (manual classification). */
+export function setBreak(id: string, index: number, value: number) {
+  const r = rendererEl(id)!;
+  const ranges = [...r.querySelectorAll(":scope > ranges > range")];
+  const relabel = (el: Element) => el.setAttribute("label", `${fmt(Number(el.getAttribute("lower")))} – ${fmt(Number(el.getAttribute("upper")))}`);
+  ranges[index].setAttribute("upper", String(value));
+  relabel(ranges[index]);
+  if (ranges[index + 1]) {
+    ranges[index + 1].setAttribute("lower", String(value));
+    relabel(ranges[index + 1]);
+  }
+  child(r, "classificationMethod").setAttribute("id", "Custom");
+}
+
 export function setClassAttr(id: string, index: number, attr: string, value: string) {
   const r = rendererEl(id)!;
   [...r.querySelectorAll(":scope > categories > category, :scope > ranges > range")][index]?.setAttribute(attr, value);
+}
+
+// ---- Scale-dependent visibility ------------------------------------------------------------
+
+/** QGIS's scale range: `minScale` is the most zoomed-out scale shown, `maxScale` the most zoomed-in (0 = no limit). */
+export function readScaleRange(id: string) {
+  const el = layerEl(id);
+  return { enabled: el.getAttribute("hasScaleBasedVisibilityFlag") === "1", minScale: Number(el.getAttribute("minScale") ?? 0) || 0, maxScale: Number(el.getAttribute("maxScale") ?? 0) || 0 };
+}
+
+export function writeScaleRange(id: string, r: { enabled: boolean; minScale: number; maxScale: number }) {
+  const el = layerEl(id);
+  el.setAttribute("hasScaleBasedVisibilityFlag", r.enabled ? "1" : "0");
+  el.setAttribute("minScale", String(r.minScale));
+  el.setAttribute("maxScale", String(r.maxScale));
 }
 
 // ---- Classification --------------------------------------------------------------------
@@ -307,6 +336,8 @@ export const MODES: Record<string, string> = {
   Quantile: "Equal count (quantile)",
   Jenks: "Natural breaks (Jenks)",
   Pretty: "Pretty breaks",
+  StdDev: "Standard deviation",
+  Custom: "Manual (edit the breaks below)",
 };
 
 function jenks(data: number[], k: number) {
@@ -341,13 +372,64 @@ function jenks(data: number[], k: number) {
   return breaks;
 }
 
-function pretty(min: number, max: number, n: number) {
-  const raw = (max - min) / n;
-  const mag = 10 ** Math.floor(Math.log10(raw));
-  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw) ?? raw;
-  const breaks: number[] = [];
-  for (let b = Math.floor(min / step) * step + step; b < max; b += step) breaks.push(+b.toPrecision(12));
-  return [...breaks, max];
+/** QGIS's pretty breaks (QgsSymbolLayerUtils::prettyBreaks, a port of R's pretty). */
+export function pretty(min: number, max: number, classes: number) {
+  if (classes < 1) return [max];
+  const minimumCount = Math.trunc(classes / 3);
+  const h = 1.5, adjustBias = 0.5 + 1.5 * h;
+  const dx = max - min;
+  let cell: number, small: boolean;
+  if (Math.abs(dx) < 1e-12 && Math.abs(max) < 1e-12) (cell = 1), (small = true);
+  else {
+    cell = Math.max(Math.abs(min), Math.abs(max));
+    const U = Math.trunc(1 + 1 / (1 + h));
+    small = dx < cell * U * Math.max(1, classes) * 1e-7 * 3;
+  }
+  if (small) {
+    if (cell > 10) cell = (9 + cell / 10) * 0.75;
+    if (minimumCount > 1) cell /= minimumCount;
+  } else if (classes > 1) cell = dx / classes;
+  else cell = dx;
+  cell = Math.max(cell, 20e-7);
+  const base = 10 ** Math.floor(Math.log10(cell));
+  let unit = base;
+  if (2 * base - cell < h * (cell - unit)) {
+    unit = 2 * base;
+    if (5 * base - cell < adjustBias * (cell - unit)) {
+      unit = 5 * base;
+      if (10 * base - cell < h * (cell - unit)) unit = 10 * base;
+    }
+  }
+  let start = Math.floor(min / unit + 1e-7), end = Math.ceil(max / unit - 1e-7);
+  while (start * unit > min + 1e-7 * unit) start--;
+  while (end * unit < max - 1e-7 * unit) end++;
+  let k = Math.floor(0.5 + end - start);
+  if (k < minimumCount) {
+    k = minimumCount - k;
+    const half = Math.trunc(k / 2);
+    if (start >= 0) (end += half), (start = start - half + (k % 2));
+    else (start -= half), (end = end + half + (k % 2));
+  }
+  const breaks = Array.from({ length: end - start }, (_, i) => start * unit + (i + 1) * unit);
+  if (!breaks.length) return breaks;
+  if (breaks[0] < min) breaks[0] = min;
+  if (breaks[breaks.length - 1] > max) breaks[breaks.length - 1] = max;
+  if (min < 0 && max > 0) {
+    let pos = 0;
+    for (let i = 1; i < breaks.length; i++) if (Math.abs(breaks[i]) < Math.abs(breaks[i - 1])) pos = i;
+    breaks[pos] = 0;
+  }
+  return breaks;
+}
+
+/** QgsClassificationMethod::makeBreaksSymmetric, as the standard deviation method uses it. */
+function symmetric(breaks: number[], point: number) {
+  if (breaks.length < 2) return breaks;
+  breaks.sort((a, b) => a - b);
+  const absMin = Math.min(Math.abs(breaks[breaks.length - 2] - point), Math.abs(breaks[0] - point));
+  const tolerance = Math.abs(breaks[0] - breaks[1]) / 100;
+  for (let i = 0; i <= breaks.length - 2; i++) if (Math.abs(breaks[i] - point) >= absMin - tolerance) breaks.splice(i--, 1);
+  return breaks;
 }
 
 const fmt = (v: number) => (Math.abs(v) >= 1000 ? Math.round(v).toLocaleString("en") : String(+v.toPrecision(4)));
@@ -360,6 +442,12 @@ export function classify(id: string, attr: string, mode: string, n: number, ramp
   if (mode === "Quantile") uppers = Array.from({ length: n }, (_, i) => values[Math.min(values.length - 1, Math.ceil(((i + 1) * values.length) / n) - 1)]);
   else if (mode === "Jenks") uppers = jenks(values, Math.min(n, values.length));
   else if (mode === "Pretty") uppers = pretty(min, max, n);
+  else if (mode === "StdDev") {
+    // As QGIS: pretty breaks in standard deviations around the mean.
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const sd = Math.sqrt(values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length) || 1;
+    uppers = symmetric(pretty((min - mean) / sd, (max - mean) / sd, n), 0).map((z) => mean + z * sd);
+  }
   else uppers = Array.from({ length: n }, (_, i) => min + ((max - min) * (i + 1)) / n);
   uppers = [...new Set(uppers)];
   const colors = rampColors(ramp, uppers.length);

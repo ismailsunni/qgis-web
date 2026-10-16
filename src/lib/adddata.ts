@@ -25,6 +25,11 @@ function askCsv(preview: CsvPreview): Promise<CsvOptions | null> {
   return new Promise((resolve) => (ui.csvPrompt = { ...preview, resolve }));
 }
 
+/** Asks which tables of a multi-layer file to add (as QGIS's sublayer picker). */
+function askLayers(file: string, items: [string, string][]): Promise<string[]> {
+  return new Promise((resolve) => (ui.layerPicker = { file, items, resolve }));
+}
+
 /** Adds a delimited text file as a QGIS delimitedtext layer, after asking how to read it. */
 async function csvSource(name: string, text: string, dataDir: string, rel: (p: string) => string): Promise<Source | null> {
   const opts = await askCsv(previewCsv(name, text));
@@ -164,7 +169,8 @@ async function prepare(files: DataFile[]): Promise<Source[]> {
           db,
           "select c.table_name, c.data_type, s.organization, s.organization_coordsys_id, s.definition from gpkg_contents c left join gpkg_spatial_ref_sys s on s.srs_id = c.srs_id where c.data_type in ('features', 'tiles', 'attributes')",
         );
-        for (const t of tables) {
+        const picked = tables.length > 1 ? await askLayers(name, tables.map((t) => [t.table_name, t.data_type])) : null;
+        for (const t of picked ? tables.filter((t) => picked.includes(t.table_name)) : tables) {
           const crs = t.data_type === "attributes" ? null : t.organization?.toUpperCase() === "EPSG" ? await authCrs(`EPSG:${t.organization_coordsys_id}`) : t.definition && t.definition !== "undefined" ? { wkt: t.definition } : null;
           out.push(
             t.data_type === "tiles"

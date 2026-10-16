@@ -57,6 +57,8 @@ export const ui = $state({
   mapTool: "identify" as "identify" | "measure-line" | "measure-area" | "select" | "select-box" | "select-polygon" | "select-freehand" | "profile",
   /** A CSV waiting for its import options (see CsvDialog). */
   csvPrompt: null as (import("./csv").CsvPreview & { resolve: (o: import("./csv").CsvOptions | null) => void }) | null,
+  /** Tables of a multi-layer file waiting to be picked (see LayerPicker). */
+  layerPicker: null as { file: string; items: [string, string][]; resolve: (names: string[]) => void } | null,
   /** Compare view: a second map with its own set of layers (swipe or side by side). */
   compare: { active: false, mode: "swipe" as "swipe" | "side", layers: [] as string[], x: 50 },
   /** Selected feature ids per layer. */

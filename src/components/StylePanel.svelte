@@ -7,6 +7,7 @@
   import Icon from "./Icon.svelte";
   import ExpressionInput from "./ExpressionInput.svelte";
   import RasterStyle from "./RasterStyle.svelte";
+  import { scaleDenominator } from "../lib/map";
 
   const FONTS = ["Open Sans", "Noto Sans", "DejaVu Sans", "Arial", "Helvetica", "Roboto", "Liberation Sans", "Times New Roman", "Georgia"];
 
@@ -31,6 +32,7 @@
       renderer: vector ? S.readRenderer(id) : null,
       labels: vector ? S.readLabels(id) : null,
       legend: [] as { label: string; icon: string }[],
+      scales: S.readScaleRange(id),
     };
   });
 
@@ -114,6 +116,22 @@
       <dt>CRS</dt><dd>{info.crs || "unknown"}</dd>
       {#if info.features !== undefined}<dt>Features</dt><dd>{info.features.toLocaleString()}</dd>{/if}
     </dl>
+  </section>
+
+  {@const sr = info.scales}
+  {@const set = (p: Partial<typeof sr>) => apply(() => S.writeScaleRange(info.id, { ...sr, ...p }))}
+  <section class="stack">
+    <label class="row"><input type="checkbox" checked={sr.enabled} onchange={(e) => set({ enabled: e.currentTarget.checked })} /> <h3>Scale-dependent visibility</h3></label>
+    {#if sr.enabled}
+      <div class="grid2 scales">
+        <label class="field">Hide when zoomed out beyond 1:
+          <span class="row"><input type="number" min="0" step="any" value={sr.minScale || ""} placeholder="no limit" onchange={(e) => set({ minScale: e.currentTarget.valueAsNumber || 0 })} /><button class="icon" title="Current map scale" aria-label="Use current scale as minimum" onclick={() => set({ minScale: Math.round(scaleDenominator()) })}><Icon name="zoom" size={15} /></button></span>
+        </label>
+        <label class="field">Hide when zoomed in beyond 1:
+          <span class="row"><input type="number" min="0" step="any" value={sr.maxScale || ""} placeholder="no limit" onchange={(e) => set({ maxScale: e.currentTarget.valueAsNumber || 0 })} /><button class="icon" title="Current map scale" aria-label="Use current scale as maximum" onclick={() => set({ maxScale: Math.round(scaleDenominator()) })}><Icon name="zoom" size={15} /></button></span>
+        </label>
+      </div>
+    {/if}
   </section>
 
   {#if info.type === "Raster"}
@@ -234,6 +252,7 @@
               <input type="checkbox" checked={g.render} aria-label="Show" onchange={(e) => apply(() => S.setClassAttr(info.id, i, "render", String(e.currentTarget.checked)))} />
               <input type="color" value={g.color} onchange={(e) => apply(() => S.setClassColor(info.id, i, e.currentTarget.value))} />
               <input value={g.label} aria-label="Label" onchange={(e) => apply(() => S.setClassAttr(info.id, i, "label", e.currentTarget.value))} />
+              {#if i < r.ranges.length - 1}<input class="break" type="number" step="any" value={g.upper} aria-label="Upper bound" title="Upper bound (manual break)" onchange={(e) => apply(() => S.setBreak(info.id, i, e.currentTarget.valueAsNumber))} />{/if}
             </li>
           {/each}
         </ul>

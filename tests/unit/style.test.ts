@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rampColors, toHex, toQgis, alphaOf } from "../../src/lib/style";
+import { rampColors, toHex, toQgis, alphaOf, pretty } from "../../src/lib/style";
 import { toMulti } from "../../src/lib/processing";
 
 describe("colors", () => {
@@ -21,5 +21,20 @@ describe("toMulti", () => {
     const multi = toMulti(point)!;
     expect(new DataView(multi.buffer).getUint32(1, true)).toBe(4);
     expect(new DataView(multi.buffer).getUint32(5, true)).toBe(1);
+  });
+});
+
+describe("pretty breaks", () => {
+  // Expected values from QgsSymbolLayerUtils.prettyBreaks (QGIS Desktop).
+  const cases: [number, number, number, number[]][] = [
+    [0, 100, 5, [20, 40, 60, 80, 100]],
+    [140, 1397715000, 5, [2e8, 4e8, 6e8, 8e8, 1e9, 1.2e9, 1397715000]],
+    [-1.71, 1.71, 5, [-1.5, -1, -0.5, 0, 0.5, 1, 1.5, 1.71]],
+    [-0.286, 8.97, 7, [0, 1, 2, 3, 4, 5, 6, 7, 8, 8.97]],
+    [3, 3.0000001, 4, [3]],
+    [0.5, 7.2, 10, [1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.2]],
+  ];
+  it.each(cases)("%s to %s in %s classes", (min, max, n, expected) => {
+    expect(pretty(min, max, n).map((b) => +b.toFixed(6))).toEqual(expected);
   });
 });

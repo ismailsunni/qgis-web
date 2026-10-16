@@ -28,6 +28,7 @@
   import FieldCalculator from "./components/FieldCalculator.svelte";
   import CsvDialog from "./components/CsvDialog.svelte";
   import ProfilePanel from "./components/ProfilePanel.svelte";
+  import LayerPicker from "./components/LayerPicker.svelte";
   import ShortcutsDialog from "./components/ShortcutsDialog.svelte";
   import { previousView, nextView } from "./lib/navigation";
   import { selectByExpression } from "./lib/selection";
@@ -216,6 +217,7 @@
   {#if ui.shortcuts}<ShortcutsDialog />{/if}
   {#if ui.dialog === "settings"}<SettingsDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "export"}<ExportDialog onclose={() => (ui.dialog = null)} />{/if}
+  {#if ui.layerPicker}{#key ui.layerPicker}<LayerPicker />{/key}{/if}
   {#if ui.csvPrompt}{#key ui.csvPrompt}<CsvDialog />{/key}{/if}
   {#if ui.current && ui.phase === "ready"}
     {#if ui.dialog === "select-location"}<SelectByLocation layerId={ui.current} onclose={() => (ui.dialog = null)} />{/if}
