@@ -30,6 +30,8 @@ self.addEventListener("fetch", (event) => {
   if (request.cache === "only-if-cached" && request.mode !== "same-origin") return;
   const url = new URL(request.url);
   const sameOrigin = url.origin === location.origin;
+  // The documentation isn't the app: no isolation, so its pages can load third-party fonts and scripts.
+  if (request.mode === "navigate" && url.pathname.includes("/docs/")) return;
   event.respondWith(
     (async () => {
       const response = sameOrigin && url.pathname.includes("/assets/wasm/") ? await engineAsset(request) : await fetch(request);

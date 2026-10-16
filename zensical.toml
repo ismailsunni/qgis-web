@@ -1,0 +1,95 @@
+[project]
+site_name = "QGIS Web"
+site_description = "Open, edit and share real QGIS projects in your browser, rendered by QGIS itself."
+site_url = "https://ismailsunni.id/qgis-web/docs/"
+repo_url = "https://github.com/ismailsunni/qgis-web"
+repo_name = "ismailsunni/qgis-web"
+edit_uri = "edit/main/docs/"
+docs_dir = "docs"
+site_dir = "site"
+copyright = "GPL-2.0-or-later · Built on <a href=\"https://github.com/qgis/qgis-js\">qgis-js</a>"
+extra_css = ["stylesheets/extra.css"]
+nav = [
+  { "Home" = "index.md" },
+  { "Getting started" = "getting-started.md" },
+  { "User guide" = [
+    { "Projects" = "guide/projects.md" },
+    { "Adding data" = "guide/data.md" },
+    { "Map tools" = "guide/map.md" },
+    { "Styling" = "guide/styling.md" },
+    { "Attributes and selection" = "guide/attributes.md" },
+    { "Editing" = "guide/editing.md" },
+    { "Processing" = "guide/processing.md" },
+    { "Sharing and embedding" = "guide/sharing.md" },
+    { "Settings and shortcuts" = "guide/settings.md" },
+  ] },
+  { "Reference" = [
+    { "Data formats" = "data-formats.md" },
+    { "Embed API" = "embed-api.md" },
+    { "How it works" = "how-it-works.md" },
+    { "Comparison" = "feature-comparison.md" },
+    { "FAQ" = "faq.md" },
+  ] },
+  { "Project" = [
+    { "Development" = "development.md" },
+    { "Product spec (PRD)" = "PRD.md" },
+  ] },
+]
+
+[project.theme]
+language = "en"
+logo = "assets/logo.svg"
+favicon = "assets/logo.svg"
+features = [
+  "content.action.edit",
+  "content.code.copy",
+  "content.tabs.link",
+  "navigation.footer",
+  "navigation.indexes",
+  "navigation.instant",
+  "navigation.path",
+  "navigation.sections",
+  "navigation.tabs",
+  "navigation.top",
+  "navigation.tracking",
+  "search.highlight",
+]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "green"
+accent = "light green"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "green"
+accent = "light green"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+
+[project.markdown_extensions]
+admonition = {}
+attr_list = {}
+def_list = {}
+md_in_html = {}
+tables = {}
+toc.permalink = true
+pymdownx.details = {}
+pymdownx.emoji.emoji_generator = "zensical.extensions.emoji.to_svg"
+pymdownx.emoji.emoji_index = "zensical.extensions.emoji.twemoji"
+pymdownx.highlight.anchor_linenums = true
+pymdownx.inlinehilite = {}
+pymdownx.keys = {}
+pymdownx.superfences.custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
+pymdownx.tabbed.alternate_style = true

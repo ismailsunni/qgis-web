@@ -328,6 +328,7 @@ export function commands(): Command[] {
     { id: "panel-tools", label: t("Show Processing tools"), run: () => (ui.panel = "tools") },
     { id: "panel-hub", label: t("Browse the QGIS Hub"), run: () => (ui.panel = "hub") },
     { id: "panel-bookmarks", label: t("Show Bookmarks"), run: () => (ui.panel = "bookmarks") },
+    { id: "docs", label: t("Documentation"), run: () => window.open(`${import.meta.env.BASE_URL}docs/`, "_blank", "noopener") },
     { id: "panel-close", label: t("Close side panel"), run: () => (ui.panel = null) },
   ];
   if (ui.phase !== "ready") return base;

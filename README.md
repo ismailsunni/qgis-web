@@ -2,7 +2,7 @@
 
 A zero-install web GIS that opens, edits and saves real QGIS projects (`.qgs` / `.qgz`) in the browser, rendered by QGIS core itself through [qgis-js](https://github.com/qgis/qgis-js) (QGIS compiled to WebAssembly).
 
-**Live app:** https://ismailsunni.id/qgis-web/ · **Product spec:** [docs/PRD.md](docs/PRD.md)
+**Live app:** https://ismailsunni.id/qgis-web/ · **Documentation:** https://ismailsunni.id/qgis-web/docs/ · **Product spec:** [docs/PRD.md](docs/PRD.md)
 
 Everything runs client-side: projects and data stay in your browser unless you open a remote URL or publish a share link.
 

@@ -1,0 +1,42 @@
+# Styling
+
+![Graduated style](../assets/screenshots/style.png)
+
+Open **Style** in the left rail; it applies to the current layer (click a layer in the tree). Every change is written into the layer's QGIS renderer in the project, so Desktop shows the same thing.
+
+## Vector layers
+
+| Renderer | Options |
+| --- | --- |
+| Single symbol | Fill, stroke, width, size, opacity |
+| Categorized | A field or expression, a color ramp, one class per value |
+| Graduated | A numeric field, a ramp, the number of classes and the mode: equal interval, quantile, natural breaks (Jenks), pretty breaks, standard deviation, or manual (type the breaks) |
+| Rule-based | Rules with QGIS expressions; can be created from categories |
+| Heatmap | Radius and ramp, for points |
+| Point cluster | Groups nearby points |
+
+Classes can be shown or hidden, recolored and relabeled. Breaks are computed the same way as in QGIS.
+
+## Labels
+
+Label with a field or an expression; choose font, size, color, a buffer (halo) and the placement. Layers with rule-based labels from Desktop keep them until you edit labels here.
+
+## Popups
+
+**Display name** (the title in Identify) and an HTML **map tip** with `[% expression %]` placeholders, as in Desktop.
+
+## Visibility and time
+
+- **Scale-dependent visibility**: hide the layer when zoomed out or in beyond a scale; use the button to take the current map scale.
+- **Time**: date fields for the [time slider](map.md#time-slider).
+
+## Raster layers
+
+Pseudocolor (one band with a color ramp), grayscale, hillshade (azimuth, altitude, z-factor, multidirectional) and RGB. For GeoTIFFs, the panel shows a histogram of the band with the min/max markers, and can reset to the band's range.
+
+## QML and copy/paste
+
+- **Load QML… / Save QML**: QGIS layer style files, applied exactly as Desktop would.
+- **Advanced (QML)**: edit the style XML directly.
+- **Copy style / Paste style** in the layer menu (⋯) copy a style between layers.
+- The **QGIS Hub** panel applies shared styles in one click.

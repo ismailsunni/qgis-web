@@ -34,6 +34,14 @@ jobs:
       - run: npm run build
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Build the documentation into dist/docs
+        run: |
+          pip install zensical
+          zensical build
+          cp -r site dist/docs
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist

@@ -57,6 +57,7 @@
       {/if}
       <p class="hint">{t("…or drop a .qgs / .qgz with its data anywhere. Nothing is uploaded: your data never leaves this browser.")}</p>
       <button class="link" onclick={() => (ui.dialog = "settings")}>{t("Choose what opens on launch…")}</button>
+      · <a href={`${import.meta.env.BASE_URL}docs/`} target="_blank" rel="noopener">{t("Documentation")}</a>
     {/if}
   </div>
 </div>
