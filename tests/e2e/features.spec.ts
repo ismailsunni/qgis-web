@@ -429,3 +429,13 @@ test("join a table to a layer by field", async ({ page }) => {
     return v;
   })).toBe(2);
 });
+
+test("a shared link opens at its view", async ({ page }) => {
+  await boot(page, "?url=projects/world/world.qgz#v=1000000,5000000,9500000&on=0,2&f=2:44");
+  await expect.poll(() => page.evaluate(() => (globalThis as any).quarkgisApp.ui.hits[0]?.fid)).toBe(44);
+  const state = await page.evaluate(() => {
+    const A = (globalThis as any).quarkgisApp;
+    return { visible: A.tree.flatLayers(A.tree.snapshotTree()).map((l: any) => l.visible), scale: Math.round(A.map.scaleDenominator() / 1000), dirty: A.ui.dirty };
+  });
+  expect(state).toEqual({ visible: [true, false, true], scale: 9500, dirty: false });
+});

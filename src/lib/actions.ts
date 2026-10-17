@@ -19,6 +19,7 @@ import { showProject, hitBox, srid, setHighlight, zoomToFull, olMap as olMapRef 
 import { setVisible, snapshotTree, flatLayers } from "./tree";
 import { resetViews, savedExtent, previousView, nextView, toggleGrid } from "./navigation";
 import { isGeoTiff, pixelSampler } from "./raster";
+import { viewLink } from "./viewlink";
 import { relocateAll, locateInAllowed, unavailableLayers, missingSummary } from "./relocate";
 import { canLink, linked, linkProject, saveToDisk, readRelocations, pickFiles, pickFolder, readRecent, getRecent, unlink, type LocalRecent, type PickedFile } from "./localfs";
 import { ui, changed, toast, featureAttributes, type IdentifyHit } from "./state.svelte";
@@ -395,6 +396,7 @@ export function commands(): Command[] {
   const layers = flatLayers(snapshotTree());
   return [
     ...base,
+    { id: "view-link", label: t("Copy link to this view"), run: () => navigator.clipboard.writeText(viewLink()).then(() => toast(t("Link to this view copied"))) },
     { id: "full", label: t("Zoom to full extent"), run: zoomToFull },
     { id: "view-back", label: t("Previous map view"), hint: "Alt+←", run: previousView },
     { id: "view-next", label: t("Next map view"), hint: "Alt+→", run: nextView },

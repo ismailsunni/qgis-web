@@ -35,6 +35,7 @@
   import UnavailableLayers from "./components/UnavailableLayers.svelte";
   import ShortcutsDialog from "./components/ShortcutsDialog.svelte";
   import { previousView, nextView } from "./lib/navigation";
+  import { applyHash } from "./lib/viewlink";
   import { copyFeatures, pasteFeatures } from "./lib/clipboard";
   import { selectByExpression } from "./lib/selection";
   import { t, N_ } from "./lib/i18n";
@@ -78,9 +79,12 @@
     try {
       await boot((s) => s && (ui.status = s));
       ui.phase = "empty";
+      const hash = location.hash.slice(1);
       if (view.gist) await openPublished(view.gist, view.rev);
       else if (view.url) await openUrl(view.url);
       else await runStartup();
+      // A shared link's view (map position, visible layers, feature).
+      if ((view.gist || view.url) && hash && (ui.phase as string) === "ready") await applyHash(hash);
     } catch (e) {
       ui.phase = "error";
       ui.error = t("The QGIS engine failed to start: {message}. qgis-js needs a recent Chromium or Firefox desktop browser.", { message: (e as Error).message });

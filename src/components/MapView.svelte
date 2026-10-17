@@ -17,6 +17,7 @@
   import { formatCoord, FORMATS, FORMAT_LABELS } from "../lib/coords";
   import { getSettings, saveSettings } from "../lib/settings";
   import { recordView } from "../lib/navigation";
+  import { updateHash } from "../lib/viewlink";
   import MapContextMenu from "./MapContextMenu.svelte";
   import TimeSlider from "./TimeSlider.svelte";
 
@@ -30,6 +31,13 @@
   let tipTimer = 0;
   let compareTarget = $state<HTMLDivElement>();
   let menu = $state<{ pixel: number[]; coordinate: number[] } | null>(null);
+
+  // Layer visibility and the identified feature are part of the link too.
+  $effect(() => {
+    ui.version;
+    ui.hits;
+    if (ui.phase === "ready") updateHash();
+  });
 
   // The comparison map lives while compare is on, and follows layer and style changes.
   $effect(() => {
@@ -87,6 +95,7 @@
       if (ui.phase !== "ready") return;
       viewChanged();
       recordView();
+      updateHash();
       scale = scaleDenominator();
       crs = srid();
     });

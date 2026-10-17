@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t, N_ } from "../lib/i18n";
+  import { viewHash } from "../lib/viewlink";
   import { ui, toast } from "../lib/state.svelte";
   import * as P from "../lib/publish";
   import Icon from "./Icon.svelte";
@@ -25,7 +26,10 @@
   P.remoteProblems().then((w) => (warnings = w));
   if (initial) P.history(initial.id).then((v) => (versions = v)).catch(() => {});
 
-  const shareLink = (extra: string) => `${base}?gist=${ref!.owner}/${ref!.id}${extra}`;
+  // Links can open at the current view (map position, visible layers, identified feature).
+  let withView = $state(true);
+  const hash = $derived(withView ? `#${viewHash()}` : "");
+  const shareLink = (extra: string) => `${base}?gist=${ref!.owner}/${ref!.id}${extra}${hash}`;
   const embed = () => `<iframe src="${shareLink("&maponly")}" width="800" height="500" style="border:0" allow="cross-origin-isolated"></iframe>`;
 
   async function copy(text: string, what: string) {
@@ -71,11 +75,12 @@
       <h2>{t("Share")}</h2>
       <button class="icon" aria-label={t("Close")} onclick={onclose}><Icon name="close" size={18} /></button>
     </header>
+    <label class="row"><input type="checkbox" bind:checked={withView} /> {t("Links open at the current view (position, visible layers, identified feature)")}</label>
 
     {#if ui.sourceUrl}
       <section class="share-section">
         <h3>{t("Link to the project URL")}</h3>
-        {#each [[N_("Full app"), `${base}?url=${encodeURIComponent(ui.sourceUrl)}`], [N_("Map only"), `${base}?url=${encodeURIComponent(ui.sourceUrl)}&maponly`]] as [label, text]}
+        {#each [[N_("Full app"), `${base}?url=${encodeURIComponent(ui.sourceUrl)}${hash}`], [N_("Map only"), `${base}?url=${encodeURIComponent(ui.sourceUrl)}&maponly${hash}`]] as [label, text]}
           <div class="row"><span class="share-label">{t(label)}</span><input readonly value={text} /><button onclick={() => copy(text, label)}>{copied === label ? t("Copied") : t("Copy")}</button></div>
         {/each}
       </section>

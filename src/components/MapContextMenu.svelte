@@ -6,6 +6,7 @@
   import { formatCoord, FORMATS, FORMAT_LABELS } from "../lib/coords";
   import { addBookmark } from "../lib/bookmarks";
   import { toast } from "../lib/state.svelte";
+  import { viewLink } from "../lib/viewlink";
 
   let { at, onclose }: { at: { pixel: number[]; coordinate: number[] }; onclose: () => void } = $props();
 
@@ -30,5 +31,6 @@
   <button role="menuitem" onclick={() => run(() => identifyAt(at.coordinate))}>{t("Identify here")}</button>
   <button role="menuitem" onclick={() => run(() => view().animate({ center: at.coordinate, duration: 250 }))}>{t("Center map here")}</button>
   <button role="menuitem" onclick={() => run(() => view().animate({ center: at.coordinate, zoom: view().getZoom()! + 1, duration: 250 }))}>{t("Zoom in here")}</button>
+  <button role="menuitem" onclick={() => run(() => navigator.clipboard.writeText(viewLink()).then(() => toast(t("Link to this view copied"))))}>{t("Copy link to this view")}</button>
   <button role="menuitem" onclick={() => run(() => (view().setCenter(at.coordinate), addBookmark(t("Bookmark at {coord}", { coord: coords[0][1] }))))}>{t("Add bookmark here")}</button>
 </div>
