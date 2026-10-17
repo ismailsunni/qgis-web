@@ -40,10 +40,12 @@ Press ++ctrl+k++ (++cmd+k++ on a Mac) at any time to search every action, and ++
 | --- | --- |
 | Top bar | Project name (click for properties), action search, undo/redo, Save, Share, Settings |
 | Left rail | Layers, Add data, Style, Attribute table, Processing, Bookmarks, QGIS Hub |
-| Map toolbar (right) | Previous/next view, selection tools, measure, elevation profile, time slider, grid, legend, map tips, compare, export image |
+| Map toolbar (right) | Previous/next view, selection tools, measure, elevation profile, time slider (temporal layers), my location, grid, legend, map tips, compare, export (PNG or PDF) |
 | Status bar | Pointer coordinates (click to change the format), scale, project CRS |
 
-Right-click the map for coordinates in every format, identify, center, zoom and bookmark.
+Right-click the map for coordinates in every format, identify, center, zoom, a link to the view and a bookmark. Right-click a layer for its menu and **Properties…**.
+
+![The tour](assets/screenshots/tour.png)
 
 ## Where your data lives
 

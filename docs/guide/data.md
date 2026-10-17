@@ -1,6 +1,6 @@
 # Adding data
 
-Open **Add data** in the left rail, or drop files on the map. New layers go on top of the layer tree; files are copied into the project's `data/` folder, so the project keeps working when saved or downloaded.
+Open **Add data** in the left rail, or drop files on the map. Files are copied into the project's `data/` folder (written into your project folder when you save a project opened from your computer), so the project keeps working when saved or downloaded. New layers get a clean default style and are stacked points above lines above polygons.
 
 ## Files
 
@@ -45,6 +45,8 @@ Web layers are saved as regular QGIS layers, so Desktop opens them as it would i
     The browser can only read services that allow cross-origin requests. If a layer stays blank, a message names it; the service has to send `Access-Control-Allow-Origin` headers.
 
 ## Open data catalogs
+
+![Searching Sentinel-2 imagery over Jakarta](../assets/screenshots/catalog.png)
 
 **Add data → Browse open data catalogs…** searches public catalogs from the browser:
 

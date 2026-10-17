@@ -26,6 +26,11 @@ Stack: Vite, TypeScript, Svelte 5, OpenLayers, qgis-js 4.2.3 (pinned), SQLite WA
 | `src/lib/processing.ts` | Algorithms (GEOS) |
 | `src/lib/remote.ts` | Web layers: data sources, capabilities, downloads |
 | `src/lib/actions.ts` | Opening/saving, identify, the action search |
+| `src/lib/localfs.ts`, `relocate.ts` | Projects linked to local files, allowed folders, unavailable layers |
+| `src/lib/catalog.ts` | Open data catalogs (STAC, CKAN) |
+| `src/lib/viewlink.ts`, `navigation.ts`, `geolocate.ts` | Links to a view, view history and grid, location |
+| `src/lib/printmap.ts` | PDF map page |
+| `src/lib/joins.ts`, `temporal.ts` | QGIS joins and temporal settings |
 | `src/i18n/*.json` | Translations |
 | `src/components/` | The UI (Svelte) |
 | `tests/` | Unit and end-to-end tests, reference projects |

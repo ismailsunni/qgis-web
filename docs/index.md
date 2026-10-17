@@ -23,7 +23,7 @@ QuarkGIS runs [QGIS](https://qgis.org) compiled to WebAssembly ([qgis-js](https:
 
     ---
 
-    Open `.qgs` / `.qgz` files and project folders, GeoPackages with an embedded project, or a project by URL. Save in the browser, download a `.qgz`, or a `.zip` with the data. Desktop opens what you save, unchanged.
+    Open `.qgs` / `.qgz` files and project folders, GeoPackages with an embedded project, or a project by URL. Save back to your own files (Chrome, Edge), in the browser, or as a download. Desktop opens what you save, unchanged.
 
     [:octicons-arrow-right-24: Projects](guide/projects.md)
 
@@ -31,7 +31,7 @@ QuarkGIS runs [QGIS](https://qgis.org) compiled to WebAssembly ([qgis-js](https:
 
     ---
 
-    GeoPackage, GeoJSON, Shapefile, FlatGeobuf, GeoParquet, GeoTIFF, KML, GPX, CSV, Excel and MBTiles. XYZ, WMS, WMTS, WFS, OGC API, ArcGIS REST, vector tiles, PMTiles and COG from the web.
+    GeoPackage, GeoJSON, Shapefile, FlatGeobuf, GeoParquet, GeoTIFF, KML, GPX, CSV, Excel and MBTiles. XYZ, WMS, WMTS, WFS, OGC API, ArcGIS REST, vector tiles, PMTiles and COG from the web, and open data catalogs (satellite imagery, elevation, government portals).
 
     [:octicons-arrow-right-24: Adding data](guide/data.md)
 
@@ -39,7 +39,7 @@ QuarkGIS runs [QGIS](https://qgis.org) compiled to WebAssembly ([qgis-js](https:
 
     ---
 
-    Single, categorized, graduated, rule-based, heatmap and cluster renderers, labels, raster styles, QML import/export and styles from the QGIS Hub.
+    Clean defaults and one-click suggestions; single, categorized, graduated, rule-based, heatmap and cluster renderers, labels, raster styles, layer properties and joins, QML and styles from the QGIS Hub.
 
     [:octicons-arrow-right-24: Styling](guide/styling.md)
 
@@ -71,7 +71,7 @@ QuarkGIS runs [QGIS](https://qgis.org) compiled to WebAssembly ([qgis-js](https:
 
     ---
 
-    Measure, elevation profiles, time slider, swipe compare, coordinate grid, bookmarks, place search and map export.
+    Measure, elevation profiles, time slider, your location, swipe compare, coordinate grid, bookmarks, place search, links to a view, and PNG or PDF export.
 
     [:octicons-arrow-right-24: Map tools](guide/map.md)
 

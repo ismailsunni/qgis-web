@@ -68,4 +68,27 @@ await page.locator('button[aria-label="Next step"]').click();
 await page.waitForTimeout(1500);
 await page.screenshot({ path: out("time") });
 
+// Layer properties, the tour, and the open data catalog (live: needs the network).
+await demo();
+await page.locator(".node", { hasText: "Countries" }).click({ button: "right" });
+await page.getByRole("menuitem", { name: "Properties…" }).click();
+await page.waitForTimeout(800);
+await page.screenshot({ path: out("properties") });
+await page.keyboard.press("Escape");
+await app(() => (globalThis.quarkgisApp.ui.tour = true));
+await page.locator(".tour-card").getByRole("button", { name: "Next", exact: true }).click();
+await page.waitForTimeout(800);
+await page.screenshot({ path: out("tour") });
+await page.keyboard.press("Escape");
+await page.getByPlaceholder("Search places or coordinates (lat, lon)").fill("-6.2, 106.8");
+await page.keyboard.press("Enter");
+await page.waitForTimeout(1500);
+await app(() => { const A = globalThis.quarkgisApp; const v = A.map.olMap().getView(); v.setResolution(v.getResolution() * 30); A.ui.panel = "catalog"; });
+await page.getByRole("button", { name: "Search this map area" }).click();
+await page.waitForSelector(".catalog-item", { timeout: 60_000 });
+await page.locator(".catalog-item button").first().click();
+await page.waitForTimeout(12000);
+await page.locator(".catalog-item").first().hover();
+await page.screenshot({ path: out("catalog") });
+
 await browser.close();

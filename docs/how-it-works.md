@@ -17,13 +17,17 @@ flowchart LR
 - **Editing** writes SQL into the layer's GeoPackage with the official SQLite WebAssembly build (it includes the R*Tree module GeoPackage spatial indexes need). Each edit stores its inverse for undo.
 - **Processing** runs geometry in GEOS compiled to WebAssembly; features, expressions and reprojection come from QGIS.
 - **CRS definitions** come from QGIS's `srs.db` inside the engine.
-- **Storage**: projects saved in the browser and autosaves live in the Origin Private File System (OPFS).
+- **Local files.** In Chrome and Edge, a project opened from the computer keeps file handles (File System Access API): Save writes the project and the changed data back in place, autosave keeps only the changes, and recent projects reopen from the start page. Data outside the project folder is found in folders you allow, following the project's relative paths; the project itself is never rewritten to point elsewhere. Firefox and Safari read files and save copies.
+- **What can't load in a browser** is flagged rather than dropped: databases (PostGIS…) and QGIS saved logins are kept in the project for Desktop and left out of the map; layers whose files are missing are listed with their expected paths.
+- **Open data catalogs** are searched straight from the browser (STAC APIs and CKAN portals); images are read as cloud-optimized GeoTIFFs with range requests.
+- **Storage**: projects saved in the browser, autosaves and remembered folders live in the browser (OPFS and IndexedDB).
 
 ## Limitations
 
 - **Main thread.** QGIS runs on the page's main thread; qgis-js doesn't start in a Web Worker yet. Rendering itself uses the engine's threads.
 - **Embedding** on other sites needs the host page to be cross-origin isolated (see [Sharing](guide/sharing.md#embedding)).
 - **Labels** in the browser preview use the engine's built-in font; the chosen font is saved for Desktop. Placement can differ slightly from Desktop.
+- **Data portals**: some file servers don't allow browsers to read their files (CORS); those are opened for a manual download.
 - **Web layers** drawn by the browser (tiles, WMS, vector tiles, MBTiles) don't use QGIS symbology; vector tiles use a default style and need a Web Mercator project.
 - **Print layouts and atlases** aren't supported yet.
 - **Processing** offers the algorithms listed in [Processing](guide/processing.md), not the whole QGIS toolbox; raster processing isn't available.

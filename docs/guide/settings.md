@@ -13,6 +13,8 @@ Open **Settings** (the gear in the top bar).
 
 ## Action search
 
+The **welcome tour** runs the first time a project opens; start it again with *Take the tour* in the action search.
+
 ++ctrl+k++ (++cmd+k++) opens a search over every action: panels, tools, processing algorithms, basemaps, bookmarks, and per-layer actions like *Zoom to layer*, *Open attribute table* or *Start editing*.
 
 ## Keyboard shortcuts
@@ -23,11 +25,12 @@ Press ++question++ in the app for this list.
 | --- | --- |
 | ++ctrl+k++ | Action search |
 | ++ctrl+o++ | Open project |
-| ++ctrl+s++ | Save in this browser |
+| ++ctrl+s++ | Save (back to the project's files when opened from your computer in Chrome or Edge, otherwise in this browser) |
 | ++ctrl+z++ / ++ctrl+shift+z++ or ++ctrl+y++ | Undo / redo (feature edits while editing) |
 | ++ctrl+c++ / ++ctrl+v++ | Copy selected features / paste into the layer being edited |
 | ++alt+arrow-left++ / ++alt+arrow-right++ | Previous / next map view |
 | ++question++ | Keyboard shortcuts |
+| Right-click on a layer | Layer menu, including Properties |
 | ++esc++ | Close dialogs and menus |
 | ++shift++ / ++ctrl++ + select | Add to / remove from the selection |
 | Right-click on the map | Coordinates, identify, bookmark |

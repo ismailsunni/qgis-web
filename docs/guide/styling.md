@@ -40,6 +40,8 @@ Pseudocolor (one band with a color ramp), grayscale, hillshade (azimuth, altitud
 
 ## Layer properties
 
+![Layer properties](../assets/screenshots/properties.png)
+
 Right-click a layer (or use its ⋯ menu) and choose **Properties…**, as in QGIS:
 
 - **Information**: type, provider, source, CRS, extent, feature count, fields, bands.
