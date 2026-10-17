@@ -5,7 +5,7 @@
 
   /** Form choices: the layer kinds, plus services stored as one of them. */
   type Choice = RemoteKind | "ogctiles" | "arcgisvt";
-  import { toast } from "../lib/state.svelte";
+  import { ui, toast } from "../lib/state.svelte";
   import { t, N_ } from "../lib/i18n";
 
   const KINDS: [Choice, string, string][] = [
@@ -86,6 +86,16 @@
     }
     loading = false;
   }
+
+  // A service picked in a data catalog: fill in the form and list its layers.
+  $effect(() => {
+    const p = ui.remotePrefill;
+    if (!p) return;
+    ui.remotePrefill = null;
+    kind = p.kind;
+    url = p.url.replace(/\?.*$/, (q) => (/service=|request=/i.test(q) ? "" : q));
+    loadCaps();
+  });
 
   $effect(() => {
     const sets = layers.find((l) => l.name === layer)?.sets ?? [];

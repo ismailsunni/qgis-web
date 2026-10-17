@@ -5,6 +5,7 @@ import ImageLayer from "ol/layer/Image";
 import TileLayer from "ol/layer/Tile";
 import VectorLayer from "ol/layer/Vector";
 import VectorTileLayer from "ol/layer/VectorTile";
+import WebGLTileLayer from "ol/layer/WebGLTile";
 import type BaseLayer from "ol/layer/Base";
 import VectorSource from "ol/source/Vector";
 import XYZ from "ol/source/XYZ";
@@ -30,7 +31,7 @@ import type { QgsGeometry } from "qgis-js";
 import { engine, projectUnits } from "./engine";
 import { flatLayers, snapshotTree } from "./tree";
 import { drawnByBrowser, remoteSpec, attributionFor, arcgisTiles, type RemoteSpec } from "./remote";
-import { hooks, unreachable } from "./doc";
+import { hooks, unreachable, mapLayerEl } from "./doc";
 import { mbtilesLayer } from "./mbtiles";
 import { toast } from "./state.svelte";
 import { t } from "./i18n";
@@ -136,7 +137,19 @@ export function redraw() {
   hooks.afterRedraw();
 }
 
+/** COGs in another CRS (e.g. UTM imagery) need their projection known to be reprojected onto the map. */
+function registerLayerCrs(id: string) {
+  const srs = mapLayerEl(id)?.querySelector(":scope > srs > spatialrefsys");
+  const authid = srs?.querySelector("authid")?.textContent;
+  const def = srs?.querySelector("proj4")?.textContent;
+  if (authid && def && !getProjection(authid)) {
+    proj4.defs(authid, def);
+    register(proj4);
+  }
+}
+
 function remoteLayer(id: string, s: RemoteSpec): BaseLayer {
+  if (s.kind === "cog") registerLayerCrs(id);
   const key = id + JSON.stringify(s);
   let layer = remoteLayers.get(key);
   if (!layer) remoteLayers.set(key, (layer = createRemoteLayer(s)));
@@ -151,7 +164,8 @@ export function createRemoteLayer(s: RemoteSpec): BaseLayer {
   if (s.kind === "xyz") layer = new TileLayer({ source: new XYZ({ url: s.url, crossOrigin, minZoom: s.zmin, maxZoom: s.zmax, attributions }) });
   else if (s.kind === "wms")
     layer = new TileLayer({ source: new TileWMS({ url: s.url, crossOrigin, projection: "EPSG:3857", params: { LAYERS: s.layer, STYLES: s.style ?? "", FORMAT: s.format ?? "image/png", TRANSPARENT: true } }) });
-  else if (s.kind === "cog") layer = new TileLayer({ source: new GeoTIFF({ sources: [{ url: s.url }], convertToRGB: "auto" }) as never });
+  // Raster data (and its reprojection) needs the WebGL tile layer.
+  else if (s.kind === "cog") layer = new WebGLTileLayer({ source: new GeoTIFF({ sources: [{ url: s.url }], convertToRGB: "auto" }) });
   else if (s.kind === "vectortile") layer = new VectorTileLayer({ source: new VectorTileSource({ format: new MVT(), url: arcgisTiles(s.url) ? `${s.url.replace(/\/$/, "")}/tile/{z}/{y}/{x}.pbf` : s.url, minZoom: s.zmin, maxZoom: s.zmax }) });
   else if (s.kind === "pmtiles") {
     if (s.raster) layer = new TileLayer({ source: new PMTilesRasterSource({ url: s.url, attributions: [] }) as never });

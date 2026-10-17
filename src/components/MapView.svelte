@@ -146,7 +146,7 @@
 {/if}
 
 {#if ui.phase === "ready" && !view.mapOnly}
-  <div class="statusbar">
+  <div class="statusbar" data-tour="status">
     <button class="coord" title={t("{format}: click for another format", { format: t(FORMAT_LABELS[coordFormat]) })} onclick={() => {
       coordFormat = FORMATS[(FORMATS.indexOf(coordFormat) + 1) % FORMATS.length];
       saveSettings({ coords: coordFormat });

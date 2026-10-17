@@ -75,8 +75,8 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | XYZ, WMS, WMTS, WFS, vector tiles, COG by URL | ✅ | ✅ | ✅ |
 | OGC API Features / Tiles | ✅ | ✅ | ✅ |
 | ArcGIS REST (Feature/Map/Image/VectorTile Server) | ✅ | ✅ | ✅ |
-| STAC catalogs | ✅ | — | — |
-| Data-catalog plugins (Planetary Computer, Earth Engine, Overture, HF, NASA…) | ✅ (dozens) | — | — |
+| STAC catalogs | ✅ | — | ✅ (Earth Search or any STAC API) |
+| Data-catalog plugins (Planetary Computer, Earth Engine, Overture, HF, NASA…) | ✅ (dozens) | — | ◐ (CKAN portals) |
 | Databases (PostGIS, SQL Server, DuckDB, Iceberg) | ✅ | ✅ (desktop) | — (PRD non-goal) |
 | Private cloud storage (S3) | ✅ | — | — |
 | Layer picker for multi-layer GeoPackage | ✅ | — | ✅ |

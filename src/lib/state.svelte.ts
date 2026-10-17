@@ -12,7 +12,7 @@ export const view = {
   noPanels: params.get("panels") === "none",
 };
 
-export type Panel = "layers" | "add" | "style" | "tools" | "hub" | "bookmarks";
+export type Panel = "layers" | "add" | "style" | "tools" | "hub" | "bookmarks" | "catalog";
 
 export interface IdentifyHit {
   layerId: string;
@@ -83,8 +83,12 @@ export const ui = $state({
   time: { active: false, range: null as [number, number] | null },
   /** "Show my location" is on. */
   locating: false,
+  /** A web service to add, handed to the remote layer form (e.g. from a data catalog). */
+  remotePrefill: null as { kind: "wms" | "wfs" | "arcgismap" | "arcgisfeature"; url: string } | null,
   /** Coordinate grid shown on the map. */
   grid: false,
+  /** The welcome tour is showing. */
+  tour: false,
   /** Keyboard shortcut sheet. */
   shortcuts: false,
   /** The elevation profile shown in the bottom drawer. */

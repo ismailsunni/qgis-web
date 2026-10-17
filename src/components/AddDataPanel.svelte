@@ -25,6 +25,12 @@
 </section>
 
 <section class="stack">
+  <h3>{t("Open data")}</h3>
+  <p class="muted">{t("Search satellite imagery, elevation and public data portals, and add the results to the map.")}</p>
+  <button onclick={() => (ui.panel = "catalog")}><Icon name="globe" size={18} /> {t("Browse open data catalogs…")}</button>
+</section>
+
+<section class="stack">
   <h3>{t("Basemaps")}</h3>
   <BasemapGallery />
 </section>

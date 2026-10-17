@@ -32,7 +32,7 @@
   const toggle = (tool: "measure-line" | "measure-area") => (ui.mapTool === tool ? stopTool() : startMeasure(tool === "measure-line" ? "line" : "area"));
 </script>
 
-<div class="map-toolbar" role="toolbar" aria-label={t("Map tools")}>
+<div class="map-toolbar" data-tour="map-tools" role="toolbar" aria-label={t("Map tools")}>
   <div class="tool-group">
     <button title={t("Previous view (Alt+←)")} aria-label={t("Previous view")} disabled={!ui.viewHistory[0]} onclick={previousView}><Icon name="back" size={17} /></button>
     <button title={t("Next view (Alt+→)")} aria-label={t("Next view")} disabled={!ui.viewHistory[1]} onclick={nextView}><Icon name="forward" size={17} /></button>

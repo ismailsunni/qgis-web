@@ -453,3 +453,17 @@ a.link { color: var(--green-dark); }
 .chip { border-radius: 999px; padding: 3px 10px; font-size: 12px; border-color: var(--green); color: var(--green-dark); background: var(--accent-bg); }
 .join-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; padding: 4px 0; border-bottom: 1px solid var(--line); }
 .join-fields { display: flex; flex-wrap: wrap; gap: 4px 12px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 13px; }
+.catalog .catalog-item { display: grid; grid-template-columns: 56px 1fr auto; gap: 8px; align-items: center; padding: 4px; border-radius: 6px; font-size: 12px; }
+.catalog .catalog-item.hovered { background: var(--accent-bg); }
+.catalog .catalog-item img { width: 56px; height: 56px; object-fit: cover; border-radius: 4px; background: var(--bg-2); }
+.catalog .catalog-item div { display: flex; flex-direction: column; min-width: 0; }
+.catalog .catalog-item .muted { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.catalog .catalog-dataset { display: flex; flex-direction: column; gap: 3px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.catalog .resources { display: flex; flex-wrap: wrap; gap: 4px; }
+.tour { position: fixed; inset: 0; z-index: 90; }
+.tour-dim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); }
+.tour-spot { position: absolute; border-radius: 8px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45); outline: 2px solid var(--green); pointer-events: none; transition: all 0.2s; }
+.tour-card { position: absolute; width: 320px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.tour-card h3 { margin: 0; }
+.tour-card p { margin: 0 0 6px; font-size: 13px; line-height: 1.45; }
+.tour-card .spacer { flex: 1; }

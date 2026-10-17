@@ -440,3 +440,50 @@ test("a shared link opens at its view", async ({ page }) => {
   });
   expect(state).toEqual({ visible: [true, false, true], scale: 9500, dirty: false });
 });
+
+test("welcome tour walks through the app", async ({ page }) => {
+  await demo(page);
+  // Not shown automatically to automated browsers; started like the "Take the tour" action.
+  await page.evaluate(() => ((globalThis as any).quarkgisApp.ui.tour = true));
+  const card = page.locator(".tour-card");
+  await expect(card).toContainText("Welcome to QuarkGIS");
+  for (let i = 0; i < 8; i++) await card.getByRole("button", { name: "Next", exact: true }).click();
+  await expect(card).toContainText("9 / 9");
+  await card.getByRole("button", { name: "Done" }).click();
+  await expect(page.locator(".tour")).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem("quarkgis:tour-done"))).toBe("1");
+});
+
+test("open data catalogs: a STAC image and a portal file", async ({ page }) => {
+  // Catalogs answered locally so the test doesn't depend on outside services.
+  const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Expose-Headers": "Content-Range, Content-Length" };
+  const tif = readFileSync("tests/fixtures/dem.tif");
+  await page.route("https://stac.test/**", (route) =>
+    route.fulfill({ headers: cors, contentType: "application/json", body: JSON.stringify({ features: [{ id: "scene-1", geometry: { type: "Polygon", coordinates: [[[0, 35], [20, 35], [20, 50], [0, 50], [0, 35]]] }, properties: { datetime: "2026-10-01T10:00:00Z", "eo:cloud_cover": 4 }, assets: { visual: { href: "https://files.test/scene.tif", type: "image/tiff; application=geotiff; profile=cloud-optimized" } } }] }) }),
+  );
+  await page.route("https://files.test/scene.tif", (route) => {
+    const m = /bytes=(\d+)-(\d+)?/.exec(route.request().headers().range ?? "");
+    if (!m) return route.fulfill({ headers: cors, body: tif });
+    const end = Math.min(+(m[2] ?? tif.length - 1), tif.length - 1);
+    route.fulfill({ status: 206, headers: { ...cors, "Content-Range": `bytes ${m[1]}-${end}/${tif.length}` }, body: tif.subarray(+m[1], end + 1) });
+  });
+  await page.route("https://portal.test/api/3/action/package_search*", (route) =>
+    route.fulfill({ headers: cors, contentType: "application/json", body: JSON.stringify({ result: { results: [{ name: "parks", title: "City parks", organization: { title: "City" }, resources: [{ name: "parks.geojson", format: "GeoJSON", url: "https://files.test/parks.geojson" }] }] } }) }),
+  );
+  await page.route("https://files.test/parks.geojson", (route) =>
+    route.fulfill({ headers: cors, contentType: "application/geo+json", body: JSON.stringify({ type: "FeatureCollection", features: [{ type: "Feature", properties: { name: "Park" }, geometry: { type: "Point", coordinates: [2.35, 48.85] } }] }) }),
+  );
+  await demo(page);
+  await page.evaluate(() => ((globalThis as any).quarkgisApp.ui.panel = "catalog"));
+  await page.locator(".catalog input[list]").fill("https://stac.test");
+  await page.getByRole("button", { name: "Search this map area" }).click();
+  await expect(page.locator(".catalog-item")).toContainText("2026-10-01");
+  await page.locator(".catalog-item").getByRole("button", { name: "Add" }).click();
+  await page.getByRole("tab", { name: "Data portals" }).click();
+  await page.locator(".catalog select").first().selectOption("custom");
+  await page.locator('.catalog input[type="url"]').fill("https://portal.test");
+  await page.locator('.catalog input[placeholder^="Search"]').fill("parks");
+  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await page.locator(".catalog-dataset .chip").click();
+  await expect.poll(() => layers(page).then((ls) => ls.map((l) => l.name).sort())).toEqual(["Countries", "Places", "Rivers", "parks", "sentinel-2-l2a 2026-10-01"].sort());
+});

@@ -21,7 +21,7 @@ Everything runs client-side: nothing is uploaded. In Chrome and Edge, a project 
 | F9 | QML import/export per layer, plus an Advanced QML editor | ✅ | Desktop QML applied verbatim |
 | F10 | Save: in the browser (OPFS), `.qgz` download, project + data `.zip` | ✅ | Round-trip suite: 10/10 projects verified by QGIS Desktop |
 | F11 | Add GeoPackage (with a layer picker), GeoJSON, Shapefile (+zip), FlatGeobuf, GeoTIFF, GeoParquet, KML, GPX, MBTiles | ✅ | CRS detected per format |
-| F12 | Remote layers: XYZ, WMS, WMTS, WFS, OGC API Features and Tiles, ArcGIS FeatureServer/MapServer/ImageServer/VectorTileServer, vector tiles, PMTiles, COG, files by URL | ✅* | Saved as QGIS layers; see notes |
+| F12 | Open data catalogs (STAC imagery and elevation, CKAN portals); remote layers: XYZ, WMS, WMTS, WFS, OGC API Features and Tiles, ArcGIS FeatureServer/MapServer/ImageServer/VectorTileServer, vector tiles, PMTiles, COG, files by URL | ✅* | Saved as QGIS layers; see notes |
 | F13 | Editing (attributes, add/move/delete features) written to GeoPackage, with undo/redo | ✅ | Edits persist (saved in the browser), readable by Desktop |
 | F14 | Processing: buffer, centroids, clip, difference, intersection, union, dissolve, join by location, merge, points along lines, reproject, … | ✅ | Outputs match Desktop's native algorithms (`scripts/compare_processing.py`) |
 | F15 | Expression builder with QGIS's function list and live preview | ✅ | Evaluated by QGIS itself |
@@ -34,7 +34,7 @@ Also:
 - **Data work:** feature selection (click, rectangle, polygon, freehand, expression, location) synced with the attribute table, field statistics with histograms, table joins (QGIS vector joins), field calculator and field management, layer export (GeoPackage, GeoJSON, FlatGeobuf, Shapefile, KML, CSV), CSV and Excel import, and a processing history to re-run tools.
 - **Styling:** clean default styles and one-click suggestions for new layers; rule-based, heatmap and point cluster renderers; standard deviation and manual classes; scale-dependent visibility; raster band histograms and pixel values in Identify; raster pseudocolor, grayscale, hillshade and RGB; popups (display name and HTML map tips, shown in Identify and on hover); copy/paste style.
 - **Editing:** snapping to visible layers, merge, split, move, rotate and explode, copy/paste of features between layers, and QGIS attribute forms (widgets, aliases, constraints, default values).
-- **App:** translations (German, French, Spanish, Indonesian), undo/redo for every project change, autosave with crash recovery, dark mode, "open project on launch" and map view settings (exportable), the project's saved view restored and written on save, an [embed API](docs/embed-api.md), a command palette (Ctrl/Cmd+K) with every action, keyboard shortcuts (press `?`), project properties (title, CRS), and a phone layout.
+- **App:** a welcome tour, translations (German, French, Spanish, Indonesian), undo/redo for every project change, autosave with crash recovery, dark mode, "open project on launch" and map view settings (exportable), the project's saved view restored and written on save, an [embed API](docs/embed-api.md), a command palette (Ctrl/Cmd+K) with every action, keyboard shortcuts (press `?`), project properties (title, CRS), and a phone layout.
 
 See [docs/feature-comparison.md](docs/feature-comparison.md) for how this compares with GeoLibre and RustGIS.
 

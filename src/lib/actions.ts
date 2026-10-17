@@ -22,7 +22,8 @@ import { isGeoTiff, pixelSampler } from "./raster";
 import { viewLink } from "./viewlink";
 import { relocateAll, locateInAllowed, unavailableLayers, missingSummary } from "./relocate";
 import { canLink, linked, linkProject, saveToDisk, readRelocations, pickFiles, pickFolder, readRecent, getRecent, unlink, type LocalRecent, type PickedFile } from "./localfs";
-import { ui, changed, toast, featureAttributes, type IdentifyHit } from "./state.svelte";
+import { maybeStartTour, startTour } from "./tour";
+import { ui, view, changed, toast, featureAttributes, type IdentifyHit } from "./state.svelte";
 import { t, N_ } from "./i18n";
 
 function opened(name: string, storedId: string | null) {
@@ -48,6 +49,7 @@ function opened(name: string, storedId: string | null) {
   const broken = flatLayers(snapshotTree()).filter((l) => !l.valid && !l.remote && !l.unreachable);
   if (blocked.length) toast(t("Can't be loaded in a browser: {names}", { names: blocked.map((l) => `${l.name} (${l.unreachable!.kind === "database" ? l.unreachable!.name : t("QGIS saved login")})`).join(", ") }));
   else if (broken.length) toast(unavailableLayers().length ? t("Data not found: {files}", { files: missingSummary() }) : t("Missing data for: {names}", { names: broken.map((l) => l.name).join(", ") }));
+  if (!view.mapOnly) maybeStartTour();
   emit("projectLoaded", { name: ui.projectName, layers: flatLayers(snapshotTree()).map((l) => ({ id: l.layerId, name: l.name })) });
 }
 
@@ -387,6 +389,8 @@ export function commands(): Command[] {
     { id: "panel-add", label: t("Show Add data panel"), run: () => (ui.panel = "add") },
     { id: "panel-style", label: t("Show Style panel"), run: () => (ui.panel = "style") },
     { id: "panel-tools", label: t("Show Processing tools"), run: () => (ui.panel = "tools") },
+    { id: "tour", label: t("Take the tour"), run: startTour },
+    { id: "panel-catalog", label: t("Browse open data catalogs (imagery, elevation, portals)"), run: () => (ui.panel = "catalog") },
     { id: "panel-hub", label: t("Browse the QGIS Hub"), run: () => (ui.panel = "hub") },
     { id: "panel-bookmarks", label: t("Show Bookmarks"), run: () => (ui.panel = "bookmarks") },
     { id: "docs", label: t("Documentation"), run: () => window.open(`${import.meta.env.BASE_URL}docs/`, "_blank", "noopener") },

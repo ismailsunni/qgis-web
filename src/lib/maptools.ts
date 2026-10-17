@@ -236,21 +236,27 @@ export const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.cha
 
 /** Renders one browser-drawn layer offscreen at the export size and returns its canvas. */
 async function renderWebLayer(layer: BaseLayer, extent: Extent, width: number, height: number) {
+  // Sources that read metadata first (GeoTIFF) draw nothing until they're ready.
+  const source = (layer as BaseLayer & { getSource?(): { getState(): string; once(t: string, f: () => void): void; on(t: string, f: () => void): void } | null }).getSource?.();
+  if (source && source.getState() === "loading") await new Promise<void>((ok) => { const done = () => source.getState() !== "loading" && ok(); source.on("change", done); setTimeout(ok, 20000); });
   const div = Object.assign(document.createElement("div"), { style: `position:fixed;left:-${width + 100}px;top:0;width:${width}px;height:${height}px` });
   document.body.appendChild(div);
   const map = new Map({ target: div, controls: [], interactions: [], layers: [layer], pixelRatio: 1, view: new View({ projection: mapProjection() }) });
   map.getView().fit(extent, { size: [width, height] });
-  await new Promise<void>((resolve) => {
-    const timer = setTimeout(resolve, 20000);
-    map.once("rendercomplete", () => (clearTimeout(timer), resolve()));
-  });
   const out = Object.assign(document.createElement("canvas"), { width, height });
   const ctx = out.getContext("2d")!;
-  for (const c of div.querySelectorAll("canvas")) {
-    const opacity = (c.parentElement as HTMLElement).style.opacity;
-    ctx.globalAlpha = opacity === "" ? 1 : +opacity;
-    ctx.drawImage(c, 0, 0, width, height);
-  }
+  // Copied inside the event: a WebGL canvas (COGs) is cleared once the frame is shown.
+  const copy = () => {
+    for (const c of div.querySelectorAll("canvas")) {
+      const opacity = (c.parentElement as HTMLElement).style.opacity;
+      ctx.globalAlpha = opacity === "" ? 1 : +opacity;
+      ctx.drawImage(c, 0, 0, width, height);
+    }
+  };
+  await new Promise<void>((resolve) => {
+    const timer = setTimeout(() => (copy(), resolve()), 20000);
+    map.once("rendercomplete", () => (clearTimeout(timer), copy(), resolve()));
+  });
   map.setTarget(undefined);
   div.remove();
   return out;

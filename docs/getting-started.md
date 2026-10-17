@@ -30,6 +30,8 @@ You can also drop files or a whole folder anywhere on the page.
 5. Click a country on the map to **identify** it.
 6. **Save** opens a menu: save in this browser (++ctrl+s++), download the project file (`.qgz`), or download the project with its data (`.zip`).
 
+The first time a project opens, a short **tour** points out the main parts of the app; run it again with *Take the tour* in the action search.
+
 Press ++ctrl+k++ (++cmd+k++ on a Mac) at any time to search every action, and ++question++ to see the keyboard shortcuts.
 
 ## Interface

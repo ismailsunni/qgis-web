@@ -85,7 +85,7 @@
     </div>
   {/if}
   {#if !tree.length}<p class="muted pad">{t("This project has no layers yet. Add data to get started.")}</p>{/if}
-  <ul class="tree" role="tree">
+  <ul class="tree" data-tour="layer-tree" role="tree">
     {#each tree as node (node.key)}<LayerNode {node} />{/each}
   </ul>
   <p class="hint">{t("Click a layer to make it current, double-click to rename, drag to reorder.")}</p>

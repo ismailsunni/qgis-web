@@ -44,6 +44,15 @@ Web layers are saved as regular QGIS layers, so Desktop opens them as it would i
 !!! info "CORS"
     The browser can only read services that allow cross-origin requests. If a layer stays blank, a message names it; the service has to send `Access-Control-Allow-Origin` headers.
 
+## Open data catalogs
+
+**Add data → Browse open data catalogs…** searches public catalogs from the browser:
+
+- **Imagery & elevation (STAC).** Search the current map area in [Earth Search](https://earth-search.aws.element84.com/v1) for Sentinel-2 true color images (with a date range and maximum cloud cover), the Copernicus 30 m elevation model, or NAIP aerial images (USA). Footprints show on the map; **Add** puts the image on the map as a cloud-optimized GeoTIFF read straight from its storage, only the parts in view. Any other STAC API can be entered by URL.
+- **Data portals (CKAN).** Search data.gov.au, data.gov.uk, Open Government Canada, the Humanitarian Data Exchange, or another CKAN portal by URL. For each dataset with map data, **Add** links GeoJSON, FlatGeobuf, KML and GeoPackage files (the project keeps their address), downloads zips, Shapefiles and CSVs into the project, and opens WMS, WFS and ArcGIS services in the web layer form to pick a layer.
+
+Some portals' file servers don't allow browsers to read their files; those open in a new tab to download and drop on the map.
+
 ## QGIS Hub
 
 The **QGIS Hub** panel browses [hub.qgis.org](https://hub.qgis.org): apply a style (QML) to the current layer in one click, open projects shared as GeoPackages, or add layer definitions.

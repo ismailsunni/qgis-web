@@ -15,6 +15,7 @@
   import StylePanel from "./components/StylePanel.svelte";
   import ToolsPanel from "./components/ToolsPanel.svelte";
   import HubPanel from "./components/HubPanel.svelte";
+  import CatalogPanel from "./components/CatalogPanel.svelte";
   import BookmarksPanel from "./components/BookmarksPanel.svelte";
   import AttributeTable from "./components/AttributeTable.svelte";
   import CommandPalette from "./components/CommandPalette.svelte";
@@ -33,6 +34,7 @@
   import { dismiss } from "./lib/dismiss";
   import LayerProperties from "./components/LayerProperties.svelte";
   import UnavailableLayers from "./components/UnavailableLayers.svelte";
+  import Tour from "./components/Tour.svelte";
   import ShortcutsDialog from "./components/ShortcutsDialog.svelte";
   import { previousView, nextView } from "./lib/navigation";
   import { applyHash } from "./lib/viewlink";
@@ -49,7 +51,7 @@
     { id: "bookmarks", icon: "bookmark", label: N_("Bookmarks") },
     { id: "hub", icon: "hub", label: N_("QGIS Hub") },
   ];
-  const titles: Record<Panel, string> = { layers: N_("Layers"), add: N_("Add data"), style: N_("Style"), tools: N_("Processing"), hub: N_("QGIS Hub"), bookmarks: N_("Bookmarks") };
+  const titles: Record<Panel, string> = { layers: N_("Layers"), add: N_("Add data"), style: N_("Style"), tools: N_("Processing"), hub: N_("QGIS Hub"), bookmarks: N_("Bookmarks"), catalog: N_("Open data") };
 
   let dragging = $state(false);
   let menuOpen = $state(false);
@@ -156,13 +158,13 @@
       <div class="project-name">
         {#if ui.phase === "ready"}<button title={t("Project properties")} onclick={() => (ui.dialog = "project")}>{ui.projectName}</button>{/if}{#if ui.dirty}<span class="dirty" title={t("Unsaved changes")}>•</span>{/if}
       </div>
-      <button class="palette-btn" onclick={() => (ui.palette = true)}>
+      <button class="palette-btn" data-tour="search" onclick={() => (ui.palette = true)}>
         <Icon name="search" size={16} /> {t("Search actions")} <kbd>Ctrl K</kbd>
       </button>
       <button class="icon" title={t("Undo (Ctrl+Z)")} aria-label={t("Undo")} disabled={!ui.canUndoProject || !!ui.editing} onclick={undoProject}><Icon name="undo" size={18} /></button>
       <button class="icon" title={t("Redo (Ctrl+Shift+Z)")} aria-label={t("Redo")} disabled={!ui.canRedoProject || !!ui.editing} onclick={redoProject}><Icon name="redo" size={18} /></button>
       <div class="menu-anchor">
-        <button class="ghost" bind:this={saveButton} onclick={() => (saveMenu = !saveMenu)} disabled={ui.phase !== "ready"}><Icon name="save" size={18} /> {t("Save")}</button>
+        <button class="ghost" data-tour="save" bind:this={saveButton} onclick={() => (saveMenu = !saveMenu)} disabled={ui.phase !== "ready"}><Icon name="save" size={18} /> {t("Save")}</button>
         {#if saveMenu}
           <div class="menu card right" role="menu" use:dismiss={{ close: () => (saveMenu = false), keep: saveButton }}>
             {#if ui.local}<button role="menuitem" onclick={() => { saveMenu = false; save(); }}>{t("Save to {name}", { name: ui.local })} <kbd>Ctrl S</kbd></button>{/if}
@@ -172,14 +174,14 @@
           </div>
         {/if}
       </div>
-      <button class="ghost" onclick={() => (ui.dialog = "share")} disabled={ui.phase !== "ready"}><Icon name="share" size={18} /> {t("Share")}</button>
+      <button class="ghost" data-tour="share" onclick={() => (ui.dialog = "share")} disabled={ui.phase !== "ready"}><Icon name="share" size={18} /> {t("Share")}</button>
       <button class="icon" title={t("Settings")} aria-label={t("Settings")} onclick={() => (ui.dialog = "settings")}><Icon name="settings" size={18} /></button>
     </header>
   {/if}
 
   <div class="body">
     {#if !view.mapOnly}
-      <nav class="rail" aria-label={t("Panels")}>
+      <nav class="rail" data-tour="rail" aria-label={t("Panels")}>
         {#if view.compact}
           <button class="rail-btn" title={t("Menu")} bind:this={menuButton} onclick={() => (menuOpen = !menuOpen)}><Icon name="menu" /></button>
           {#if menuOpen}
@@ -193,6 +195,7 @@
         {#each rail as item}
           <button
             class="rail-btn"
+            data-tour={item.id}
             class:active={item.id === "table" ? !!ui.tableLayerId : ui.panel === item.id}
             disabled={!!item.planned || (item.id === "table" && !ui.current)}
             title={item.planned ? t("{label} — planned for {version}", { label: t(item.label), version: item.planned }) : t(item.label)}
@@ -216,6 +219,7 @@
             {:else if ui.panel === "style"}<StylePanel />
             {:else if ui.panel === "tools"}<ToolsPanel />
             {:else if ui.panel === "hub"}<HubPanel />
+            {:else if ui.panel === "catalog"}<CatalogPanel />
             {:else if ui.panel === "bookmarks"}<BookmarksPanel />{/if}
           </div>
         </aside>
@@ -240,6 +244,7 @@
   {#if ui.dialog === "project"}<ProjectDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "layer-properties" && ui.current}{#key ui.current}<LayerProperties layerId={ui.current} onclose={() => (ui.dialog = null)} />{/key}{/if}
   {#if ui.dialog === "unavailable"}<UnavailableLayers onclose={() => (ui.dialog = null)} />{/if}
+  {#if ui.tour && ui.phase === "ready" && !view.mapOnly}<Tour />{/if}
   {#if ui.shortcuts}<ShortcutsDialog />{/if}
   {#if ui.dialog === "settings"}<SettingsDialog onclose={() => (ui.dialog = null)} />{/if}
   {#if ui.dialog === "export"}<ExportDialog onclose={() => (ui.dialog = null)} />{/if}
