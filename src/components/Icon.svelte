@@ -48,6 +48,7 @@
     profile: "M3 19l5-8 4 4 4-9 5 13H3Z",
     chart: "M4 20V10m6 10V4m6 16v-7m4 7H2",
     back: "M15 6l-6 6 6 6",
+    locate: "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm0-6v4m0 12v4M2 12h4m12 0h4",
     forward: "M9 6l6 6-6 6",
     grid: "M3 9h18M3 15h18M9 3v18M15 3v18",
     keyboard: "M3 6h18v12H3V6Zm4 4h.01M11 10h.01M15 10h.01M7 14h10",

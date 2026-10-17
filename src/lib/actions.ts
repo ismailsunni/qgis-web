@@ -400,6 +400,7 @@ export function commands(): Command[] {
     { id: "full", label: t("Zoom to full extent"), run: zoomToFull },
     { id: "view-back", label: t("Previous map view"), hint: "Alt+←", run: previousView },
     { id: "view-next", label: t("Next map view"), hint: "Alt+→", run: nextView },
+    { id: "locate", label: t("Show my location"), run: () => import("./geolocate").then((m) => m.toggleLocation()) },
     { id: "grid", label: t("Show/hide coordinate grid"), run: () => toggleGrid() },
     { id: "time", label: t("Show/hide time slider (temporal layers)"), run: () => (ui.time.active = !ui.time.active) },
     { id: "shortcuts", label: t("Keyboard shortcuts"), hint: "?", run: () => (ui.shortcuts = true) },

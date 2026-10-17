@@ -4,6 +4,7 @@
   import { startProfile } from "../lib/profile";
   import { previousView, nextView, toggleGrid } from "../lib/navigation";
   import { dismiss } from "../lib/dismiss";
+  import { toggleLocation } from "../lib/geolocate";
   import { temporalLayers } from "../lib/temporal";
   import { t, N_ } from "../lib/i18n";
 
@@ -56,6 +57,7 @@
   {#if (ui.version, temporalLayers().length)}
     <button class:active={ui.time.active} title={t("Time slider (temporal controller)")} aria-label={t("Time slider")} onclick={() => (ui.time.active = !ui.time.active)}><Icon name="clock" size={17} /></button>
   {/if}
+  <button class:active={ui.locating} title={t("Show my location")} aria-label={t("Show my location")} onclick={() => toggleLocation()}><Icon name="locate" size={17} /></button>
   <button class:active={ui.grid} title={t("Coordinate grid")} aria-label={t("Coordinate grid")} onclick={() => toggleGrid()}><Icon name="grid" size={17} /></button>
   <button class:active={ui.showLegend} title={t("Legend")} aria-label={t("Legend")} onclick={() => (ui.showLegend = !ui.showLegend)}><Icon name="legend" size={17} /></button>
   <button class:active={ui.mapTips} title={t("Map tips on hover")} aria-label={t("Map tips")} onclick={() => (ui.mapTips = !ui.mapTips)}><Icon name="tip" size={17} /></button>

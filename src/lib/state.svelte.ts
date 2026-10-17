@@ -81,6 +81,8 @@ export const ui = $state({
   copiedFeatures: 0,
   /** Temporal controller: the time range shown, when active. */
   time: { active: false, range: null as [number, number] | null },
+  /** "Show my location" is on. */
+  locating: false,
   /** Coordinate grid shown on the map. */
   grid: false,
   /** Keyboard shortcut sheet. */
