@@ -54,8 +54,10 @@
   async function searchStac() {
     busy = true;
     try {
-      const [w, s, e, n] = transformExtent(olMap().getView().calculateExtent(olMap().getSize()), mapProjection(), "EPSG:4326");
-      const bbox = [Math.max(-180, w), Math.max(-90, s), Math.min(180, e), Math.min(90, n)];
+      // Beyond the CRS's valid area (e.g. a world view in Equal Earth) corners don't convert: use the world's limits.
+      const [w, s, e, n] = transformExtent(olMap().getView().calculateExtent(olMap().getSize()), mapProjection(), "EPSG:4326", 8);
+      const ok = (v: number, d: number) => (Number.isFinite(v) ? v : d);
+      const bbox = [Math.max(-180, ok(w, -180)), Math.max(-90, ok(s, -90)), Math.min(180, ok(e, 180)), Math.min(90, ok(n, 90))];
       items = [];
       items = await stacSearch(api, collection, bbox, { from, to, maxCloud: preset?.cloud ? maxCloud : undefined, asset: preset?.asset });
       source.clear();
