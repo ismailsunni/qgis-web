@@ -48,6 +48,7 @@
   let mode = $state("Jenks");
   let classes = $state(5);
   let advanced = $state(false);
+  let more = $state(false);
   let qml = $state("");
 
   $effect(() => {
@@ -130,40 +131,6 @@
     </dl>
   </section>
 
-  {@const sr = info.scales}
-  {@const set = (p: Partial<typeof sr>) => apply(() => S.writeScaleRange(info.id, { ...sr, ...p }))}
-  <section class="stack">
-    <label class="row"><input type="checkbox" checked={sr.enabled} onchange={(e) => set({ enabled: e.currentTarget.checked })} /> <h3>{t("Scale-dependent visibility")}</h3></label>
-    {#if sr.enabled}
-      <div class="grid2 scales">
-        <label class="field">{t("Hide when zoomed out beyond 1:")}
-          <span class="row"><input type="number" min="0" step="any" value={sr.minScale || ""} placeholder={t("no limit")} onchange={(e) => set({ minScale: e.currentTarget.valueAsNumber || 0 })} /><button class="icon" title={t("Current map scale")} aria-label={t("Use current scale as minimum")} onclick={() => set({ minScale: Math.round(scaleDenominator()) })}><Icon name="zoom" size={15} /></button></span>
-        </label>
-        <label class="field">{t("Hide when zoomed in beyond 1:")}
-          <span class="row"><input type="number" min="0" step="any" value={sr.maxScale || ""} placeholder={t("no limit")} onchange={(e) => set({ maxScale: e.currentTarget.valueAsNumber || 0 })} /><button class="icon" title={t("Current map scale")} aria-label={t("Use current scale as maximum")} onclick={() => set({ maxScale: Math.round(scaleDenominator()) })}><Icon name="zoom" size={15} /></button></span>
-        </label>
-      </div>
-    {/if}
-  </section>
-
-  {#if info.temporal && info.timeFields.length}
-    {@const tm = info.temporal}
-    {@const setT = (p: Partial<typeof tm>) => apply(() => writeTemporal(info.id, { ...tm, start: tm.start || info.timeFields[0], ...p }), "temporal settings")}
-    <section class="stack">
-      <label class="row"><input type="checkbox" checked={tm.enabled} onchange={(e) => setT({ enabled: e.currentTarget.checked })} /> <h3>{t("Time (temporal controller)")}</h3></label>
-      {#if tm.enabled}
-        <label class="field">{t("Features have")}
-          <select value={tm.mode} onchange={(e) => setT({ mode: +e.currentTarget.value as 1 | 2, end: tm.end || info.timeFields[0] })}><option value={1}>{t("A date/time (one field)")}</option><option value={2}>{t("Start and end fields")}</option></select>
-        </label>
-        <div class="grid2">
-          <label class="field">{tm.mode === 2 ? t("Start") : t("Date/time")}<select value={tm.start} onchange={(e) => setT({ start: e.currentTarget.value })}>{#each info.timeFields as f}<option>{f}</option>{/each}</select></label>
-          {#if tm.mode === 2}<label class="field">{t("End")}<select value={tm.end} onchange={(e) => setT({ end: e.currentTarget.value })}>{#each info.timeFields as f}<option>{f}</option>{/each}</select></label>{/if}
-        </div>
-        {#if tm.mode === 1}<label class="row"><input type="checkbox" checked={tm.accumulate} onchange={(e) => setT({ accumulate: e.currentTarget.checked })} /> {t("Accumulate features over time")}</label>{/if}
-        <p class="hint">{t("Use the clock button on the map to play through time.")}</p>
-      {/if}
-    </section>
-  {/if}
 
   {#if info.type === "Raster"}
     {#key info.id}<RasterStyle layerId={info.id} />{/key}
@@ -332,6 +299,11 @@
     </section>
   {/if}
 
+  {@const active = [info.scales.enabled, info.temporal?.enabled, info.vector && (S.readPopup(info.id).display || S.readPopup(info.id).mapTip)].filter(Boolean).length}
+  <section class="stack">
+    <button class="ghost" onclick={() => (more = !more)}><span class="chev" class:open={more}><Icon name="chevron" size={14} /></span> {t("More options")} <span class="muted">{active ? t("{n} set", { n: active }) : t("popup, visibility by scale, time")}</span></button>
+  </section>
+  {#if more}
   {#if info.vector}
     {@const popup = S.readPopup(info.id)}
     <section class="stack">
@@ -345,6 +317,41 @@
       {#if !popup.mapTip}<button class="link" onclick={() => apply(() => S.writePopup(info.id, { ...popup, mapTip: S.defaultMapTip(info.fields) }), "map tip")}>{t("Start from all fields")}</button>{/if}
       <p class="hint">{t("Saved in the project like QGIS's Display properties.")}</p>
     </section>
+  {/if}
+  {@const sr = info.scales}
+  {@const set = (p: Partial<typeof sr>) => apply(() => S.writeScaleRange(info.id, { ...sr, ...p }))}
+  <section class="stack">
+    <label class="row"><input type="checkbox" checked={sr.enabled} onchange={(e) => set({ enabled: e.currentTarget.checked })} /> <h3>{t("Scale-dependent visibility")}</h3></label>
+    {#if sr.enabled}
+      <div class="grid2 scales">
+        <label class="field">{t("Hide when zoomed out beyond 1:")}
+          <span class="row"><input type="number" min="0" step="any" value={sr.minScale || ""} placeholder={t("no limit")} onchange={(e) => set({ minScale: e.currentTarget.valueAsNumber || 0 })} /><button class="icon" title={t("Current map scale")} aria-label={t("Use current scale as minimum")} onclick={() => set({ minScale: Math.round(scaleDenominator()) })}><Icon name="zoom" size={15} /></button></span>
+        </label>
+        <label class="field">{t("Hide when zoomed in beyond 1:")}
+          <span class="row"><input type="number" min="0" step="any" value={sr.maxScale || ""} placeholder={t("no limit")} onchange={(e) => set({ maxScale: e.currentTarget.valueAsNumber || 0 })} /><button class="icon" title={t("Current map scale")} aria-label={t("Use current scale as maximum")} onclick={() => set({ maxScale: Math.round(scaleDenominator()) })}><Icon name="zoom" size={15} /></button></span>
+        </label>
+      </div>
+    {/if}
+  </section>
+
+  {#if info.temporal && info.timeFields.length}
+    {@const tm = info.temporal}
+    {@const setT = (p: Partial<typeof tm>) => apply(() => writeTemporal(info.id, { ...tm, start: tm.start || info.timeFields[0], ...p }), "temporal settings")}
+    <section class="stack">
+      <label class="row"><input type="checkbox" checked={tm.enabled} onchange={(e) => setT({ enabled: e.currentTarget.checked })} /> <h3>{t("Time (temporal controller)")}</h3></label>
+      {#if tm.enabled}
+        <label class="field">{t("Features have")}
+          <select value={tm.mode} onchange={(e) => setT({ mode: +e.currentTarget.value as 1 | 2, end: tm.end || info.timeFields[0] })}><option value={1}>{t("A date/time (one field)")}</option><option value={2}>{t("Start and end fields")}</option></select>
+        </label>
+        <div class="grid2">
+          <label class="field">{tm.mode === 2 ? t("Start") : t("Date/time")}<select value={tm.start} onchange={(e) => setT({ start: e.currentTarget.value })}>{#each info.timeFields as f}<option>{f}</option>{/each}</select></label>
+          {#if tm.mode === 2}<label class="field">{t("End")}<select value={tm.end} onchange={(e) => setT({ end: e.currentTarget.value })}>{#each info.timeFields as f}<option>{f}</option>{/each}</select></label>{/if}
+        </div>
+        {#if tm.mode === 1}<label class="row"><input type="checkbox" checked={tm.accumulate} onchange={(e) => setT({ accumulate: e.currentTarget.checked })} /> {t("Accumulate features over time")}</label>{/if}
+        <p class="hint">{t("Use the clock button on the map to play through time.")}</p>
+      {/if}
+    </section>
+  {/if}
   {/if}
 
   <section class="stack">

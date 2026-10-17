@@ -281,6 +281,7 @@ test("time slider filters temporal layers", async ({ page }) => {
     A.ui.current = id;
     A.ui.panel = "style";
   }, { type: "FeatureCollection", features });
+  await page.getByRole("button", { name: /More options/ }).click();
   await page.locator("section", { hasText: "Time (temporal controller)" }).locator('input[type="checkbox"]').first().check();
   await page.locator('button[aria-label="Time slider"]').click();
   const count = () => page.evaluate(() => { const A = (globalThis as any).quarkgisApp; const it = A.engine.findMapLayer(A.ui.current).getFeatures(); let n = 0; while (it.nextFeature()) n++; it.delete(); return n; });

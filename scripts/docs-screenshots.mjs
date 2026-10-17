@@ -60,6 +60,7 @@ await page.screenshot({ path: out("profile") });
 await demo();
 const events = { type: "FeatureCollection", features: Array.from({ length: 60 }, (_, i) => ({ type: "Feature", properties: { when: `2024-${String(1 + (i % 12)).padStart(2, "0")}-15T12:00:00` }, geometry: { type: "Point", coordinates: [-10 + ((i * 37) % 45), 36 + ((i * 13) % 24)] } })) };
 await app(async (fc) => { const A = globalThis.quarkgisApp; const [id] = await A.adddata.addData([{ path: "events.geojson", data: new TextEncoder().encode(JSON.stringify(fc)) }]); A.ui.current = id; A.ui.panel = "style"; A.map.olMap().getView().fit([-1500000, 3800000, 3500000, 7500000]); }, events);
+await page.getByRole("button", { name: /More options/ }).click();
 await page.locator("section", { hasText: "Time (temporal controller)" }).locator('input[type="checkbox"]').first().check();
 await page.locator('button[aria-label="Time slider"]').click();
 await page.locator('button[aria-label="Next step"]').click();
