@@ -216,6 +216,42 @@ export function setSingle(id: string, base = baseSymbol(id)) {
   replaceRenderer(id, r);
 }
 
+// ---- Defaults and suggestions ---------------------------------------------------------------
+
+/** Colors for new layers, instead of QGIS's random ones. */
+const PALETTE = ["#4c78a8", "#59a14f", "#e15759", "#f28e2b", "#76b7b2", "#b07aa1", "#edc948", "#9c755f"];
+let nextColor = 0;
+const mix = (hex: string, to: number, f: number) => "#" + [1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - f) + to * f).toString(16).padStart(2, "0")).join("");
+const darker = (hex: string) => "#" + [1, 3, 5].map((i) => Math.round(parseInt(hex.slice(i, i + 2), 16) * 0.65).toString(16).padStart(2, "0")).join("");
+
+/** A clean single-symbol style for a newly added vector layer. */
+export function setDefaultStyle(id: string) {
+  const kind = symbolKind(id);
+  if (!kind) return;
+  const color = PALETTE[nextColor++ % PALETTE.length];
+  setSingle(id, templateSymbol(kind));
+  const sym = rendererEl(id)!.querySelector(":scope > symbols > symbol")!;
+  writeSymbol(sym, kind === "line" ? { color, strokeWidth: 0.6, size: 0.6 } : kind === "marker" ? { color, stroke: "#ffffff", strokeWidth: 0.4, size: 2.6 } : { color: mix(color, 255, 0.45), stroke: darker(color), strokeWidth: 0.3 });
+  if (kind === "fill") sym.setAttribute("alpha", "0.85");
+}
+
+export interface Suggestion { type: "categorizedSymbol" | "graduatedSymbol"; field: string }
+
+/** Styles worth offering for a layer: categories for a text field with few values, classes for a numeric one. */
+export function suggestStyles(id: string): Suggestion[] {
+  const fields = (findMapLayer(id) as QgsVectorLayer).fields();
+  const out: Suggestion[] = [];
+  for (let i = 0; i < fields.count() && out.length < 3; i++) {
+    const f = fields.at(i);
+    const name = f.name();
+    if (/^(fid|id|ogc_fid|objectid|gid)$|_id$/i.test(name)) continue;
+    const distinct = new Set(fieldValues(id, name, 2000).filter((v) => v !== null && v !== "")).size;
+    if (f.type() === 10 && distinct >= 2 && distinct <= 12 && !out.some((s) => s.type === "categorizedSymbol")) out.push({ type: "categorizedSymbol", field: name });
+    else if ([2, 4, 6, 3, 5, 32, 33, 34, 35, 36, 38].includes(f.type()) && distinct > 5 && !out.some((s) => s.type === "graduatedSymbol")) out.push({ type: "graduatedSymbol", field: name });
+  }
+  return out;
+}
+
 export function setCategorized(id: string, attr: string, cats: Category[], ramp: string) {
   const base = baseSymbol(id);
   const r = newRenderer("categorizedSymbol", { attr, quarkgis_ramp: ramp });
@@ -296,11 +332,12 @@ export function writeScaleRange(id: string, r: { enabled: boolean; minScale: num
 // ---- Classification --------------------------------------------------------------------
 
 /** Values of a field (or expression) over all features, read from QGIS. */
-export function fieldValues(id: string, attr: string): unknown[] {
+export function fieldValues(id: string, attr: string, limit = 0): unknown[] {
   const api = engine();
   const layer = findMapLayer(id) as QgsVectorLayer;
   const req = new api.QgsFeatureRequest();
   req.setFlags(FeatureRequestFlag.NoGeometry);
+  if (limit) req.setLimit(limit);
   const fieldIdx = (() => {
     const fields = layer.fields();
     for (let i = 0; i < fields.count(); i++) if (fields.at(i).name() === attr) return i;

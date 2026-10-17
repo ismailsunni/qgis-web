@@ -40,6 +40,17 @@ The one goal that overrides the rest: a project round-tripped through QuarkGIS o
 - Print layouts and atlas.
 - Mobile-first editing; phones get view and identify only.
 
+## Product direction (October 2026)
+
+QuarkGIS is a **lite** QGIS for the web, not a port of QGIS Desktop. It covers the common, everyday workflows, stays fully compatible with QGIS projects, and uses what the web does well.
+
+- **Compatibility first.** Everything is read and written in QGIS's own project format. Features QuarkGIS doesn't offer (layouts, advanced symbology, joins it can't edit…) are kept in the project untouched, so Desktop still has them.
+- **Common use cases over breadth.** Add what most QGIS users do every week: style, label, query, lightly edit, analyse with a few core tools, print a simple map, share it. Leave out the long tail: the full processing toolbox (GRASS/SAGA), the full symbology editor, Python plugins, database connections, mesh, point clouds, 3D, atlas.
+- **Web-native.** Links that open a view, sharing without accounts, installable and offline-capable, location on phones, streaming of cloud-optimized data, open data catalogs.
+- **Modern and simple UI.** Sensible defaults (e.g. styles on add), the action search for everything, expert options behind "Advanced".
+
+Quick map export (title, legend, scale bar, north arrow, PDF) is part of the common use cases; QGIS print layouts and atlas stay a non-goal.
+
 ## Users and use cases
 
 The primary user is someone who already has a QGIS project and needs to show, check or lightly edit it where Desktop isn't available.

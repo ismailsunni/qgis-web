@@ -1,10 +1,13 @@
 import { unzipSync, strFromU8, strToU8 } from "fflate";
-import { exists, writeFile } from "./engine";
-import { insertLayerXml, newLayerId, project, hasProject } from "./doc";
+import { exists, writeFile, findMapLayer } from "./engine";
+import { LayerType } from "qgis-js";
+import { setDefaultStyle, symbolKind } from "./style";
+import { redraw } from "./map";
+import { insertLayerXml, newLayerId, project, hasProject, reload, treeRootEl } from "./doc";
 import { crsByAuthid, spatialRefSys, type CrsDef } from "./crs";
 import { openDb, rows } from "./sqlite";
 import { apply } from "./commit";
-import { ui, toast } from "./state.svelte";
+import { ui, toast, changed } from "./state.svelte";
 import { t, N_ } from "./i18n";
 import { previewCsv, delimitedTextUri, toCsv, type CsvOptions, type CsvPreview } from "./csv";
 
@@ -227,6 +230,20 @@ export async function addData(files: { path: string; data: Blob | Uint8Array }[]
   apply(() => {
     for (const s of sources.reverse()) ids.push(insertLayerXml(mapLayerXml(s), s.name));
   }, N_("add data"));
+  // Clean default styles rather than QGIS's random colors (part of the same undo step).
+  const vectors = ids.filter((id) => findMapLayer(id)?.type() === LayerType.Vector);
+  if (vectors.length) {
+    vectors.forEach(setDefaultStyle);
+    // Points above lines above polygons above rasters, so new layers don't hide each other.
+    const RANK: Record<string, number> = { marker: 0, line: 1, fill: 2 };
+    const rank = (id: string) => (vectors.includes(id) ? (RANK[symbolKind(id) ?? ""] ?? 3) : 3);
+    const nodes = [...treeRootEl().children].filter((n) => n.tagName === "layer-tree-layer" && ids.includes(n.getAttribute("id")!));
+    const anchor = nodes.at(-1)?.nextSibling ?? null;
+    for (const n of [...nodes].sort((a, b) => rank(a.getAttribute("id")!) - rank(b.getAttribute("id")!))) treeRootEl().insertBefore(n, anchor);
+    reload();
+    changed();
+    redraw();
+  }
   const unknown = sources.filter((s) => !s.crs);
   if (unknown.length) toast(t("No CRS found for {names}; QGIS will use the project CRS.", { names: unknown.map((s) => s.name).join(", ") }));
   ui.current = ids.at(-1) ?? ui.current;

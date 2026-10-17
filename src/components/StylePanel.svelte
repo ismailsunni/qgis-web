@@ -72,6 +72,13 @@
 
   const reclassify = () => setType(info!.renderer!.type);
 
+  // One-click styles for a plain layer: categories for a text field with few values, classes for a number.
+  const suggestions = $derived(info?.renderer && ["singleSymbol", "none"].includes(info.renderer.type) ? S.suggestStyles(info.id) : []);
+  function suggest(s: S.Suggestion) {
+    catField = s.field;
+    setType(s.type);
+  }
+
   function symbolProp(p: Partial<S.SymbolProps>) {
     const id = info!.id;
     apply(() => (info!.renderer!.type === "singleSymbol" ? S.setAllSymbols(id, p) : S.setAllSymbols(id, { ...p, color: undefined })));
@@ -180,6 +187,14 @@
             {#if r.type === "none"}<option value="none">{t("Default")}</option>{/if}
           </select>
         </label>
+        {#if suggestions.length}
+          <div class="suggestions">
+            <span class="muted">{t("Try:")}</span>
+            {#each suggestions as s}
+              <button class="chip" onclick={() => suggest(s)}>{s.type === "categorizedSymbol" ? t("Categorized by {field}", { field: s.field }) : t("Graduated by {field}", { field: s.field })}</button>
+            {/each}
+          </div>
+        {/if}
       {:else}
         {@const msg = t("This layer uses a {renderer} renderer. Edit it with QML under Advanced, or switch to:").split("{renderer}")}
         <p class="hint">{msg[0]}<b>{r.type}</b>{msg[1]}</p>

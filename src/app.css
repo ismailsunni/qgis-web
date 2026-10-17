@@ -449,3 +449,5 @@ a.link { color: var(--green-dark); }
 .unavailable .source { word-break: break-all; font-size: 12px; }
 .missing-files { margin: 0; padding-left: 18px; font-size: 12px; word-break: break-all; }
 .notice.warn-notice { border-color: #e8a33c; background: color-mix(in srgb, #e8a33c 10%, var(--bg)); }
+.suggestions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; }
+.chip { border-radius: 999px; padding: 3px 10px; font-size: 12px; border-color: var(--green); color: var(--green-dark); background: var(--accent-bg); }
