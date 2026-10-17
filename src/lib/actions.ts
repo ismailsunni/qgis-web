@@ -417,7 +417,7 @@ export function commands(): Command[] {
     { id: "add-data", label: t("Add data files…"), run: () => document.getElementById("pick-data")?.click() },
     ...PRESETS.map((p) => ({ id: `basemap-${p.name}`, label: t("Add basemap: {name}", { name: p.name }), run: () => addRemote(p, "bottom") })),
     { id: "share", label: t("Share / publish…"), run: () => (ui.dialog = "share") },
-    { id: "export-image", label: t("Export map image (PNG)…"), run: () => (ui.dialog = "export") },
+    { id: "export-image", label: t("Export map (PNG image or PDF page)…"), run: () => (ui.dialog = "export") },
     { id: "measure-line", label: t("Measure distance"), run: () => import("./maptools").then((m) => m.startMeasure("line")) },
     { id: "profile", label: t("Elevation profile"), run: () => import("./profile").then((m) => m.startProfile()) },
     { id: "measure-area", label: t("Measure area"), run: () => import("./maptools").then((m) => m.startMeasure("area")) },

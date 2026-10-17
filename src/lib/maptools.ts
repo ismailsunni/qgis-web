@@ -259,20 +259,16 @@ async function renderWebLayer(layer: BaseLayer, extent: Extent, width: number, h
 export interface ExportOptions { scale: number; legend: boolean; title: string }
 
 /** Exports the current view as a PNG at `scale` × screen resolution (96 dpi × scale for QGIS). */
-export async function exportImage(o: ExportOptions): Promise<Blob> {
-  const map = olMap();
-  const [w, h] = map.getSize()!;
-  const extent = map.getView().calculateExtent([w, h]);
-  const W = Math.round(w * o.scale), H = Math.round(h * o.scale);
+/** The map for an extent at a pixel size, as on screen: QGIS segments and web layers, bottom to top. */
+export async function renderMap(extent: Extent, W: number, H: number, scale: number) {
   const canvas = Object.assign(document.createElement("canvas"), { width: W, height: H });
   const ctx = canvas.getContext("2d")!;
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, W, H);
   const api = engine();
-  // Same order as on screen: QGIS segments and web layers, bottom to top.
   for (const piece of layerStack()) {
     if (piece.kind === "qgis") {
-      const img = await api.renderImage(srid(), new api.QgsRectangle(extent[0], extent[1], extent[2], extent[3]), W, H, o.scale, piece.layerIds);
+      const img = await api.renderImage(srid(), new api.QgsRectangle(extent[0], extent[1], extent[2], extent[3]), W, H, scale, piece.layerIds);
       ctx.drawImage(await createImageBitmap(img), 0, 0);
     } else {
       const c = await renderWebLayer(createRemoteLayer(piece.spec), extent, W, H);
@@ -281,6 +277,19 @@ export async function exportImage(o: ExportOptions): Promise<Blob> {
       ctx.globalAlpha = 1;
     }
   }
+  return canvas;
+}
+
+/** Credits of the web layers drawn (their terms require them). */
+export const mapCredits = () => [...new Set(layerStack().flatMap((p) => (p.kind === "web" ? [attributionFor(p.spec.url)] : [])).filter(Boolean))].join(" · ");
+
+export async function exportImage(o: ExportOptions): Promise<Blob> {
+  const map = olMap();
+  const [w, h] = map.getSize()!;
+  const extent = map.getView().calculateExtent([w, h]);
+  const W = Math.round(w * o.scale), H = Math.round(h * o.scale);
+  const canvas = await renderMap(extent, W, H, o.scale);
+  const ctx = canvas.getContext("2d")!;
   if (o.legend) {
     const url = legendImage(96 * o.scale);
     if (url) {
@@ -294,8 +303,7 @@ export async function exportImage(o: ExportOptions): Promise<Blob> {
       ctx.drawImage(img, x + pad, y + pad);
     }
   }
-  // Credits of the web layers drawn (their terms require them).
-  const credits = [...new Set(layerStack().flatMap((p) => (p.kind === "web" ? [attributionFor(p.spec.url)] : [])).filter(Boolean))].join(" · ");
+  const credits = mapCredits();
   if (credits) {
     const size = 10 * o.scale;
     ctx.font = `${size}px system-ui, sans-serif`;
