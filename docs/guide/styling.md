@@ -17,9 +17,13 @@ Open **Style** in the left rail; it applies to the current layer (click a layer 
 
 Classes can be shown or hidden, recolored and relabeled. Breaks are computed the same way as in QGIS.
 
+New layers get a clean color instead of QGIS's random one, and are stacked points above lines above polygons. For a layer with a single symbol, the panel suggests one-click styles such as **Categorized by CONTINENT** (a text field with a few values) or **Graduated by POP_EST** (a number).
+
 ## Labels
 
 Label with a field or an expression; choose font, size, color, a buffer (halo) and the placement. Layers with rule-based labels from Desktop keep them until you edit labels here.
+
+**More options** (collapsed) holds the less common settings: the popup, scale-dependent visibility and time.
 
 ## Popups
 
@@ -41,6 +45,7 @@ Right-click a layer (or use its ⋯ menu) and choose **Properties…**, as in QG
 - **Information**: type, provider, source, CRS, extent, feature count, fields, bands.
 - **Source**: rename the layer, and set a **provider feature filter** (an SQL `WHERE` clause, like QGIS's Query Builder) with **Test** to count the matching features first.
 - **Fields**: names, types and lengths; edit the **aliases** shown in the table and forms.
+- **Joins**: add the fields of another layer or table that shares a field, e.g. a CSV of statistics joined to countries by their code (QGIS vector joins: QGIS does the join, Desktop shows the same).
 - **Rendering**: opacity and scale-dependent visibility.
 - **Metadata**: the layer's title and abstract.
 

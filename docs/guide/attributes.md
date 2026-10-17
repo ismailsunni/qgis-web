@@ -29,6 +29,10 @@ The **statistics** button in the table summarizes a field over the rows shown (a
 
 Both write to the layer's GeoPackage (other formats are converted first) and can be undone.
 
+## Joining a table
+
+To bring in attributes from a table (for example statistics in a CSV) by a shared field: add the table (*No geometry* in the CSV dialog), then open the layer's **Properties… → Joins → Add a join…**, choose the table, the join field and the layer's field, and which fields to bring in. The joined fields appear in the table and can be used for styles and labels. It's a QGIS join, so Desktop shows the same.
+
 ## Exporting a layer
 
 **Export…** (table toolbar or layer menu) downloads the layer as GeoPackage, FlatGeobuf or CSV with WKT geometry in the layer's CRS, or as GeoJSON, Shapefile (zip) or KML in WGS 84.

@@ -17,6 +17,7 @@ A project opened from a URL can be shared as is: the dialog gives a link with `?
 - **Visibility**: unlisted (link only) or public.
 - **Opens as**: the full app, the compact app, or the map only.
 - **Embedding allowed on**: a list of domains that may embed the map (empty for any).
+- **Links open at the current view** (position, visible layers, identified feature) unless you untick it.
 - **Versions**: publishing again updates the same link; earlier versions stay listed and can be restored, or opened with `&rev=`.
 
 Publishing needs a GitHub token with the `gist` scope, created once and kept only in this browser. Viewing needs nothing.
@@ -31,6 +32,7 @@ Publishing needs a GitHub token with the `gist` scope, created once and kept onl
 | `panels=none` | Start with the panels closed |
 | `maponly` | Only the map, for embedding |
 | `legend` | Show the legend on the map |
+| `#v=<x>,<y>,<scale>&on=<layers>&f=<layer>:<feature>` | Open at a view: center and scale in the project CRS, visible layers by position, the feature to show |
 
 ## Embedding
 

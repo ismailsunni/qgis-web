@@ -106,7 +106,7 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | Style library / presets | ✅ | ✅ | ◐ (QGIS Hub) |
 | Style interchange (SLD, Mapbox GL style) | ✅ | ✅ (MapLibre out) | ◐ (QML only) |
 | Popup / map tip designer | ✅ | ✅ | ✅ (QGIS map tips) |
-| Smart default styling on add | ✅ | — | ◐ (QGIS random default) |
+| Smart default styling on add | ✅ | — | ✅ (palette, layer order, style suggestions) |
 | Masking, extrusion (2.5D) | ✅ | ✅ | ◐ (via QML; QGIS renders it) |
 
 ### Attribute data and selection
@@ -119,7 +119,7 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | Select by expression / attributes | ✅ | ✅ | ✅ |
 | Select by location | ✅ | ✅ | ✅ |
 | Field calculator, add/delete/rename fields | ✅ | ✅ | ✅ |
-| Virtual fields, joins | ✅ | ✅ (relationships) | — |
+| Virtual fields, joins | ✅ | ✅ (relationships) | ◐ (joins) |
 | Attribute forms (widgets, constraints) | ✅ | ✅ (domains, subtypes, rules) | ✅ (from the project) |
 | Field statistics, charts | ✅ | ✅ | ✅ (statistics, histogram) |
 | Export layer (GeoJSON, GPKG, CSV, Shapefile…) | ✅ | ✅ | ✅ (GeoPackage, GeoJSON, FlatGeobuf, Shapefile, KML, CSV) |
@@ -166,7 +166,7 @@ The goal is a list to decide from, not a plan: part 1 inventories what the two a
 | --- | --- | --- | --- |
 | Save project, Save As, open recent | ✅ | ✅ | ✅ |
 | Export map image (PNG at DPI) | ✅ | ✅ | ✅ |
-| Print layout / atlas / PDF | ✅ | ✅ | — (PRD non-goal v1) |
+| Print layout / atlas / PDF | ✅ | ✅ | ◐ (quick PDF map page) |
 | Reports, presentations, story maps, dashboards | ✅ | ✅ | — |
 | Standalone HTML export | ✅ | ✅ | — |
 | Share links, embed, map-only mode | ✅ | ◐ (static files) | ✅ |

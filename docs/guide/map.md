@@ -11,6 +11,14 @@
 - **Bookmarks** (left rail) save views in the project, as QGIS spatial bookmarks; Desktop shows them too.
 - When a project opens, the map shows the view saved in it, as Desktop does (or the full extent, see [Settings](settings.md)).
 
+## Your location
+
+**Show my location** (map toolbar or action search) zooms to where you are and keeps showing your position with its accuracy, using the device's GPS or network location. Click it again to stop.
+
+## Links to a view
+
+The address bar always holds the current view: map position and scale, the visible layers and the feature shown in Identify (`#v=…&on=…&f=…`). Opening a shared map (`?url=` or `?gist=`) with it shows that exact view without changing the project. **Copy link to this view** is in the right-click menu and the action search.
+
 ## Coordinates
 
 The status bar shows the pointer position; click it to switch between latitude/longitude, degrees-minutes-seconds, UTM, MGRS and the project CRS. **Right-click** the map to copy the position in any of these formats, identify, center or zoom there, or add a bookmark. The **grid** button draws a latitude/longitude grid with labels.
@@ -45,6 +53,11 @@ Layers with dates can be played through time, like QGIS's temporal controller:
 
 The **legend** button shows the QGIS legend of the visible layers on the map.
 
-## Exporting an image
+## Exporting a map
 
-**Export map image** renders the current view with QGIS at 96 to 384 dpi, with an optional title and legend. Download it as PNG or copy it to the clipboard. Web layer credits are added at the bottom.
+**Export map** has two formats:
+
+- **Image (PNG)**: the current view rendered by QGIS at 96 to 384 dpi, with an optional title and legend; download it or copy it to the clipboard.
+- **Map page (PDF)**: a page (A4, A3 or Letter, landscape or portrait, 150 or 300 dpi) with the title, the current view fitted to the page, the legend, a scale bar, a north arrow, the scale, the date and the credits. It is the quick "map for a report"; for full print layouts and atlases use QGIS Desktop.
+
+Web layer credits are always added.
