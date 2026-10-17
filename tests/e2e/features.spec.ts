@@ -402,3 +402,30 @@ test("database layers are flagged and don't stop the map", async ({ page }) => {
   expect(await page.evaluate(() => (globalThis as any).quarkgisApp.map.layerStack()[0].layerIds.length)).toBe(3);
   expect(await page.evaluate(() => new XMLSerializer().serializeToString((globalThis as any).quarkgisApp.doc.project().xml).includes("<provider>postgres</provider>"))).toBe(true);
 });
+
+test("join a table to a layer by field", async ({ page }) => {
+  await demo(page);
+  const added = page.evaluate(() => (globalThis as any).quarkgisApp.adddata.addData([{ path: "scores.csv", data: new TextEncoder().encode("iso,score\nDEU,2\nITA,3\n") }]));
+  await page.locator(".dialog.csv select").nth(1).selectOption("none");
+  await page.locator(".dialog.csv button.primary").click();
+  await added;
+  await page.locator(".node", { hasText: "Countries" }).click({ button: "right" });
+  await page.getByRole("menuitem", { name: "Properties…" }).click();
+  const dialog = page.locator(".layer-props");
+  await dialog.getByRole("tab", { name: "Joins" }).click();
+  await dialog.getByRole("button", { name: "Add a join…" }).click();
+  await dialog.locator("select").first().selectOption({ label: "scores" });
+  await dialog.locator("label", { hasText: "Join field" }).locator("select").selectOption("iso");
+  await dialog.locator("label", { hasText: "Target field" }).locator("select").selectOption("ISO_A3");
+  await dialog.getByRole("button", { name: "Add join" }).click();
+  await expect.poll(() => page.evaluate(() => {
+    const A = (globalThis as any).quarkgisApp;
+    const layer = A.engine.findMapLayer(A.tree.flatLayers(A.tree.snapshotTree()).find((l: any) => l.name === "Countries").layerId);
+    const r = new (globalThis as any).quarkgisEngine.api.QgsFeatureRequest();
+    r.setFilterExpression(`"ISO_A3" = 'DEU'`);
+    const it = layer.getFeatures(r);
+    const v = it.nextFeature()?.attribute("scores_score");
+    it.delete();
+    return v;
+  })).toBe(2);
+});

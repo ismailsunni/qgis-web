@@ -244,7 +244,7 @@ export async function addData(files: { path: string; data: Blob | Uint8Array }[]
     changed();
     redraw();
   }
-  const unknown = sources.filter((s) => !s.crs);
+  const unknown = sources.filter((s) => !s.crs && !s.datasource.includes("geomType=none"));
   if (unknown.length) toast(t("No CRS found for {names}; QGIS will use the project CRS.", { names: unknown.map((s) => s.name).join(", ") }));
   ui.current = ids.at(-1) ?? ui.current;
   return ids;

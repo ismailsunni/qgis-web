@@ -8,6 +8,7 @@
   import { cleanDatasource } from "../lib/secrets";
   import { readForm } from "../lib/forms";
   import { flatLayers, rename, setOpacity, snapshotTree } from "../lib/tree";
+  import { readJoins, writeJoins, type Join } from "../lib/joins";
   import { readScaleRange, writeScaleRange, symbolKind } from "../lib/style";
   import { rasterInfo } from "../lib/raster";
   import { scaleDenominator } from "../lib/map";
@@ -19,7 +20,7 @@
   /** QGIS's Layer Properties: information, source, fields, rendering and metadata of a layer. */
   let { layerId, onclose }: { layerId: string; onclose: () => void } = $props();
 
-  const TABS = [["info", N_("Information")], ["source", N_("Source")], ["fields", N_("Fields")], ["rendering", N_("Rendering")], ["metadata", N_("Metadata")]] as const;
+  const TABS = [["info", N_("Information")], ["source", N_("Source")], ["fields", N_("Fields")], ["joins", N_("Joins")], ["rendering", N_("Rendering")], ["metadata", N_("Metadata")]] as const;
   let tab = $state<(typeof TABS)[number][0]>("info");
 
   const info = $derived.by(() => {
@@ -92,6 +93,29 @@
     apply(() => (child(child(mapLayerEl(layerId)!, "resourceMetadata"), key).textContent = value), N_("layer metadata"));
   }
 
+  // Joins: attributes of another layer or table, matched on a field (QGIS joins them itself).
+  const joins = $derived((ui.version, readJoins(layerId)));
+  const others = $derived((ui.version, flatLayers(snapshotTree()).filter((l) => l.layerId !== layerId && l.layerType === LayerType.Vector && l.valid)));
+  const fieldsOf = (id: string) => {
+    const qf = (findMapLayer(id) as QgsVectorLayer | undefined)?.fields();
+    return qf ? Array.from({ length: qf.count() }, (_, i) => qf.at(i).name()) : [];
+  };
+  let draft = $state<Join | null>(null);
+  function newJoin() {
+    const other = others[0];
+    if (!other) return toast(t("Add the table to join first (e.g. a CSV), then join it here."));
+    const fields = fieldsOf(other.layerId!);
+    const target = info.fields.find((f) => fields.includes(f.name))?.name ?? info.fields[0]?.name ?? "";
+    draft = { layer: other.layerId!, joinField: fields.includes(target) ? target : fields[0], targetField: target, prefix: `${other.name}_`, fields: null };
+  }
+  function saveJoin() {
+    const j = draft!;
+    apply(() => writeJoins(layerId, [...joins, j]), N_("add join"));
+    draft = null;
+  }
+  const removeJoin = (i: number) => apply(() => writeJoins(layerId, joins.filter((_, k) => k !== i)), N_("remove join"));
+  const layerName = (id: string) => flatLayers(snapshotTree()).find((l) => l.layerId === id)?.name ?? id;
+
   const setScales = (p: Partial<typeof info.scales>) => apply(() => writeScaleRange(layerId, { ...info.scales, ...p }));
 </script>
 
@@ -157,6 +181,40 @@
           <p class="hint">{t("Aliases are shown in the attribute table and forms. Add, rename or delete fields from the attribute table.")}</p>
         {:else}
           <p class="muted">{t("This layer has no fields.")}</p>
+        {/if}
+      {:else if tab === "joins"}
+        {#each joins as j, i}
+          <div class="join-row">
+            <span><b>{layerName(j.layer)}</b>.{j.joinField} = {j.targetField}{j.prefix ? ` · ${t("prefix")} ${j.prefix}` : ""}{j.fields ? ` · ${j.fields.join(", ")}` : ""}</span>
+            <button class="icon" title={t("Remove join")} aria-label={t("Remove join")} onclick={() => removeJoin(i)}><Icon name="trash" size={15} /></button>
+          </div>
+        {:else}
+          <p class="muted">{t("No joins. Join attributes from another layer or table that shares a field, e.g. statistics by country code.")}</p>
+        {/each}
+        {#if draft}
+          {@const joinFields = fieldsOf(draft.layer)}
+          <div class="grid2">
+            <label class="field">{t("Join layer")}
+              <select bind:value={draft.layer} onchange={() => { const f = fieldsOf(draft!.layer); draft!.joinField = f.includes(draft!.targetField) ? draft!.targetField : f[0]; draft!.prefix = `${layerName(draft!.layer)}_`; draft!.fields = null; }}>
+                {#each others as o}<option value={o.layerId}>{o.name}</option>{/each}
+              </select>
+            </label>
+            <label class="field">{t("Prefix for joined fields")}<input bind:value={draft.prefix} /></label>
+            <label class="field">{t("Join field")}<select bind:value={draft.joinField}>{#each joinFields as f}<option>{f}</option>{/each}</select></label>
+            <label class="field">{t("Target field")}<select bind:value={draft.targetField}>{#each info.fields as f}<option>{f.name}</option>{/each}</select></label>
+          </div>
+          <fieldset class="join-fields">
+            <legend>{t("Joined fields")}</legend>
+            {#each joinFields.filter((f) => f !== draft!.joinField) as f}
+              <label class="radio"><input type="checkbox" checked={!draft.fields || draft.fields.includes(f)} onchange={(e) => { const all = joinFields.filter((x) => x !== draft!.joinField); const cur = draft!.fields ?? all; draft!.fields = e.currentTarget.checked ? [...cur, f] : cur.filter((x) => x !== f); if (draft!.fields.length === all.length) draft!.fields = null; }} /> {f}</label>
+            {/each}
+          </fieldset>
+          <div class="row">
+            <button onclick={() => (draft = null)}>{t("Cancel")}</button>
+            <button class="primary" disabled={!draft.joinField || !draft.targetField} onclick={saveJoin}>{t("Add join")}</button>
+          </div>
+        {:else if info.vector}
+          <button onclick={newJoin}><Icon name="add" size={16} /> {t("Add a join…")}</button>
         {/if}
       {:else if tab === "rendering"}
         <label class="field">{t("Opacity")}

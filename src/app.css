@@ -451,3 +451,5 @@ a.link { color: var(--green-dark); }
 .notice.warn-notice { border-color: #e8a33c; background: color-mix(in srgb, #e8a33c 10%, var(--bg)); }
 .suggestions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12px; }
 .chip { border-radius: 999px; padding: 3px 10px; font-size: 12px; border-color: var(--green); color: var(--green-dark); background: var(--accent-bg); }
+.join-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.join-fields { display: flex; flex-wrap: wrap; gap: 4px 12px; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; font-size: 13px; }
