@@ -454,11 +454,18 @@ test("welcome tour walks through the app", async ({ page }) => {
   expect(await page.evaluate(() => localStorage.getItem("quarkgis:tour-done"))).toBe("1");
 });
 
-test("open data catalogs: a STAC image and a portal file", async ({ page }) => {
+test.describe("open data catalogs", () => {
+  // The catalogs are answered by the test, which only sees the page's own requests, not the service worker's.
+  test.use({ serviceWorkers: "block" });
+
+test("a STAC image and a portal file", async ({ page }) => {
   // Catalogs answered locally so the test doesn't depend on outside services.
   const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Expose-Headers": "Content-Range, Content-Length" };
   const tif = readFileSync("tests/fixtures/dem.tif");
-  await page.route("https://stac.test/**", (route) =>
+  await page.route("https://stac.test/collections", (route) =>
+    route.fulfill({ headers: cors, contentType: "application/json", body: JSON.stringify({ collections: [{ id: "sentinel-2-l2a", title: "Test imagery" }] }) }),
+  );
+  await page.route("https://stac.test/search", (route) =>
     route.fulfill({ headers: cors, contentType: "application/json", body: JSON.stringify({ features: [{ id: "scene-1", geometry: { type: "Polygon", coordinates: [[[0, 35], [20, 35], [20, 50], [0, 50], [0, 35]]] }, properties: { datetime: "2026-10-01T10:00:00Z", "eo:cloud_cover": 4 }, assets: { visual: { href: "https://files.test/scene.tif", type: "image/tiff; application=geotiff; profile=cloud-optimized" } } }] }) }),
   );
   await page.route("https://files.test/scene.tif", (route) => {
@@ -476,6 +483,8 @@ test("open data catalogs: a STAC image and a portal file", async ({ page }) => {
   await demo(page);
   await page.evaluate(() => ((globalThis as any).quarkgisApp.ui.panel = "catalog"));
   await page.locator(".catalog input[list]").fill("https://stac.test");
+  await page.locator(".catalog input[list]").press("Tab");
+  await expect(page.locator(".catalog select").first()).toContainText("Test imagery");
   await page.getByRole("button", { name: "Search this map area" }).click();
   await expect(page.locator(".catalog-item")).toContainText("2026-10-01");
   await page.locator(".catalog-item").getByRole("button", { name: "Add" }).click();
@@ -486,4 +495,5 @@ test("open data catalogs: a STAC image and a portal file", async ({ page }) => {
   await page.getByRole("button", { name: "Search", exact: true }).click();
   await page.locator(".catalog-dataset .chip").click();
   await expect.poll(() => layers(page).then((ls) => ls.map((l) => l.name).sort())).toEqual(["Countries", "Places", "Rivers", "parks", "sentinel-2-l2a 2026-10-01"].sort());
+});
 });
